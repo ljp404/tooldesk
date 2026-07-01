@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="代码格式化">
+  <defs>
+    <linearGradient id="code-format-bg" x1="8" x2="56" y1="6" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#code-format-bg)"/>
+  <path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.2" d="m23.5 22.5-8 9.5 8 9.5m17-19 8 9.5-8 9.5M35.5 18l-7 28"/>
+  <path fill="none" stroke="#dbeafe" stroke-linecap="round" stroke-width="3" d="M20 49h8m6 0h10M24 14h16"/>
+  <circle cx="31.5" cy="49" r="1.8" fill="#dbeafe"/>
+</svg>

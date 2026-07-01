@@ -1,0 +1,38 @@
+{
+  "accent": "purple",
+  "caption": "直线法、双倍余额递减法、年数总和法折旧测算与摊销表。",
+  "category": "finance",
+  "clipboardMatch": {
+    "type": "decimal-amount",
+    "priority": 80
+  },
+  "defaultAlias": "zjjs",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-depreciation-calculator",
+  "keywords": [
+    "zj",
+    "dep",
+    "zhejiu",
+    "depreciation",
+    "折旧",
+    "摊销",
+    "直线法",
+    "双倍余额",
+    "年数总和",
+    "会计"
+  ],
+  "name": "折旧计算",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

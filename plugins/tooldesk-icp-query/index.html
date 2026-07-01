@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ICP 备案查询</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #2563eb; color: #fff; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+
+
+
+.icp-query-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.icp-query-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.icp-query-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.icp-query-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.icp-query-icon-badge {
+  align-items: center;
+  background: #f5f3ff;
+  border-radius: 6px;
+  color: #7c3aed;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.icp-query-icon-badge .app-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.icp-query-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.icp-query-field {
+  display: grid;
+  gap: 8px;
+}
+
+.icp-query-field input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  height: 38px;
+  outline: none;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.icp-query-field input:focus {
+  border-color: #c4b5fd;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.icp-query-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.tool-panel .icp-query-primary-button,
+.icp-query-primary-button,
+.icp-query-official-link {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.icp-query-official-link {
+  background: #ffffff;
+  border: 1px solid #ddd6fe;
+  color: #7c3aed;
+}
+
+.icp-query-official-link:hover {
+  background: #faf5ff;
+  color: #6d28d9;
+}
+
+.tool-panel .icp-query-primary-button:disabled,
+.tool-panel .icp-query-copy-button:disabled,
+.icp-query-primary-button:disabled,
+.icp-query-copy-button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.tool-panel .icp-query-copy-button,
+.icp-query-copy-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #ddd6fe;
+  border-radius: 7px;
+  color: #7c3aed;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  margin-left: auto;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.tool-panel .icp-query-copy-button:hover,
+.icp-query-copy-button:hover {
+  background: #faf5ff;
+  color: #6d28d9;
+}
+
+.icp-query-info-grid {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.icp-query-info-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.icp-query-info-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.icp-query-info-row strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icp-query-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.icp-query-empty .app-icon {
+  height: 42px;
+  width: 42px;
+}
+
+.icp-query-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 14px;
+  padding: 10px 12px;
+}
+
+.icp-query-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 2;
+}
+
+.icp-query-copy-toast::before {
+  border-bottom: 5px solid rgba(15, 23, 42, 0.88);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: -5px;
+}
+
+
+.icp-query-hint { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #475569; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 16px 16px; padding: 10px 12px; }
+
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content icp-query-layout">
+      <section class="icp-query-card icp-query-form-card">
+        <div class="icp-query-card-head"><span class="icp-query-icon-badge">ICP</span><strong>备案查询</strong></div>
+        <div class="icp-query-form">
+          <label class="field small icp-query-field">域名<input id="domainInput" type="text" placeholder="例如 baidu.com" /></label>
+          <label class="field small icp-query-field">API Token<input id="tokenInput" type="password" placeholder="起零数据开发者 Token" /></label>
+          <div class="icp-query-actions"><button id="query" class="icp-query-primary-button tool-primary-button">查询</button><button id="official" class="icp-query-official-link">官方查询</button></div>
+        </div>
+        <p class="icp-query-hint">查询结果来自第三方接口，建议通过工信部官方入口核验。Token 只保存在本机浏览器存储中。</p>
+      </section>
+      <section class="icp-query-card icp-query-result-card">
+        <div class="icp-query-card-head"><span class="icp-query-icon-badge">ICP</span><strong>备案信息</strong><button id="copy" class="icp-query-copy-button" disabled>复制结果</button></div>
+        <span id="toast" class="icp-query-copy-toast" hidden></span>
+        <p id="error" class="icp-query-error" hidden></p>
+        <div id="result" class="icp-query-info-grid"></div>
+        <div id="empty" class="icp-query-empty">输入域名后查询备案信息</div>
+      </section>
+    </main>
+<script>
+const ISTERO_ICP_ENDPOINT = 'https://api.istero.com/resource/v2/icp/query';
+      const TOKEN_STORAGE_KEY = 'tooldesk-istero-api-token';
+      let result = null;
+      const $ = (id) => document.getElementById(id);
+
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function normalizeDomain(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        try { return new URL(raw.includes('://') ? raw : `https://${raw}`).hostname.replace(/^www\./i, ''); }
+        catch { return raw.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0]; }
+      }
+      function officialUrl() {
+        return `https://beian.miit.gov.cn/#/Integrated/index?keyword=${encodeURIComponent(normalizeDomain($('domainInput').value))}`;
+      }
+      function setError(message) {
+        $('error').textContent = message;
+        $('error').hidden = !message;
+      }
+      function showToast(text) {
+        $('toast').textContent = text;
+        $('toast').hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600);
+      }
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+      function rows() {
+        if (!result) return [];
+        return [
+          ['查询域名', result.domain],
+          ['备案号', result.icpNo],
+          ['主办单位', result.organizer],
+          ['网站名称', result.websiteName],
+          ['单位性质', result.nature],
+          ['审核时间', result.auditDate],
+          ['状态', result.status],
+          ['首页地址', result.homepage],
+          ['数据来源', result.source]
+        ];
+      }
+      function render() {
+        const data = rows();
+        $('copy').disabled = data.length === 0;
+        $('empty').hidden = data.length > 0 || !$('error').hidden;
+        $('result').replaceChildren(...data.map(([label, value]) => {
+          const row = document.createElement('div');
+          row.className = 'icp-query-info-row';
+          row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+          return row;
+        }));
+      }
+      async function queryByHostRequest(domain, token) {
+        const body = new URLSearchParams({ domain, token }).toString();
+        const result = await api.sendHttpRequest({
+          body,
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+          method: 'POST',
+          timeoutMs: 30000,
+          url: ISTERO_ICP_ENDPOINT
+        });
+
+        if (!result?.ok) {
+          throw new Error(`HTTP ${result?.status || 0}`);
+        }
+
+        try {
+          return result.body ? JSON.parse(result.body) : null;
+        } catch {
+          return result.body || '';
+        }
+      }
+      function normalizeResponseCode(value) {
+        const trimmed = String(value || '').trim();
+        return /^\d+(\.0+)?$/.test(trimmed) ? String(Number(trimmed)) : trimmed;
+      }
+      function isSuccessfulResponseCode(value) {
+        const code = normalizeResponseCode(value);
+        return !code || ['0', '1', '200'].includes(code);
+      }
+      function flattenPayload(value, prefix = '') {
+        const output = {};
+        if (!value || typeof value !== 'object') return output;
+        Object.entries(value).forEach(([key, raw]) => {
+          const nextKey = prefix ? `${prefix}.${key}` : key;
+          if (raw && typeof raw === 'object') Object.assign(output, flattenPayload(raw, nextKey));
+          else if (raw !== undefined && raw !== null) { output[nextKey] = String(raw); output[key] = String(raw); }
+        });
+        return output;
+      }
+      function findValue(values, keys) {
+        for (const key of keys) {
+          if (values[key]?.trim()) return values[key].trim();
+          const fuzzyKey = Object.keys(values).find((item) => item.toLowerCase().includes(key.toLowerCase()));
+          if (fuzzyKey && values[fuzzyKey]?.trim()) return values[fuzzyKey].trim();
+        }
+        return '';
+      }
+      function findRecordContainer(payload) {
+        if (!payload || typeof payload !== 'object') return payload;
+        const entries = Object.entries(payload);
+        for (const key of ['data', 'result', 'record', 'records', 'list', 'rows']) {
+          const entry = entries.find(([entryKey]) => entryKey.toLowerCase() === key.toLowerCase());
+          if (!entry) continue;
+          const value = entry[1];
+          if (Array.isArray(value)) return value[0] || null;
+          if (value && typeof value === 'object') return findRecordContainer(value);
+        }
+        for (const [, value] of entries) {
+          if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') return value[0];
+        }
+        return payload;
+      }
+      function parseTextPayload(payload, domain, source) {
+        const text = payload.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        const icpMatch = text.match(/[\u4e00-\u9fa5]{1,3}ICP备[\dA-Za-z-]+号?(?:-\d+)?/);
+        return icpMatch ? { auditDate: '-', domain, homepage: domain, icpNo: icpMatch[0], nature: '-', organizer: '-', source, status: '已查询', websiteName: '-' } : null;
+      }
+      function parseIcpPayload(payload, domain, source) {
+        if (typeof payload === 'string') return parseTextPayload(payload, domain, source);
+        const values = flattenPayload(payload);
+        const code = findValue(values, ['code', 'statusCode', 'status_code']);
+        const message = findValue(values, ['msg', 'message']);
+        if (!isSuccessfulResponseCode(code)) throw new Error(message || `接口返回码 ${code}`);
+        if (message && /维护|失败|错误|不存在|禁止|鉴权/i.test(message)) throw new Error(message);
+        const recordValues = flattenPayload(findRecordContainer(payload));
+        const icpNo = findValue(recordValues, ['icp', 'icpNo', 'icp_no', 'permit', 'serviceLicence', 'mainLicence', '备案号', '许可证']);
+        if (!icpNo || icpNo === '-') return null;
+        return {
+          auditDate: findValue(recordValues, ['auditDate', 'updateTime', 'checkTime', 'passTime', '审核时间']) || '-',
+          domain,
+          homepage: findValue(recordValues, ['homeUrl', 'homepage', 'domain', 'url', '网站首页']) || domain,
+          icpNo,
+          nature: findValue(recordValues, ['nature', 'unitNature', 'type', '性质', '单位性质']) || '-',
+          organizer: findValue(recordValues, ['unitName', 'organizer', 'company', '主办单位', '主办者']) || '-',
+          source,
+          status: findValue(recordValues, ['status', 'state', '备案状态']) || '已查询',
+          websiteName: findValue(recordValues, ['siteName', 'websiteName', 'name', '网站名称']) || '-'
+        };
+      }
+      async function queryIcp() {
+        const domain = normalizeDomain($('domainInput').value);
+        const token = $('tokenInput').value.trim();
+        if (!domain) { result = null; setError('请输入要查询的域名'); render(); return; }
+        if (!token) { result = null; setError('请输入起零数据 API Token'); render(); return; }
+        $('query').disabled = true;
+        $('query').textContent = '查询中';
+        setError('');
+        result = null;
+        try {
+          localStorage.setItem(TOKEN_STORAGE_KEY, token);
+          result = parseIcpPayload(await queryByHostRequest(domain, token), domain, '起零数据');
+          if (!result) throw new Error('未查询到备案信息');
+        } catch (error) {
+          setError(`${error instanceof Error ? error.message : 'ICP备案查询失败'}。可以点击“官方查询”核验。`);
+        } finally {
+          $('query').disabled = false;
+          $('query').textContent = '查询';
+          render();
+        }
+      }
+
+      $('tokenInput').value = localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+      $('query').addEventListener('click', queryIcp);
+      $('domainInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') queryIcp(); });
+      $('tokenInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') queryIcp(); });
+      $('official').addEventListener('click', () => api.openExternalUrl(officialUrl()).catch(() => window.open(officialUrl(), '_blank', 'noreferrer')));
+      $('copy').addEventListener('click', () => { if (result) copyText(rows().map(([label, value]) => `${label}: ${value}`).join('\n'), '备案信息已复制'); });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-icp-query', capabilities: ['copyText', 'openExternalUrl', 'sendHttpRequest'] };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

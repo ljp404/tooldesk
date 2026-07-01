@@ -1,0 +1,63 @@
+{
+  "accent": "blue",
+  "caption": "输入常见网站名，快速打开官网或站内搜索。",
+  "category": "life",
+  "defaultAlias": "cywz",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-common-sites",
+  "keywords": [
+    "wz",
+    "site",
+    "changyongwangzhan",
+    "web",
+    "url",
+    "baidu",
+    "bd",
+    "jd",
+    "taobao",
+    "tb",
+    "github",
+    "gh",
+    "aliyun",
+    "ali",
+    "al",
+    "aliyuncloud",
+    "阿里云",
+    "tencentcloud",
+    "qcloud",
+    "txcloud",
+    "txy",
+    "腾讯云",
+    "zhihu",
+    "zh",
+    "bilibili",
+    "bili",
+    "gpt",
+    "chatgpt",
+    "openai",
+    "deepseek",
+    "ds",
+    "wangzhan"
+  ],
+  "name": "常用网站",
+  "permissions": [
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "sync": {
+    "localStorageKeys": [
+      "tooldesk-common-sites.custom.v2"
+    ]
+  },
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "getPluginStorageItem",
+    "openExternalUrl",
+    "setPluginStorageItem"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

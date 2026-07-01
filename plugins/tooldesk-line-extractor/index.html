@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文本行提取</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .58; }
+.tool-content {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 340px minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  padding: 12px;
+}
+.panel {
+  background: #fff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.panel-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+}
+.panel-head strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+.panel-head small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
+}
+.config-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field > span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+.input, .select, .textarea {
+  background: #fff;
+  border: 1px solid #cbd8e7;
+  border-radius: 6px;
+  color: #111827;
+  outline: none;
+  width: 100%;
+}
+.input, .select {
+  height: 36px;
+  padding: 0 10px;
+}
+.textarea {
+  line-height: 1.55;
+  min-height: 94px;
+  padding: 9px 10px;
+  resize: vertical;
+}
+.textarea.source {
+  min-height: 130px;
+}
+.input:focus, .select:focus, .textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+.file-input {
+  align-items: center;
+  border: 1px dashed #adc0d8;
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px;
+}
+.file-input input {
+  min-width: 0;
+  width: 100%;
+}
+.file-meta {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+  min-height: 18px;
+}
+.option-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+.check {
+  align-items: center;
+  color: #334155;
+  display: flex;
+  gap: 7px;
+  min-height: 28px;
+}
+.actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: auto;
+}
+.button {
+  align-items: center;
+  border-radius: 6px;
+  display: inline-flex;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  padding: 0 12px;
+}
+.button.primary {
+  background: #2563eb;
+  color: #fff;
+}
+.button.secondary {
+  background: #edf3ff;
+  color: #1d4ed8;
+}
+.button.ghost {
+  background: #f1f5f9;
+  color: #334155;
+}
+.button.danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.status-bar {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 10px 14px;
+}
+.stat {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  min-width: 0;
+  padding: 8px 10px;
+}
+.stat span {
+  color: #64748b;
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+}
+.stat strong {
+  color: #0f172a;
+  display: block;
+  font-size: 15px;
+  font-weight: 900;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.progress {
+  background: #e5e7eb;
+  height: 5px;
+  overflow: hidden;
+}
+.progress > span {
+  background: #2563eb;
+  display: block;
+  height: 100%;
+  transition: width .16s ease;
+  width: 0;
+}
+.result-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.result-list {
+  flex: 1;
+  font-family: Consolas, "JetBrains Mono", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.empty {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  flex: 1;
+  font-weight: 700;
+  justify-content: center;
+}
+.result-foot {
+  align-items: center;
+  border-top: 1px solid #e5e7eb;
+  color: #64748b;
+  display: flex;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+}
+.result-foot .button {
+  height: 30px;
+  margin-left: auto;
+}
+.toast-stack {
+  bottom: 16px;
+  display: grid;
+  gap: 8px;
+  position: fixed;
+  right: 16px;
+  z-index: 20;
+}
+.toast {
+  background: rgba(15, 23, 42, .92);
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 800;
+  padding: 9px 12px;
+}
+@media (max-width: 900px) {
+  .tool-content { grid-template-columns: 1fr; }
+  .status-bar { grid-template-columns: 1fr 1fr; }
+}
+    </style>
+  </head>
+  <body>
+    <main class="tool-content">
+      <section class="panel">
+        <header class="panel-head">
+          <strong>提取条件</strong>
+          <small id="sourceBadge">未选择文件</small>
+        </header>
+        <div class="config-body">
+          <label class="field">
+            <span>本地文件</span>
+            <div class="file-input">
+              <input id="fileInput" type="file" />
+            </div>
+            <em id="fileMeta" class="file-meta"></em>
+          </label>
+          <label class="field">
+            <span>粘贴文本</span>
+            <textarea id="sourceText" class="textarea source" spellcheck="false"></textarea>
+          </label>
+          <label class="field">
+            <span>关键词</span>
+            <textarea id="keywordsInput" class="textarea" spellcheck="false"></textarea>
+          </label>
+          <div class="option-grid">
+            <label class="field">
+              <span>匹配方式</span>
+              <select id="modeSelect" class="select">
+                <option value="any">包含任一</option>
+                <option value="all">包含全部</option>
+                <option value="exclude">排除包含</option>
+                <option value="regex">正则匹配</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>编码</span>
+              <select id="encodingSelect" class="select">
+                <option value="utf-8">UTF-8</option>
+                <option value="gbk">GBK / ANSI</option>
+              </select>
+            </label>
+          </div>
+          <div class="option-grid">
+            <label class="field">
+              <span>关联字段</span>
+              <select id="relationSelect" class="select">
+                <option value="">不关联</option>
+                <option value="thread">线程号</option>
+                <option value="trace">TraceId</option>
+                <option value="request">RequestId</option>
+                <option value="custom">自定义正则</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>字段正则</span>
+              <input id="relationPattern" class="input" type="text" disabled />
+            </label>
+          </div>
+          <div class="option-grid">
+            <label class="check"><input id="ignoreCase" type="checkbox" checked />忽略大小写</label>
+            <label class="check"><input id="withLineNumber" type="checkbox" />保留行号</label>
+            <label class="check"><input id="dedupe" type="checkbox" />结果去重</label>
+            <label class="check"><input id="trimEmpty" type="checkbox" checked />跳过空行</label>
+          </div>
+          <div class="actions">
+            <button id="runButton" class="button primary" type="button">开始提取</button>
+            <button id="exportButton" class="button secondary" type="button">导出并打开</button>
+            <button id="cancelButton" class="button danger" type="button" disabled>取消</button>
+            <button id="clearButton" class="button ghost" type="button">清空</button>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <header class="panel-head">
+          <strong>结果预览</strong>
+          <small id="statusText">等待处理</small>
+        </header>
+        <div class="status-bar">
+          <div class="stat"><span>扫描行数</span><strong id="scannedLines">0</strong></div>
+          <div class="stat"><span>命中行数</span><strong id="matchedLines">0</strong></div>
+          <div class="stat"><span>已处理</span><strong id="processedBytes">0 B</strong></div>
+          <div class="stat"><span>耗时</span><strong id="durationText">0 ms</strong></div>
+        </div>
+        <div class="progress"><span id="progressBar"></span></div>
+        <div class="result-body">
+          <div id="emptyState" class="empty">暂无结果</div>
+          <pre id="resultList" class="result-list" hidden></pre>
+        </div>
+        <footer class="result-foot">
+          <span id="previewHint">最多预览 500 行</span>
+          <button id="copyButton" class="button secondary" type="button" disabled>复制预览</button>
+        </footer>
+      </section>
+    </main>
+    <div id="toastStack" class="toast-stack" aria-live="polite"></div>
+<script>
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const PREVIEW_LIMIT = 500;
+      const RELATION_PATTERNS = {
+        request: String.raw`(?:requestId|request_id|request-id|reqId|req_id|请求(?:ID|号)?)\s*[:=\]\[]\s*([A-Za-z0-9_.:-]+)`,
+        thread: String.raw`(?:thread|threadId|thread_id|tid|线程(?:ID|号)?)\s*[:=\]\[]\s*([A-Za-z0-9_.:-]+)`,
+        trace: String.raw`(?:traceId|trace_id|trace-id|trace|链路(?:ID|号)?)\s*[:=\]\[]\s*([A-Za-z0-9_.:-]+)`
+      };
+      const $ = (id) => document.getElementById(id);
+      const state = {
+        cancelRequested: false,
+        file: null,
+        lastPreview: [],
+        running: false
+      };
+
+      function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        $('toastStack').appendChild(toast);
+        window.setTimeout(() => toast.remove(), 2200);
+      }
+
+      function formatBytes(bytes) {
+        if (!bytes) return '0 B';
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+        return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
+      }
+
+      function getKeywords() {
+        return $('keywordsInput').value
+          .split(/\r?\n|,/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function buildMatcher() {
+        const keywords = getKeywords();
+        const mode = $('modeSelect').value;
+        const ignoreCase = $('ignoreCase').checked;
+        if (!keywords.length) throw new Error('请输入关键词');
+
+        if (mode === 'regex') {
+          const flags = ignoreCase ? 'i' : '';
+          const regexes = keywords.map((keyword) => new RegExp(keyword, flags));
+          return (line) => regexes.some((regex) => regex.test(line));
+        }
+
+        const words = ignoreCase ? keywords.map((item) => item.toLowerCase()) : keywords;
+        return (line) => {
+          const text = ignoreCase ? line.toLowerCase() : line;
+          if (mode === 'all') return words.every((word) => text.includes(word));
+          if (mode === 'exclude') return !words.some((word) => text.includes(word));
+          return words.some((word) => text.includes(word));
+        };
+      }
+
+      function buildRelationExtractor() {
+        const selected = $('relationSelect').value;
+        const pattern = selected === 'custom' ? $('relationPattern').value.trim() : RELATION_PATTERNS[selected];
+
+        if (!pattern) {
+          return null;
+        }
+
+        const regex = new RegExp(pattern);
+        return (line) => {
+          regex.lastIndex = 0;
+          const match = regex.exec(line);
+          return match?.[1]?.trim() || '';
+        };
+      }
+
+      function setRunning(running) {
+        state.running = running;
+        $('runButton').disabled = running;
+        $('exportButton').disabled = running;
+        $('cancelButton').disabled = !running;
+      }
+
+      function resetStats() {
+        $('scannedLines').textContent = '0';
+        $('matchedLines').textContent = '0';
+        $('processedBytes').textContent = '0 B';
+        $('durationText').textContent = '0 ms';
+        $('progressBar').style.width = '0%';
+        $('statusText').textContent = '等待处理';
+        $('resultList').textContent = '';
+        $('resultList').hidden = true;
+        $('emptyState').hidden = false;
+        $('copyButton').disabled = true;
+        state.lastPreview = [];
+      }
+
+      function updatePreview(lines) {
+        state.lastPreview = lines;
+        $('resultList').textContent = lines.join('\n');
+        $('resultList').hidden = lines.length === 0;
+        $('emptyState').hidden = lines.length > 0;
+        $('copyButton').disabled = lines.length === 0;
+      }
+
+      function createOutputLine(line, lineNumber) {
+        return $('withLineNumber').checked ? `${lineNumber}: ${line}` : line;
+      }
+
+      async function scanLines({ onLine, source, totalBytes }) {
+        const decoder = source.file ? new TextDecoder($('encodingSelect').value) : null;
+        let processed = 0;
+        let scanned = 0;
+        let lastYield = 0;
+
+        const handleLine = async (line) => {
+          scanned += 1;
+          await onLine(line, scanned, processed);
+        };
+
+        if (source.file) {
+          const reader = source.file.stream().getReader();
+          let carry = '';
+          while (true) {
+            if (state.cancelRequested) break;
+            const { done, value } = await reader.read();
+            if (done) break;
+            processed += value.byteLength;
+            const text = carry + decoder.decode(value, { stream: true });
+            const lines = text.split(/\r\n|\n|\r/);
+            carry = lines.pop() || '';
+            for (const line of lines) await handleLine(line);
+            if (performance.now() - lastYield > 80) {
+              lastYield = performance.now();
+              await new Promise((resolve) => setTimeout(resolve, 0));
+            }
+          }
+          const tail = carry + decoder.decode();
+          if (!state.cancelRequested && tail) await handleLine(tail);
+        } else {
+          const text = source.text || '';
+          totalBytes = new Blob([text]).size;
+          const lines = text.split(/\r\n|\n|\r/);
+          for (let index = 0; index < lines.length; index += 1) {
+            if (state.cancelRequested) break;
+            processed += lines[index].length;
+            await handleLine(lines[index]);
+            if (index % 2000 === 0) await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+        }
+
+        return { processed, scanned, totalBytes };
+      }
+
+      async function collectRelationValues({ extractor, matcher, source, totalBytes }) {
+        const values = new Set();
+        const startedAt = performance.now();
+        let processed = 0;
+        let scanned = 0;
+
+        await scanLines({
+          onLine: async (line, lineNumber, processedBytes) => {
+            scanned = lineNumber;
+            processed = processedBytes;
+            if (lineNumber % 2000 === 0) {
+              $('scannedLines').textContent = scanned.toLocaleString('zh-CN');
+              $('matchedLines').textContent = values.size.toLocaleString('zh-CN');
+              $('processedBytes').textContent = formatBytes(processed);
+              $('durationText').textContent = `${Math.round(performance.now() - startedAt)} ms`;
+              $('progressBar').style.width = totalBytes ? `${Math.min(100, processed / totalBytes * 100)}%` : '100%';
+            }
+            if ($('trimEmpty').checked && !line.trim()) return;
+            if (!matcher(line)) return;
+            const value = extractor(line);
+            if (value) values.add(value);
+          },
+          source,
+          totalBytes
+        });
+
+        $('scannedLines').textContent = scanned.toLocaleString('zh-CN');
+        $('matchedLines').textContent = values.size.toLocaleString('zh-CN');
+        $('processedBytes').textContent = formatBytes(processed);
+        $('durationText').textContent = `${Math.round(performance.now() - startedAt)} ms`;
+        $('progressBar').style.width = '100%';
+        return values;
+      }
+
+      async function processLineSource({ emitLine, matcher, relationExtractor, relationValues, source, totalBytes }) {
+        const startedAt = performance.now();
+        const preview = [];
+        const seen = $('dedupe').checked ? new Set() : null;
+        let scanned = 0;
+        let matched = 0;
+        let processed = 0;
+        let lastPaint = 0;
+
+        const handleLine = async (line) => {
+          if (state.cancelRequested) return;
+          scanned += 1;
+          if ($('trimEmpty').checked && !line.trim()) return;
+          const relationValue = relationExtractor ? relationExtractor(line) : '';
+          const relationMatched = Boolean(relationValue && relationValues?.has(relationValue));
+          if (!matcher(line) && !relationMatched) return;
+          const output = createOutputLine(line, scanned);
+          if (seen) {
+            if (seen.has(output)) return;
+            seen.add(output);
+          }
+          matched += 1;
+          if (preview.length < PREVIEW_LIMIT) preview.push(output);
+          await emitLine(output);
+        };
+
+        const paint = () => {
+          $('scannedLines').textContent = scanned.toLocaleString('zh-CN');
+          $('matchedLines').textContent = matched.toLocaleString('zh-CN');
+          $('processedBytes').textContent = formatBytes(processed);
+          $('durationText').textContent = `${Math.round(performance.now() - startedAt)} ms`;
+          $('progressBar').style.width = totalBytes ? `${Math.min(100, processed / totalBytes * 100)}%` : '100%';
+          updatePreview(preview);
+        };
+
+        await scanLines({
+          onLine: async (line, _lineNumber, processedBytes) => {
+            processed = processedBytes;
+            await handleLine(line);
+            if (performance.now() - lastPaint > 80) {
+              paint();
+              lastPaint = performance.now();
+              await new Promise((resolve) => setTimeout(resolve, 0));
+            }
+          },
+          source,
+          totalBytes
+        });
+
+        paint();
+        return { matched, scanned };
+      }
+
+      function getSource() {
+        if (state.file) return { file: state.file };
+        return { text: $('sourceText').value };
+      }
+
+      function applyLaunchContent(content) {
+        const text = String(content || '');
+
+        if (!text.trim()) {
+          return;
+        }
+
+        state.file = null;
+        $('fileInput').value = '';
+        $('sourceText').value = text;
+        $('sourceBadge').textContent = '粘贴模式';
+        $('fileMeta').textContent = '';
+        resetStats();
+      }
+
+      async function runExtraction() {
+        if (state.running) return;
+        resetStats();
+        state.cancelRequested = false;
+        setRunning(true);
+        try {
+          const matcher = buildMatcher();
+          const relationExtractor = buildRelationExtractor();
+          const source = getSource();
+          if (!source.file && !source.text.trim()) throw new Error('请选择文件或粘贴文本');
+          const totalBytes = source.file ? source.file.size : new Blob([source.text || '']).size;
+          let relationValues = null;
+          if (relationExtractor) {
+            $('statusText').textContent = '收集关联字段';
+            relationValues = await collectRelationValues({ extractor: relationExtractor, matcher, source, totalBytes });
+            if (!relationValues.size) throw new Error('未从命中行中提取到关联字段');
+            resetStats();
+          }
+          $('statusText').textContent = relationValues ? `处理中 · 关联 ${relationValues.size} 个值` : '处理中';
+          const result = await processLineSource({
+            emitLine: async () => {},
+            matcher,
+            relationExtractor,
+            relationValues,
+            source,
+            totalBytes
+          });
+          $('statusText').textContent = state.cancelRequested ? '已取消' : '处理完成';
+          showToast(state.cancelRequested ? '已取消' : `命中 ${result.matched} 行`);
+        } catch (error) {
+          $('statusText').textContent = '处理失败';
+          showToast(error instanceof Error ? error.message : '处理失败');
+        } finally {
+          setRunning(false);
+        }
+      }
+
+      async function createWritableSink() {
+        await pluginConnect;
+        const session = await api.createTextExport('line-extract-result.txt');
+        let buffer = '';
+        const flush = async () => {
+          if (!buffer) return;
+          const chunk = buffer;
+          buffer = '';
+          await api.appendTextExport(session.exportId, chunk);
+        };
+
+        return {
+          async close(openFile = true) {
+            await flush();
+            return api.finishTextExport(session.exportId, openFile);
+          },
+          async write(text) {
+            buffer += text;
+            if (buffer.length >= 64 * 1024) {
+              await flush();
+            }
+          }
+        };
+      }
+
+      async function exportResult() {
+        if (state.running) return;
+        resetStats();
+        state.cancelRequested = false;
+        setRunning(true);
+        let sink = null;
+        try {
+          const matcher = buildMatcher();
+          const relationExtractor = buildRelationExtractor();
+          const source = getSource();
+          if (!source.file && !source.text.trim()) throw new Error('请选择文件或粘贴文本');
+          const totalBytes = source.file ? source.file.size : new Blob([source.text || '']).size;
+          sink = await createWritableSink();
+          let relationValues = null;
+          if (relationExtractor) {
+            $('statusText').textContent = '收集关联字段';
+            relationValues = await collectRelationValues({ extractor: relationExtractor, matcher, source, totalBytes });
+            if (!relationValues.size) throw new Error('未从命中行中提取到关联字段');
+            resetStats();
+          }
+          let first = true;
+          $('statusText').textContent = relationValues ? `正在导出 · 关联 ${relationValues.size} 个值` : '正在导出';
+          const result = await processLineSource({
+            emitLine: async (line) => {
+              await sink.write(`${first ? '' : '\n'}${line}`);
+              first = false;
+            },
+            matcher,
+            relationExtractor,
+            relationValues,
+            source,
+            totalBytes
+          });
+          await sink.close(!state.cancelRequested);
+          $('statusText').textContent = state.cancelRequested ? '已取消' : '导出完成';
+          showToast(state.cancelRequested ? '已取消' : `已导出 ${result.matched} 行并打开`);
+        } catch (error) {
+          try { if (sink) await sink.close(false); } catch {}
+          $('statusText').textContent = '导出失败';
+          showToast(error instanceof Error ? error.message : '导出失败');
+        } finally {
+          setRunning(false);
+        }
+      }
+
+      $('fileInput').addEventListener('change', () => {
+        state.file = $('fileInput').files?.[0] || null;
+        $('sourceBadge').textContent = state.file ? '文件模式' : '粘贴模式';
+        $('fileMeta').textContent = state.file ? `${state.file.name} · ${formatBytes(state.file.size)}` : '';
+      });
+      $('relationSelect').addEventListener('change', () => {
+        const selected = $('relationSelect').value;
+        $('relationPattern').disabled = selected !== 'custom';
+        $('relationPattern').value = selected === 'custom' ? '' : (RELATION_PATTERNS[selected] || '');
+      });
+      $('runButton').addEventListener('click', () => void runExtraction());
+      $('exportButton').addEventListener('click', () => void exportResult());
+      $('cancelButton').addEventListener('click', () => { state.cancelRequested = true; });
+      $('clearButton').addEventListener('click', () => {
+        $('sourceText').value = '';
+        $('keywordsInput').value = '';
+        $('fileInput').value = '';
+        state.file = null;
+        $('sourceBadge').textContent = '未选择文件';
+        $('fileMeta').textContent = '';
+        resetStats();
+      });
+      $('copyButton').addEventListener('click', async () => {
+        const text = state.lastPreview.join('\n');
+        await pluginConnect;
+        try {
+          await api.copyText(text);
+        } catch {
+          showToast('复制失败');
+          return;
+        }
+        showToast('已复制预览');
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-line-extractor', capabilities: ['appendTextExport', 'copyText', 'createTextExport', 'finishTextExport'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () {};
+        const pluginOfflineReady = function () {};
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

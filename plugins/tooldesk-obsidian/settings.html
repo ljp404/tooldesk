@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Obsidian 设置</title>
+    <style>
+      :root {
+        color: #0f172a;
+        background: #ffffff;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        --brand: #2563eb;
+        --panel-bg: #ffffff;
+        --panel-border: #dbe4ef;
+        --panel-soft: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --text-soft: #334155;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #ffffff;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .page {
+        display: grid;
+        align-content: start;
+        gap: 16px;
+        min-height: 100vh;
+        padding: 20px 18px 22px;
+      }
+
+      .head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .head-title {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--text-main);
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .description {
+        margin: 0;
+        color: var(--text-soft);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 8px;
+      }
+
+      button {
+        height: 34px;
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        background: var(--panel-bg);
+        color: var(--text-main);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 0 16px;
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease,
+          color 0.15s ease;
+      }
+
+      button:hover {
+        border-color: rgba(37, 99, 235, 0.35);
+        background: rgba(37, 99, 235, 0.06);
+        color: var(--brand);
+      }
+
+      button.primary {
+        border-color: var(--brand);
+        background: var(--brand);
+        color: #ffffff;
+      }
+
+      button.primary:hover {
+        border-color: #1d4ed8;
+        background: #1d4ed8;
+        color: #ffffff;
+      }
+
+      .list,
+      .form {
+        display: grid;
+        gap: 10px;
+      }
+
+      .empty {
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        background: var(--panel-bg);
+        color: var(--text-muted);
+        font-size: 13px;
+        padding: 26px;
+        text-align: center;
+      }
+
+      .item {
+        display: grid;
+        gap: 9px;
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        background: var(--panel-bg);
+        padding: 12px 14px 14px;
+      }
+
+      .item-head {
+        display: grid;
+        align-items: center;
+        gap: 10px;
+        grid-template-columns: minmax(0, 1fr) 18px;
+      }
+
+      .title {
+        min-width: 0;
+        color: var(--text-main);
+        font-size: 13px;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .path,
+      .meta,
+      .status {
+        color: var(--text-muted);
+        font-size: 12px;
+        margin: 0;
+      }
+
+      .path {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .enabled-toggle {
+        align-self: start;
+        background: transparent;
+        border: 0;
+        border-radius: 3px;
+        display: inline-flex;
+        height: 14px;
+        margin: 2px 0 0;
+        padding: 0;
+        width: 14px;
+      }
+
+      .enabled-toggle::before {
+        align-items: center;
+        background: #14b8a6;
+        border-radius: 3px;
+        color: #ffffff;
+        content: "✓";
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 700;
+        height: 14px;
+        justify-content: center;
+        line-height: 1;
+        width: 14px;
+      }
+
+      .enabled-toggle.disabled::before {
+        background: #cbd5e1;
+        content: "";
+      }
+
+      .form {
+        display: grid;
+        gap: 12px;
+        padding: 0;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: var(--text-main);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        background: var(--panel-bg);
+        color: var(--text-main);
+        font-size: 13px;
+        outline: 0;
+        padding: 0 12px;
+      }
+
+      input::placeholder {
+        color: var(--text-muted);
+        opacity: 1;
+      }
+
+      select {
+        cursor: pointer;
+      }
+
+      input:hover,
+      select:hover {
+        border-color: var(--brand);
+      }
+
+      input:focus,
+      select:focus {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .path-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 88px;
+        gap: 8px;
+      }
+
+      .path-row button {
+        height: 40px;
+        background: var(--panel-soft);
+        border-color: var(--panel-border);
+        color: var(--text-main);
+        padding: 0 14px;
+      }
+
+      .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 40px;
+      }
+
+      .switch-row input {
+        width: auto;
+        min-height: 0;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .add-button {
+        flex: 0 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="head">
+        <div class="head-title">
+          <h1>Obsidian</h1>
+          <p class="description">配置 Obsidian 笔记库或本地 Markdown 文件夹，通过扩展搜索和打开文件。</p>
+        </div>
+        <button id="add" type="button" class="primary add-button">添加库</button>
+      </header>
+
+      <section id="list" class="list"></section>
+
+      <section id="form" class="form hidden">
+        <input id="keyword" type="hidden" />
+        <label>
+          名称
+          <input id="name" type="text" placeholder="Obsidian 笔记" />
+        </label>
+        <label>
+          路径
+          <div class="path-row">
+            <input id="path" type="text" />
+            <button id="browse" type="button">浏览</button>
+          </div>
+        </label>
+        <label>
+          文件类型
+          <input id="extensions" type="text" placeholder=".md, .txt" />
+        </label>
+        <label>
+          打开方式
+          <select id="openWith">
+            <option value="default">默认程序</option>
+            <option value="typora">Typora</option>
+            <option value="vscode">VS Code</option>
+            <option value="obsidian">Obsidian</option>
+          </select>
+        </label>
+        <label id="typoraRow" class="hidden">
+          Typora 路径
+          <input id="typoraPath" type="text" placeholder="C:\Program Files\Typora\Typora.exe" />
+        </label>
+        <label id="vaultRow" class="hidden">
+          Obsidian 库名
+          <input id="vaultName" type="text" />
+        </label>
+        <label class="switch-row">
+          <span>启用</span>
+          <input id="enabled" type="checkbox" />
+        </label>
+        <div class="toolbar">
+          <button id="cancel" type="button">取消</button>
+          <button id="save" type="button" class="primary">保存</button>
+        </div>
+      </section>
+
+      <p id="status" class="status"></p>
+    </main>
+<script>
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const listEl = document.getElementById('list');
+      const formEl = document.getElementById('form');
+      const statusEl = document.getElementById('status');
+      const addEl = document.getElementById('add');
+      const fields = {
+        enabled: document.getElementById('enabled'),
+        extensions: document.getElementById('extensions'),
+        keyword: document.getElementById('keyword'),
+        name: document.getElementById('name'),
+        openWith: document.getElementById('openWith'),
+        path: document.getElementById('path'),
+        typoraPath: document.getElementById('typoraPath'),
+        vaultName: document.getElementById('vaultName')
+      };
+      let settings = { libraries: [], maxResults: 50, searchContent: true, maxFilesToScan: 500 };
+      let editingIndex = -1;
+
+      function normalizeKeyword(value) {
+        return String(value || '')
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 10);
+      }
+
+      function createUniqueLibraryKeyword(source, currentIndex) {
+        const base = normalizeKeyword(source) || 'library';
+        const used = new Set(
+          settings.libraries
+            .filter((_, index) => index !== currentIndex)
+            .map((library) => normalizeKeyword(library.keyword))
+            .filter(Boolean)
+        );
+
+        if (!used.has(base)) {
+          return base;
+        }
+
+        for (let index = 2; index < 1000; index += 1) {
+          const suffix = `-${index}`;
+          const candidate = `${base.slice(0, Math.max(1, 10 - suffix.length))}${suffix}`;
+
+          if (!used.has(candidate)) {
+            return candidate;
+          }
+        }
+
+        return `${base.slice(0, 6)}-${Date.now().toString(36).slice(-3)}`;
+      }
+
+      function parseExtensions(value) {
+        return String(value || '.md')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .map((item) => (item.startsWith('.') ? item : `.${item}`));
+      }
+
+      function getFolderName(value) {
+        return String(value || '').replace(/\\/g, '/').split('/').filter(Boolean).pop() || '';
+      }
+
+      function setStatus(value) {
+        statusEl.textContent = value || '';
+      }
+
+      function updateConditionalFields() {
+        document.getElementById('typoraRow').classList.toggle('hidden', fields.openWith.value !== 'typora');
+        document.getElementById('vaultRow').classList.toggle('hidden', fields.openWith.value !== 'obsidian');
+      }
+
+      function showList() {
+        listEl.classList.remove('hidden');
+        addEl.classList.remove('hidden');
+        formEl.classList.add('hidden');
+      }
+
+      function showForm() {
+        listEl.classList.add('hidden');
+        addEl.classList.add('hidden');
+        formEl.classList.remove('hidden');
+      }
+
+      function renderList() {
+        listEl.innerHTML = '';
+        showList();
+
+        if (!settings.libraries.length) {
+          listEl.innerHTML = '<div class="empty">还没有配置 Obsidian 库</div>';
+          return;
+        }
+
+        settings.libraries.forEach((library, index) => {
+          const item = document.createElement('article');
+          item.className = 'item';
+          item.innerHTML = `
+            <div class="item-head">
+              <strong class="title">${library.name || getFolderName(library.path)}</strong>
+              <button class="enabled-toggle ${library.enabled === false ? 'disabled' : ''}" type="button" data-action="toggle" aria-label="${library.enabled === false ? '启用' : '停用'}"></button>
+            </div>
+            <div class="path" title="${library.path || ''}">${library.path || ''}</div>
+            <div class="meta">${(library.extensions || []).join(', ')} · ${library.openWith || 'default'}</div>
+            <div class="actions">
+              <button type="button" data-action="edit">编辑</button>
+              <button type="button" data-action="delete">删除</button>
+            </div>
+          `;
+          item.querySelector('[data-action="edit"]').addEventListener('click', () => editLibrary(index));
+          item.querySelector('[data-action="delete"]').addEventListener('click', () => deleteLibrary(index));
+          item.querySelector('[data-action="toggle"]').addEventListener('click', () => toggleLibrary(index, library.enabled === false));
+          listEl.appendChild(item);
+        });
+      }
+
+      function editLibrary(index) {
+        const library = settings.libraries[index] || {
+          enabled: true,
+          extensions: ['.md'],
+          keyword: '',
+          name: '',
+          openWith: 'default',
+          path: ''
+        };
+        editingIndex = index;
+        fields.enabled.checked = library.enabled !== false;
+        fields.extensions.value = (library.extensions || ['.md']).join(', ');
+        fields.keyword.value = library.keyword || '';
+        fields.name.value = library.name || '';
+        fields.openWith.value = library.openWith || 'default';
+        fields.path.value = library.path || '';
+        fields.typoraPath.value = library.typoraPath || '';
+        fields.vaultName.value = library.vaultName || '';
+        updateConditionalFields();
+        showForm();
+      }
+
+      async function persist() {
+        const appSettings = await api.setAppSettings({ localLibrary: settings });
+        settings = appSettings.localLibrary || settings;
+        renderList();
+        setStatus('');
+      }
+
+      async function saveLibrary() {
+        const path = fields.path.value.trim();
+        const name = fields.name.value.trim() || getFolderName(path);
+        const existingKeyword = editingIndex >= 0 ? settings.libraries[editingIndex]?.keyword : '';
+        const keyword = createUniqueLibraryKeyword(existingKeyword || name || path, editingIndex);
+        const extensions = parseExtensions(fields.extensions.value);
+        if (!path || !name || !keyword || extensions.length === 0) {
+          setStatus('请填写完整信息');
+          return;
+        }
+
+        const library = {
+          enabled: fields.enabled.checked,
+          extensions,
+          keyword,
+          name,
+          openWith: fields.openWith.value,
+          path
+        };
+        if (fields.typoraPath.value.trim()) library.typoraPath = fields.typoraPath.value.trim();
+        if (fields.vaultName.value.trim()) library.vaultName = fields.vaultName.value.trim();
+
+        if (editingIndex >= 0) {
+          settings.libraries[editingIndex] = library;
+        } else {
+          settings.libraries.push(library);
+        }
+
+        editingIndex = -1;
+        await persist();
+      }
+
+      async function deleteLibrary(index) {
+        settings.libraries.splice(index, 1);
+        await persist();
+      }
+
+      async function toggleLibrary(index, enabled) {
+        settings.libraries[index].enabled = enabled;
+        await persist();
+      }
+
+      async function chooseDirectory() {
+        const result = await api.showOpenDialog({ directory: true, title: '选择 Obsidian 库文件夹' });
+        if (result && !result.canceled && result.filePaths[0]) {
+          fields.path.value = result.filePaths[0];
+          if (!fields.name.value.trim()) fields.name.value = getFolderName(result.filePaths[0]);
+          if (fields.openWith.value === 'obsidian' && !fields.vaultName.value.trim()) fields.vaultName.value = getFolderName(result.filePaths[0]);
+        }
+      }
+
+      async function load() {
+        const appSettings = await api.getAppSettings();
+        settings = appSettings.localLibrary || settings;
+        settings.libraries = Array.isArray(settings.libraries) ? settings.libraries : [];
+        renderList();
+      }
+
+      addEl.addEventListener('click', () => editLibrary(-1));
+      document.getElementById('browse').addEventListener('click', () => void chooseDirectory());
+      document.getElementById('cancel').addEventListener('click', renderList);
+      document.getElementById('save').addEventListener('click', () => void saveLibrary());
+      fields.openWith.addEventListener('change', updateConditionalFields);
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-obsidian', capabilities: ['getAppSettings', 'setAppSettings', 'showOpenDialog'] };
+        const pluginOnReady = function () { void load().catch((error) => setStatus(error instanceof Error ? error.message : '加载失败')); };
+        const pluginOfflineReady = function () { void load().catch((error) => setStatus(error instanceof Error ? error.message : '加载失败')); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

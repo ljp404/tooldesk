@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数字转中文小写</title>
+    <style>
+* { box-sizing: border-box; } html, body { height: 100%; margin: 0; }
+body { background: #eef3f8; color: #111827; font-family: "Microsoft YaHei","Segoe UI",Arial,sans-serif; font-size: 13px; }
+button, input, textarea { font: inherit; } button { border: 0; cursor: pointer; }
+.tool-content { height: 100%; min-height: 0; } .field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-layout { display: grid; gap: 16px; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); }
+.fin-card { background: #fff; border: 1px solid #dbe4ef; border-radius: 8px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; position: relative; }
+.fin-head { align-items: center; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; min-height: 48px; padding: 0 14px; }
+.fin-head strong { font-size: 14px; font-weight: 800; }
+.fin-badge { align-items: center; background: #ecfdf5; border-radius: 6px; color: #16a34a; display: inline-flex; font-size: 12px; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.fin-form { display: grid; gap: 12px; padding: 16px; }
+.fin-field { display: grid; gap: 8px; }
+.fin-field input, .fin-field textarea { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; outline: none; padding: 10px 12px; width: 100%; }
+.fin-field input { font-family: Consolas, monospace; font-size: 16px; font-weight: 700; height: 42px; }
+.fin-field textarea { font-family: Consolas, monospace; font-size: 13px; line-height: 1.65; min-height: 180px; resize: vertical; }
+.fin-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.fin-preset { background: #fff; border: 1px solid #bbf7d0; border-radius: 999px; color: #15803d; font-size: 12px; font-weight: 800; min-height: 30px; padding: 0 12px; }
+.fin-note { background: #ecfdf5; border: 1px solid #bbf7d0; border-radius: 7px; color: #166534; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 16px 16px; padding: 10px 12px; }
+.fin-copy { background: #fff; border: 1px solid #bbf7d0; border-radius: 7px; color: #16a34a; font-size: 12px; font-weight: 800; height: 30px; margin-left: auto; padding: 0 10px; }
+.fin-result { background: linear-gradient(180deg,#ecfdf5 0%,#fff 100%); border: 1px solid #bbf7d0; border-radius: 8px; color: #14532d; font-size: 24px; font-weight: 800; letter-spacing: 0.04em; line-height: 1.8; margin: 14px; min-height: 100px; padding: 18px 16px; word-break: break-all; }
+.fin-grid { display: grid; gap: 8px; padding: 0 14px 14px; }
+.fin-row { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; display: grid; gap: 12px; grid-template-columns: 96px minmax(0,1fr); min-height: 42px; padding: 0 12px; }
+.fin-row span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-row strong { color: #111827; font-size: 13px; font-weight: 800; }
+.fin-error { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 7px; color: #9a3412; font-size: 12px; font-weight: 700; margin: 0 14px; padding: 10px 12px; }
+.fin-toast { background: rgba(15,23,42,.88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; padding: 7px 10px; position: absolute; right: 14px; top: 56px; z-index: 2; }
+    
+/* tooldesk responsive plugin layout */
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content, .fin-layout { height: auto; min-height: calc(100dvh - 20px); overflow: visible; }
+  .fin-layout { grid-template-columns: 1fr !important; gap: 12px; }
+  .fin-card { min-height: auto; overflow: visible; }
+  .fin-body, .fin-table-wrap { overflow: auto; }
+  .fin-grid2, .fin-row { grid-template-columns: 1fr !important; }
+  .fin-actions, .fin-quick { flex-wrap: wrap; }
+  .fin-result { font-size: 18px; margin: 12px; }
+  input, select, textarea, button { max-width: 100%; }
+}
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content fin-layout">
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">文</span><strong>数字输入</strong></div>
+        <div class="fin-form">
+          <label class="field small fin-field">阿拉伯数字<input id="amount" type="text" inputmode="decimal" autocomplete="off" value="1234.56" /></label>
+          <label class="field small fin-field">批量转换（每行一条）<textarea id="batch" spellcheck="false" placeholder="留空则仅转换上方单个数字"></textarea></label>
+          <div class="fin-presets" id="presets"></div>
+        </div>
+        <p class="fin-note">中文小写读法：一千二百三十四点五六。可与「人民币大小写」配合使用。</p>
+        <p id="error" class="fin-error" hidden></p>
+      </section>
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">文</span><strong>中文小写</strong><button id="copy" class="fin-copy">复制结果</button></div>
+        <span id="toast" class="fin-toast" hidden></span>
+        <div id="single" class="fin-result">-</div>
+        <div id="grid" class="fin-grid"></div>
+      </section>
+    </main>
+<script>
+const DIGITS = ['零','一','二','三','四','五','六','七','八','九'];
+      const UNITS = ['','十','百','千'];
+      const BIGS = ['','万','亿','兆'];
+      const presets = ['0', '12.34', '1234.56', '100010001', '100000000.05'];
+      const $ = (id) => document.getElementById(id);
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function convertSection(section) {
+        const text = String(section).padStart(4, '0'); let result = ''; let zeroPending = false;
+        for (let i = 0; i < 4; i += 1) {
+          const digit = Number(text[i]); const unitIndex = 3 - i;
+          if (digit === 0) { zeroPending = true; continue; }
+          if (zeroPending && result) result += '零';
+          zeroPending = false;
+          if (!(digit === 1 && unitIndex === 1 && !result)) result += DIGITS[digit];
+          result += UNITS[unitIndex];
+        }
+        return result;
+      }
+      function convertInteger(integerPart) {
+        const normalized = integerPart.replace(/^0+(?=\d)/, '') || '0';
+        if (normalized === '0') return '零';
+        const padded = normalized.padStart(Math.ceil(normalized.length / 4) * 4, '0');
+        const groups = []; for (let i = 0; i < padded.length; i += 4) groups.push(padded.slice(i, i + 4));
+        let result = ''; let zeroSection = false;
+        for (let i = 0; i < groups.length; i += 1) {
+          const value = Number(groups[i]); const unitIndex = groups.length - 1 - i;
+          if (value === 0) { zeroSection = true; continue; }
+          if (result && (zeroSection || value < 1000)) result += '零';
+          result += convertSection(value) + BIGS[unitIndex]; zeroSection = false;
+        }
+        return result || '零';
+      }
+      function convertNumber(raw) {
+        const text = String(raw || '').trim().replace(/,/g, '');
+        if (!/^-?\d+(\.\d+)?$/.test(text)) return { valid: false, error: '数字格式无效' };
+        const negative = text.startsWith('-');
+        const unsigned = negative ? text.slice(1) : text;
+        const [intPart, decPart = ''] = unsigned.split('.');
+        let result = negative ? '负' : '';
+        result += convertInteger(intPart);
+        if (decPart) {
+          result += '点';
+          decPart.split('').forEach((char) => { result += DIGITS[Number(char)]; });
+        }
+        return { valid: true, input: text, output: result };
+      }
+      function applyLaunchContent(content) {
+        const text = String(content || '').trim().replace(/[¥￥,\s]/g, '');
+        if (!text || !/^-?\d+(?:\.\d+)?$/.test(text)) return;
+        $('amount').value = text;
+        $('batch').value = '';
+        render();
+      }
+      function render() {
+        const single = convertNumber($('amount').value);
+        if (!single.valid) {
+          $('error').textContent = single.error; $('error').hidden = false;
+          $('single').textContent = '-'; $('grid').replaceChildren(); return;
+        }
+        $('error').hidden = true;
+        $('single').textContent = single.output;
+        const batchLines = $('batch').value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        const batchResults = batchLines.map((line) => convertNumber(line));
+        $('grid').replaceChildren(...[
+          ['单个数字', single.input, single.output],
+          ...batchResults.map((item, index) => [item.valid ? `批量 ${index + 1}` : `无效 ${index + 1}`, batchLines[index], item.valid ? item.output : item.error])
+        ].map(([label, input, output]) => {
+          const row = document.createElement('div'); row.className = 'fin-row';
+          row.innerHTML = `<span>${label}</span><strong>${input} → ${output}</strong>`; return row;
+        }));
+      }
+      $('presets').replaceChildren(...presets.map((value) => {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'fin-preset';
+        button.textContent = value; button.addEventListener('click', () => { $('amount').value = value; render(); }); return button;
+      }));
+      ['amount','batch'].forEach((id) => { $(id).addEventListener('input', render); });
+      $('copy').addEventListener('click', async () => {
+        const single = convertNumber($('amount').value); if (!single.valid) return;
+        const lines = [`${single.input} → ${single.output}`];
+        $('batch').value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).forEach((line) => {
+          const item = convertNumber(line); if (item.valid) lines.push(`${item.input} → ${item.output}`);
+        });
+        await api.copyText(lines.join('\n'));
+        $('toast').textContent = '已复制'; $('toast').hidden = false; setTimeout(() => { $('toast').hidden = true; }, 1600);
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-number-chinese-lowercase', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

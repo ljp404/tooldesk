@@ -1,0 +1,38 @@
+{
+  "accent": "blue",
+  "caption": "搜索本机浏览器书签并快速打开。",
+  "category": "life",
+  "defaultAlias": "sq",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-browser-bookmarks",
+  "keywords": [
+    "llqsq",
+    "bm",
+    "shuqian",
+    "liulanqishuqian",
+    "bookmark",
+    "bookmarks",
+    "browser",
+    "chrome",
+    "edge",
+    "书签",
+    "收藏夹",
+    "浏览器"
+  ],
+  "name": "浏览器书签",
+  "permissions": [
+    "browser-bookmarks",
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "listBrowserBookmarks",
+    "openExternalUrl"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hosts 编辑器</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        background: #f3f6fb;
+        color: #0f172a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #f3f6fb;
+      }
+
+      button,
+      textarea {
+        font: inherit;
+      }
+
+      .app {
+        display: flex;
+        min-height: 100vh;
+        padding: 16px;
+      }
+
+      .panel {
+        display: flex;
+        min-width: 0;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        border: 1px solid #dbe4ef;
+        border-radius: 10px;
+        background: #ffffff;
+        overflow: hidden;
+      }
+
+      .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px;
+        border-bottom: 1px solid #eef3f9;
+      }
+
+      .title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .caption {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .button {
+        display: inline-flex;
+        height: 38px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 0 14px;
+        color: #0f172a;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+
+      .button:hover {
+        border-color: #bfdbfe;
+        background: #f8fbff;
+      }
+
+      .button.primary {
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      .button.primary:hover {
+        border-color: #1d4ed8;
+        background: #1d4ed8;
+      }
+
+      .button[disabled] {
+        opacity: 0.55;
+        cursor: default;
+      }
+
+      .meta {
+        display: grid;
+        gap: 8px;
+        padding: 14px 16px 0;
+      }
+
+      .path {
+        color: #334155;
+        font-size: 12px;
+        word-break: break-all;
+      }
+
+      .status {
+        min-height: 20px;
+        color: #64748b;
+        font-size: 12px;
+      }
+
+      .status.error {
+        color: #b91c1c;
+      }
+
+      .status.success {
+        color: #0f766e;
+      }
+
+      .editor-wrap {
+        display: flex;
+        min-height: 0;
+        flex: 1;
+        padding: 12px 16px 16px;
+      }
+
+      .editor {
+        width: 100%;
+        min-height: 0;
+        flex: 1;
+        resize: none;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        background: #fbfdff;
+        padding: 14px;
+        color: #0f172a;
+        line-height: 1.7;
+        outline: none;
+      }
+
+      .editor:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="panel">
+        <header class="header">
+          <div>
+            <div class="title">Hosts 编辑器</div>
+            <div class="caption">直接编辑本机 hosts 文件。保存失败通常是因为当前没有管理员权限。</div>
+          </div>
+          <div class="actions">
+            <button id="openFolderButton" class="button" type="button">打开本地文件夹</button>
+            <button id="reloadButton" class="button" type="button">重新读取</button>
+            <button id="saveButton" class="button primary" type="button">保存</button>
+          </div>
+        </header>
+
+        <div class="meta">
+          <div id="pathText" class="path"></div>
+          <div id="statusText" class="status"></div>
+        </div>
+
+        <div class="editor-wrap">
+          <textarea id="editor" class="editor" spellcheck="false"></textarea>
+        </div>
+      </section>
+    </main>
+<script>
+      let api = null;
+      let pluginBoot = null;
+      let pluginConnect = Promise.resolve();
+
+      function syncPluginApi() {
+        if (pluginBoot) {
+          api = pluginBoot.api;
+        }
+        return { api };
+      }
+
+      async function ensurePluginApi() {
+        if (!pluginBoot) {
+          throw new Error('插件 SDK 未就绪，请重启 Tooldesk');
+        }
+        await pluginConnect;
+        syncPluginApi();
+        if (!api) {
+          throw new Error('插件 SDK 未就绪，请重启 Tooldesk');
+        }
+        return { api };
+      }
+
+      const editor = document.getElementById('editor');
+      const pathText = document.getElementById('pathText');
+      const statusText = document.getElementById('statusText');
+      const openFolderButton = document.getElementById('openFolderButton');
+      const reloadButton = document.getElementById('reloadButton');
+      const saveButton = document.getElementById('saveButton');
+
+      let lastSavedContent = '';
+      let filePath = '';
+      let isLoading = false;
+
+      function setBusy(nextBusy) {
+        isLoading = nextBusy;
+        openFolderButton.disabled = nextBusy;
+        reloadButton.disabled = nextBusy;
+        saveButton.disabled = nextBusy;
+        editor.disabled = nextBusy;
+      }
+
+      function setStatus(message, type) {
+        statusText.textContent = message || '';
+        statusText.className = `status${type ? ` ${type}` : ''}`;
+      }
+
+      async function loadHosts() {
+        setBusy(true);
+        setStatus('正在读取 hosts 文件…', '');
+
+        try {
+          const { api: activeApi } = await ensurePluginApi();
+          const result = await activeApi.readHostsFile();
+          filePath = result.path || '';
+          pathText.textContent = filePath;
+          editor.value = result.content || '';
+          lastSavedContent = editor.value;
+          setStatus('已读取当前 hosts 文件。', '');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '读取 hosts 文件失败', 'error');
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function saveHosts() {
+        if (isLoading) {
+          return;
+        }
+
+        if (editor.value === lastSavedContent) {
+          setStatus('当前没有未保存修改。', '');
+          return;
+        }
+
+        setBusy(true);
+        setStatus('正在保存 hosts 文件…', '');
+
+        try {
+          const { api: activeApi } = await ensurePluginApi();
+          const result = await activeApi.writeHostsFile(editor.value);
+          filePath = result.path || filePath;
+          pathText.textContent = filePath;
+          lastSavedContent = editor.value;
+          setStatus('保存成功。', 'success');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '保存 hosts 文件失败', 'error');
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      reloadButton.addEventListener('click', () => {
+        void loadHosts();
+      });
+
+      openFolderButton.addEventListener('click', async () => {
+        try {
+          const { api: activeApi } = await ensurePluginApi();
+          await activeApi.openHostsFolder();
+          setStatus('已打开 hosts 所在文件夹。', '');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '打开本地文件夹失败', 'error');
+        }
+      });
+
+      saveButton.addEventListener('click', () => {
+        void saveHosts();
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          void saveHosts();
+        }
+      });
+
+      (function bootPluginHost(attempt) {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (attempt < 120) {
+            setTimeout(() => bootPluginHost(attempt + 1), 25);
+          } else {
+            setStatus('插件 SDK 未就绪，请重启 Tooldesk', 'error');
+          }
+          return;
+        }
+
+        const pluginCreateOptions = { id: 'tooldesk-host-editor', capabilities: ['openHostsFolder', 'readHostsFile', 'writeHostsFile'] };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        pluginBoot = { api: plugin.api };
+        syncPluginApi();
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            throw result.error || new Error('插件连接失败，请重启 Tooldesk');
+          }
+          syncPluginApi();
+        });
+        void pluginConnect.then(() => {
+          void loadHosts();
+        }).catch((error) => {
+          setStatus(error instanceof Error ? error.message : '插件连接失败，请重启 Tooldesk', 'error');
+        });
+      })(0);
+    </script>
+  </body>
+</html>

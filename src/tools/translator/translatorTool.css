@@ -1,0 +1,179 @@
+
+
+.translator-panel {
+  min-height: 0;
+  position: relative;
+}
+
+.translator-layout {
+  display: grid;
+  flex: 1;
+  gap: 12px;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.translator-toolbar {
+  align-items: end;
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(150px, 190px) 36px minmax(150px, 190px) minmax(0, 1fr);
+  padding: 12px;
+}
+
+.translator-lang-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.translator-lang-field span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.translator-lang-field select {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.translator-swap-button {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  color: #2563eb;
+  cursor: pointer;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  margin-bottom: 0;
+  width: 36px;
+}
+
+.translator-swap-button:hover {
+  background: #eff6ff;
+}
+
+.translator-swap-button .app-icon {
+  height: 18px;
+  width: 18px;
+}
+
+.translator-columns {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.translator-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.translator-input-wrap {
+  min-height: 0;
+  position: relative;
+}
+
+.translator-card textarea {
+  background: #fbfdff;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #111827;
+  font:
+    500 14px/1.65 'Segoe UI',
+    system-ui,
+    sans-serif;
+  height: 100%;
+  min-height: 0;
+  outline: none;
+  overflow: auto;
+  padding: 14px 40px 14px 14px;
+  resize: none;
+  width: 100%;
+}
+
+.translator-card textarea:focus,
+.translator-card textarea:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.translator-card textarea[readonly] {
+  background: #fbfdff;
+  color: #0f172a;
+}
+
+.translator-clear-button {
+  align-items: center;
+  background: #eef2f7;
+  border: 1px solid #dbe4ef;
+  border-radius: 50%;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 18px;
+  font-weight: 700;
+  height: 24px;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 24px;
+}
+
+.translator-clear-button:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.translator-error {
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
+
+@media (width <= 760px) {
+  .translator-layout {
+    overflow: visible;
+  }
+
+  .translator-toolbar {
+    grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
+  }
+
+  .translator-columns {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .translator-card {
+    min-height: 320px;
+  }
+}

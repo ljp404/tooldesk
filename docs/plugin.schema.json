@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tooldesk.dev/schemas/plugin-manifest.v1.json",
+  "title": "Tooldesk Plugin Manifest v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "manifestVersion",
+    "id",
+    "name",
+    "version",
+    "entry",
+    "category",
+    "publisher",
+    "sdkVersion",
+    "minHostVersion",
+    "capabilities"
+  ],
+  "properties": {
+    "manifestVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^tooldesk-[a-z0-9._-]+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+(?:\\.\\d+){0,2}$"
+    },
+    "entry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "enum": ["text", "dev", "image", "json", "finance", "life", "document"]
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sdkVersion": {
+      "type": "string",
+      "pattern": "^\\d+(?:\\.\\d+){0,2}$"
+    },
+    "minHostVersion": {
+      "type": "string",
+      "pattern": "^\\d+(?:\\.\\d+){0,2}$"
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "browser-bookmarks",
+          "clipboard",
+          "docker",
+          "filesystem",
+          "hosts",
+          "http",
+          "mail",
+          "keepass",
+          "local-library",
+          "music",
+          "native-tool",
+          "ssh"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "nativeTools": {
+      "type": "object",
+      "description": "Declared native tools bundled inside this plugin package. Keys are tool names, values are relative paths under the plugin root.",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "accent": { "type": "string" },
+    "caption": { "type": "string" },
+    "defaultAlias": { "type": "string" },
+    "icon": {
+      "type": "string",
+      "description": "Built-in icon name or fixed local asset path assets/icon.svg."
+    },
+    "windowIcon": {
+      "type": "string",
+      "pattern": "^assets/window-icon\\.(png|ico)$",
+      "description": "Fixed local asset path for independent plugin windows: assets/window-icon.png or assets/window-icon.ico."
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "clipboardMatch": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "type": "string" },
+            "priority": { "type": "number" }
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "type": "string" },
+              "priority": { "type": "number" }
+            }
+          }
+        }
+      ]
+    },
+    "settings": {
+      "type": "object",
+      "required": ["entry"],
+      "properties": {
+        "entry": { "type": "string" },
+        "label": { "type": "string" },
+        "icon": {
+          "type": "string",
+          "description": "Built-in icon name or a relative local asset path such as assets/icon.svg."
+        },
+        "accent": { "type": "string" }
+      }
+    },
+    "sync": {
+      "type": "object",
+      "properties": {
+        "localStorageKeys": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

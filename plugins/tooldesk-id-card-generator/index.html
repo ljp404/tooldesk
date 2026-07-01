@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>身份证生成器</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #2563eb; color: #fff; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+
+
+
+.id-card-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.id-card-config,
+.id-card-result {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.id-card-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.id-card-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.id-card-icon-badge {
+  align-items: center;
+  background: #edf3ff;
+  border-radius: 6px;
+  color: #2563eb;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.id-card-icon-badge .app-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.id-card-count {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.id-card-form-grid {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.id-card-field {
+  display: grid;
+  gap: 8px;
+}
+
+.id-card-field select,
+.id-card-field input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  height: 38px;
+  outline: none;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.id-card-field select:focus,
+.id-card-field input:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.id-card-segmented {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 3px;
+}
+
+.tool-panel .id-card-segmented button,
+.id-card-segmented button {
+  background: transparent;
+  border-radius: 5px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 30px;
+  padding: 0 8px;
+}
+
+.tool-panel .id-card-segmented button.active,
+.id-card-segmented button.active {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  color: #2563eb;
+}
+
+.id-card-actions {
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding: 14px 16px;
+}
+
+.tool-panel .id-card-secondary-button,
+.id-card-secondary-button {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.id-card-secondary-button {
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  color: #2563eb;
+}
+
+.tool-panel .id-card-secondary-button:hover,
+.id-card-secondary-button:hover {
+  background: #f8fbff;
+  color: #2563eb;
+}
+
+.id-card-secondary-button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.id-card-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.id-card-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  z-index: 20;
+}
+
+.tool-panel .id-card-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #334155;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(190px, 1fr) 110px 96px 34px;
+  min-height: 42px;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.tool-panel .id-card-row:hover {
+  background: #edf3ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.id-card-row code {
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.id-card-row span {
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.id-card-disclaimer { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #475569; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 16px 16px; padding: 10px 12px; }
+
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content id-card-layout">
+      <section class="id-card-config">
+        <div class="id-card-card-head"><span class="id-card-icon-badge">ID</span><strong>生成配置</strong></div>
+        <div class="id-card-form-grid">
+          <label class="field small id-card-field">地区<select id="region">
+            <option value="110101">北京 东城</option>
+            <option value="310101">上海 黄浦</option>
+            <option value="440305">广东 深圳南山</option>
+            <option value="440106">广东 广州天河</option>
+            <option value="330106">浙江 杭州西湖</option>
+            <option value="320106">江苏 南京鼓楼</option>
+            <option value="510104">四川 成都锦江</option>
+            <option value="420106">湖北 武汉武昌</option>
+            <option value="610102">陕西 西安新城</option>
+            <option value="500103">重庆 渝中</option>
+            <option value="120101">天津 和平</option>
+            <option value="350203">福建 厦门思明</option>
+          </select></label>
+          <label class="field small id-card-field">出生日期<input id="birth" type="date" value="1990-01-01" /></label>
+          <label class="field small id-card-field">性别</label>
+          <div class="field small id-card-field">
+            <div class="id-card-segmented">
+              <button type="button" class="active" data-gender="random">随机</button>
+              <button type="button" data-gender="male">男</button>
+              <button type="button" data-gender="female">女</button>
+            </div>
+          </div>
+          <label class="field small id-card-field">数量<input id="count" min="1" max="20" type="number" value="10" /></label>
+        </div>
+        <p class="id-card-disclaimer">免责声明：本工具生成的数据仅用于软件开发、表单校验和测试演示，不代表真实身份信息，不应用于实名认证、开户、风控绕过或任何违法违规用途。</p>
+        <div class="id-card-actions"><button id="copyAll" type="button" class="id-card-secondary-button">复制全部</button></div>
+      </section>
+      <section class="id-card-result">
+        <div class="id-card-card-head"><span class="id-card-icon-badge">ID</span><strong>生成结果</strong><span id="resultCount" class="id-card-count">0 条</span></div>
+        <div id="list" class="id-card-list"></div>
+      </section>
+      <span id="toast" class="id-card-copy-toast" hidden></span>
+    </main>
+<script>
+      const regions = [
+        ['110101', '北京 东城'], ['310101', '上海 黄浦'], ['440305', '广东 深圳南山'], ['440106', '广东 广州天河'],
+        ['330106', '浙江 杭州西湖'], ['320106', '江苏 南京鼓楼'], ['510104', '四川 成都锦江'], ['420106', '湖北 武汉武昌'],
+        ['610102', '陕西 西安新城'], ['500103', '重庆 渝中'], ['120101', '天津 和平'], ['350203', '福建 厦门思明']
+      ];
+      const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+      const codes = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+      const state = { gender: 'random', cards: [] };
+      const $ = (id) => document.getElementById(id);
+      let api = { copyText: async () => false };
+      let pluginConnect = Promise.resolve();
+
+      function showToast(text) {
+        const toast = $('toast');
+        toast.textContent = text;
+        toast.hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { toast.hidden = true; }, 1600);
+      }
+
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      function normalizeBirth(value) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value.replaceAll('-', '') : '19900101';
+      }
+
+      function createChecksum(body) {
+        const sum = body.split('').reduce((total, value, index) => total + Number(value) * weights[index], 0);
+        return codes[sum % 11];
+      }
+
+      function createCard() {
+        const region = $('region').value;
+        const birth = normalizeBirth($('birth').value);
+        const gender = state.gender === 'random' ? (Math.random() > .5 ? 'male' : 'female') : state.gender;
+        const base = Math.floor(Math.random() * 50) * 2;
+        const sequence = String(gender === 'male' ? base + 1 : base + 2).padStart(3, '0');
+        const body = `${region}${birth}${sequence}`;
+        const area = regions.find((item) => item[0] === region)?.[1] || '';
+        return { area, birth: `${birth.slice(0, 4)}-${birth.slice(4, 6)}-${birth.slice(6, 8)}`, gender: gender === 'male' ? '男' : '女', id: `${body}${createChecksum(body)}` };
+      }
+
+      function render() {
+        $('resultCount').textContent = `${state.cards.length} 条`;
+        $('copyAll').disabled = state.cards.length === 0;
+        $('list').replaceChildren(...state.cards.map((card) => {
+          const row = document.createElement('button');
+          row.className = 'id-card-row';
+          row.type = 'button';
+          row.title = '点击复制身份证号';
+          row.innerHTML = `<code>${card.id}</code><span>${card.area}</span><span>${card.birth}</span><span>${card.gender}</span>`;
+          row.addEventListener('click', () => copyText(card.id, '身份证号已复制'));
+          return row;
+        }));
+      }
+
+      function generate() {
+        const count = Math.min(Math.max(Number($('count').value) || 1, 1), 20);
+        $('count').value = String(count);
+        const used = new Set();
+        state.cards = [];
+        while (state.cards.length < count) {
+          const card = createCard();
+          if (!used.has(card.id)) {
+            used.add(card.id);
+            state.cards.push(card);
+          }
+        }
+        render();
+      }
+
+      document.querySelectorAll('[data-gender]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.gender = button.dataset.gender;
+          document.querySelectorAll('[data-gender]').forEach((item) => item.classList.toggle('active', item === button));
+          generate();
+        });
+      });
+      $('region').addEventListener('change', generate);
+      $('birth').addEventListener('input', generate);
+      $('birth').addEventListener('change', generate);
+      $('count').addEventListener('input', generate);
+      $('count').addEventListener('change', generate);
+      $('copyAll').addEventListener('click', () => {
+        void copyText(state.cards.map((card) => card.id).join('\n'), '全部身份证号已复制');
+      });
+      $('copyAll').disabled = true;
+      $('count').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          generate();
+        }
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-id-card-generator', capabilities: ['copyText'] };
+        const pluginOnReady = function () { generate(); };
+        const pluginOfflineReady = function () { generate(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+  </body>
+</html>

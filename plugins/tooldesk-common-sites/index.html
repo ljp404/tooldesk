@@ -1,0 +1,1804 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>常用网站</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        background: #f3f6fb;
+        color: #0f172a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 28%),
+          linear-gradient(180deg, #f7f9fc 0%, #f3f6fb 100%);
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .app {
+        display: flex;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+
+      .workspace {
+        display: flex;
+        width: min(100%, 980px);
+        height: min(760px, calc(100vh - 32px));
+        flex-direction: column;
+        border: 1px solid rgba(219, 228, 239, 0.9);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+      }
+
+      .header-panel {
+        padding: 14px 14px 10px;
+        border-bottom: 1px solid #eef3f9;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.92));
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0;
+      }
+
+      .search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .search-input,
+      .field-input,
+      .field-textarea {
+        width: 100%;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #0f172a;
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      }
+
+      .search-input {
+        height: 48px;
+        padding: 0 42px 0 16px;
+        font-size: 14px;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
+      }
+
+      .field-input {
+        height: 40px;
+        padding: 0 12px;
+      }
+
+      .field-textarea {
+        min-height: 86px;
+        padding: 10px 12px;
+        resize: vertical;
+      }
+
+      .search-input:focus,
+      .field-input:focus,
+      .field-textarea:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      }
+
+      .clear-button {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        display: none;
+        width: 24px;
+        height: 24px;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-50%);
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #64748b;
+        cursor: pointer;
+      }
+
+      .clear-button.visible {
+        display: inline-flex;
+      }
+
+      .clear-button:hover {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+
+      .button {
+        display: inline-flex;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 0 12px;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+        white-space: nowrap;
+      }
+
+      .button:hover {
+        border-color: #bfdbfe;
+        background: #f8fbff;
+      }
+
+      .button.primary {
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      .button.primary:hover {
+        border-color: #1d4ed8;
+        background: #1d4ed8;
+      }
+
+      .button.subtle {
+        color: #475569;
+      }
+
+      .button.warn {
+        color: #b45309;
+      }
+
+      .button.danger {
+        color: #b91c1c;
+      }
+
+      .button.compact {
+        height: 32px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      .button[disabled] {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      .meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 2px 0;
+        color: #64748b;
+        font-size: 12px;
+      }
+
+      .meta-hint {
+        min-width: 0;
+        line-height: 1.6;
+      }
+
+      .meta-stats {
+        display: inline-flex;
+        gap: 10px;
+        white-space: nowrap;
+      }
+
+      .results-panel {
+        display: flex;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        margin: 12px 14px 14px;
+        border: 1px solid #e7eef7;
+        border-radius: 14px;
+        background:
+          linear-gradient(180deg, rgba(252, 253, 255, 0.98), rgba(248, 251, 255, 0.96));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        overflow: hidden;
+      }
+
+      .list {
+        display: flex;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        overflow: auto;
+        padding: 10px;
+      }
+
+      .result-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        border: 1px solid #edf2f8;
+        border-radius: 12px;
+        padding: 10px 14px;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.76);
+        transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+      }
+
+      .result-row + .result-row {
+        margin-top: 6px;
+      }
+
+      .result-row:hover {
+        border-color: #dbe8fb;
+        background: #fbfdff;
+      }
+
+      .result-row.active {
+        border-color: #bfdbfe;
+        background: #f8fbff;
+        box-shadow:
+          inset 0 0 0 1px rgba(37, 99, 235, 0.05),
+          0 10px 22px rgba(37, 99, 235, 0.08);
+        transform: translateY(-1px);
+      }
+
+      .result-icon {
+        display: inline-flex;
+        width: 36px;
+        height: 36px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 14px;
+        font-weight: 700;
+        flex: 0 0 auto;
+      }
+
+      .result-main {
+        min-width: 0;
+      }
+
+      .result-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        margin-bottom: 4px;
+      }
+
+      .result-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .result-meta-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .result-domain {
+        color: #64748b;
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .result-tags,
+      .drawer-tags {
+        display: inline-flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .tag {
+        display: inline-flex;
+        height: 20px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 7px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 10px;
+      }
+
+      .tag.accent {
+        background: #e0ecff;
+        color: #2563eb;
+      }
+
+      .result-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        opacity: 0.55;
+        pointer-events: auto;
+        transition: opacity 0.15s ease;
+      }
+
+      .result-row:hover .result-actions,
+      .result-row.active .result-actions {
+        opacity: 1;
+      }
+
+      .result-row:not(.active) .result-actions .button.primary {
+        display: none;
+      }
+
+      .state-panel {
+        display: flex;
+        min-height: 220px;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: #64748b;
+        font-size: 13px;
+        border: 1px dashed #dbe4ef;
+        border-radius: 10px;
+        margin: 0;
+        background: rgba(255, 255, 255, 0.68);
+      }
+
+      .state-panel strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #334155;
+        font-size: 14px;
+      }
+
+      .drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        background: rgba(15, 23, 42, 0.2);
+      }
+
+      .drawer-backdrop.visible {
+        display: block;
+      }
+
+      .drawer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        width: min(420px, 100%);
+        height: 100%;
+        flex-direction: column;
+        background: #ffffff;
+        box-shadow: -20px 0 48px rgba(15, 23, 42, 0.12);
+      }
+
+      .drawer-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 18px 14px;
+        border-bottom: 1px solid #eef3f9;
+      }
+
+      .drawer-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .drawer-caption {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .drawer-body {
+        display: flex;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px 18px 18px;
+      }
+
+      .section {
+        display: grid;
+        gap: 12px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .section-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field label {
+        color: #334155;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .field-note {
+        color: #94a3b8;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .form-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .custom-list {
+        display: grid;
+        gap: 8px;
+        min-height: 0;
+        overflow: auto;
+      }
+
+      .footer-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid #e8eef6;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .footer-selected {
+        min-width: 0;
+        color: #334155;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .footer-shortcuts {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .footer-shortcuts.hidden {
+        display: none;
+      }
+
+      .shortcut-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #64748b;
+        font-size: 10px;
+      }
+
+      .selected-guide {
+        display: inline-flex;
+        align-items: center;
+        height: 20px;
+        border-radius: 999px;
+        background: #eff6ff;
+        padding: 0 8px;
+        color: #2563eb;
+        font-size: 10px;
+      }
+
+      .stats-pill {
+        display: inline-flex;
+        align-items: center;
+        height: 22px;
+        border-radius: 999px;
+        background: #eef4ff;
+        padding: 0 9px;
+        color: #2563eb;
+        font-size: 11px;
+      }
+
+      .shortcut-chip kbd {
+        min-width: 22px;
+        height: 20px;
+        border: 1px solid #dbe4ef;
+        border-bottom-color: #cbd5e1;
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 0 6px;
+        color: #0f172a;
+        font: inherit;
+        line-height: 18px;
+        text-align: center;
+        box-shadow: inset 0 -1px 0 rgba(148, 163, 184, 0.15);
+      }
+
+      .custom-item {
+        display: grid;
+        gap: 10px;
+        border: 1px solid #dbe4ef;
+        border-radius: 10px;
+        background: #fbfdff;
+        padding: 12px;
+      }
+
+      .custom-item.active {
+        border-color: #bfdbfe;
+        background: #f8fbff;
+      }
+
+      .custom-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .custom-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .custom-domain {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .custom-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .toast-stack {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        display: grid;
+        gap: 8px;
+        z-index: 30;
+      }
+
+      .toast {
+        min-width: 180px;
+        max-width: 320px;
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: #ffffff;
+        font-size: 12px;
+        line-height: 1.5;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+      }
+
+      .toast.success {
+        background: #0f766e;
+      }
+
+      .toast.error {
+        background: #b91c1c;
+      }
+
+      @media (max-width: 780px) {
+        .app {
+          padding: 12px;
+        }
+
+        .workspace {
+          height: calc(100vh - 24px);
+          border-radius: 10px;
+        }
+
+        .toolbar {
+          flex-wrap: wrap;
+        }
+
+        .meta-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .results-panel {
+          margin: 10px 12px 12px;
+        }
+
+        .result-row {
+          grid-template-columns: auto minmax(0, 1fr);
+        }
+
+        .result-actions {
+          grid-column: 1 / -1;
+          justify-content: flex-start;
+          padding-left: 46px;
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .drawer {
+          width: 100%;
+        }
+
+        .footer-bar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      body {
+        background: #eef3f8;
+      }
+
+      .app {
+        align-items: stretch;
+        justify-content: stretch;
+        padding: 12px;
+      }
+
+      .workspace {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        box-shadow: none;
+        backdrop-filter: none;
+      }
+
+      .header-panel {
+        background: #ffffff;
+        padding: 12px;
+      }
+
+      .toolbar {
+        gap: 8px;
+      }
+
+      .search-input {
+        height: 40px;
+        font-size: 13px;
+      }
+
+      .button {
+        height: 36px;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .meta-row {
+        padding-top: 8px;
+      }
+
+      .meta-hint,
+      .footer-shortcuts {
+        display: none;
+      }
+
+      .results-panel {
+        margin: 12px;
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: none;
+      }
+
+      .list {
+        padding: 8px;
+      }
+
+      .result-row {
+        border-radius: 8px;
+        padding: 9px 12px;
+        transform: none;
+      }
+
+      .result-row.active {
+        transform: none;
+      }
+
+      .footer-bar {
+        min-height: 34px;
+        padding: 8px 12px;
+      }
+
+      .drawer {
+        width: min(390px, 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="workspace">
+        <div class="header-panel">
+          <div class="toolbar">
+            <div class="search-wrap">
+              <input id="searchInput" class="search-input" type="text" placeholder="输入百度、GitHub、内部系统，或直接输入网址" autocomplete="off" />
+              <button id="clearButton" class="clear-button" type="button" aria-label="清空">×</button>
+            </div>
+            <button id="manageButton" type="button" class="button subtle">管理网站</button>
+            <button id="addButton" type="button" class="button primary">新增网站</button>
+          </div>
+
+          <div class="meta-row">
+            <div class="meta-hint">回车打开当前选中项，输入“淘宝 耳机”这类内容时会优先走站内搜索。</div>
+            <div id="metaStats" class="meta-stats"></div>
+          </div>
+        </div>
+
+        <div class="results-panel">
+          <div id="resultList" class="list"></div>
+
+          <div class="footer-bar">
+            <div id="footerSelected" class="footer-selected"></div>
+            <div id="footerShortcuts" class="footer-shortcuts">
+              <span class="shortcut-chip"><kbd>Enter</kbd><span>打开</span></span>
+              <span class="shortcut-chip"><kbd>↑</kbd><kbd>↓</kbd><span>切换</span></span>
+              <span class="shortcut-chip"><kbd>Ctrl</kbd><kbd>K</kbd><span>选中搜索</span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true">
+        <aside class="drawer" role="dialog" aria-modal="true" aria-label="管理网站">
+          <div class="drawer-head">
+            <div>
+              <div class="drawer-title">管理网站</div>
+              <div class="drawer-caption">主界面保持轻量，新增、编辑和排序都收在这里。</div>
+            </div>
+            <button id="closeDrawerButton" type="button" class="button compact">关闭</button>
+          </div>
+
+          <div class="drawer-body">
+            <section class="section">
+              <div class="section-head">
+                <div class="section-title">新增 / 编辑</div>
+                <button id="resetFormButton" type="button" class="button compact">新建</button>
+              </div>
+
+              <form id="siteForm" class="form-grid">
+                <div class="field">
+                  <label for="siteNameInput">网站名称</label>
+                  <input id="siteNameInput" class="field-input" type="text" maxlength="40" placeholder="例如：测试环境" />
+                </div>
+
+                <div class="field">
+                  <label for="siteDomainInput">域名</label>
+                  <input id="siteDomainInput" class="field-input" type="text" placeholder="例如：test.example.com" />
+                </div>
+
+                <div class="field">
+                  <label for="siteOpenUrlInput">打开地址</label>
+                  <input id="siteOpenUrlInput" class="field-input" type="text" placeholder="例如：https://test.example.com/" />
+                </div>
+
+                <div class="field">
+                  <label for="siteSearchUrlInput">搜索地址</label>
+                  <input id="siteSearchUrlInput" class="field-input" type="text" placeholder="例如：https://test.example.com/search?q={query}" />
+                  <div class="field-note">如果支持站内搜索，地址里需要包含 <code>{query}</code></div>
+                </div>
+
+                <div class="field">
+                  <label for="siteAliasesInput">别名</label>
+                  <input id="siteAliasesInput" class="field-input" type="text" placeholder="多个别名用逗号分隔，例如：test, 测试站" />
+                </div>
+
+                <div class="field">
+                  <label for="siteTagsInput">标签</label>
+                  <input id="siteTagsInput" class="field-input" type="text" placeholder="多个标签用逗号分隔，例如：工作, 开发" />
+                </div>
+
+                <div class="form-actions">
+                  <button id="saveButton" type="submit" class="button primary">保存网站</button>
+                  <button id="cancelEditButton" type="button" class="button">清空表单</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="section">
+              <div class="section-head">
+                <div class="section-title">我的网站</div>
+              </div>
+              <div id="customList" class="custom-list"></div>
+            </section>
+          </div>
+        </aside>
+      </div>
+
+      <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+    </main>
+    <!-- TOOLDESK_INLINE_PLUGIN_DATA -->
+<script>
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const STORAGE_KEY = 'tooldesk-common-sites.custom.v2';
+      let builtInSites = [];
+
+      const searchInput = document.getElementById('searchInput');
+      const clearButton = document.getElementById('clearButton');
+      const manageButton = document.getElementById('manageButton');
+      const addButton = document.getElementById('addButton');
+      const resultList = document.getElementById('resultList');
+      const metaStats = document.getElementById('metaStats');
+      const footerSelected = document.getElementById('footerSelected');
+      const footerShortcuts = document.getElementById('footerShortcuts');
+      const drawerBackdrop = document.getElementById('drawerBackdrop');
+      const closeDrawerButton = document.getElementById('closeDrawerButton');
+      const resetFormButton = document.getElementById('resetFormButton');
+      const cancelEditButton = document.getElementById('cancelEditButton');
+      const siteForm = document.getElementById('siteForm');
+      const customList = document.getElementById('customList');
+      const toastStack = document.getElementById('toastStack');
+      const siteNameInput = document.getElementById('siteNameInput');
+      const siteDomainInput = document.getElementById('siteDomainInput');
+      const siteOpenUrlInput = document.getElementById('siteOpenUrlInput');
+      const siteSearchUrlInput = document.getElementById('siteSearchUrlInput');
+      const siteAliasesInput = document.getElementById('siteAliasesInput');
+      const siteTagsInput = document.getElementById('siteTagsInput');
+
+      const storage = createSafeStorage();
+
+      const state = {
+        customSites: [],
+        drawerVisible: false,
+        editingId: '',
+        lastLaunchTrigger: 0,
+        selectedId: '',
+        visibleSites: []
+      };
+
+      function createSafeStorage() {
+        const memoryStore = new Map();
+
+        return {
+          async getItem(key) {
+            try {
+              return await api.getPluginStorageItem(key);
+            } catch (error) {
+              console.warn('localStorage getItem failed', error);
+              return memoryStore.has(key) ? memoryStore.get(key) : null;
+            }
+          },
+          setItem(key, value) {
+            try {
+              void api.setPluginStorageItem(key, value);
+            } catch (error) {
+              console.warn('localStorage setItem failed', error);
+              memoryStore.set(key, String(value));
+            }
+          }
+        };
+      }
+
+      function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        toastStack.appendChild(toast);
+        window.setTimeout(() => {
+          toast.remove();
+        }, 2600);
+      }
+
+      function normalizeKeyword(value) {
+        return String(value || '').trim().toLowerCase();
+      }
+
+      function normalizeUrl(value) {
+        const text = String(value || '').trim();
+        if (!text) {
+          return '';
+        }
+
+        return /^https?:\/\//i.test(text) ? text : `https://${text}`;
+      }
+
+      function sanitizeDomain(value) {
+        return String(value || '').trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+      }
+
+      function normalizeStringList(value) {
+        if (!Array.isArray(value)) {
+          return [];
+        }
+
+        return value.map((item) => String(item || '').trim()).filter(Boolean);
+      }
+
+      function splitInputList(value) {
+        return String(value || '')
+          .split(/[,，]/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function normalizeSite(site, builtIn) {
+        const name = String(site && site.name ? site.name : '').trim();
+        const domain = sanitizeDomain(site && site.domain);
+        const openUrl = normalizeUrl(site && site.openUrl ? site.openUrl : domain);
+        const searchUrl = String(site && site.searchUrl ? site.searchUrl : '').trim();
+
+        if (!name || !domain || !openUrl) {
+          return null;
+        }
+
+        return {
+          aliases: normalizeStringList(site && site.aliases),
+          builtIn: Boolean(builtIn),
+          domain,
+          id: String(site && site.id ? site.id : `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`),
+          lastUsedAt: Number(site && site.lastUsedAt) || 0,
+          name,
+          openUrl,
+          pinned: Boolean(site && site.pinned),
+          searchUrl,
+          tags: normalizeStringList(site && site.tags)
+        };
+      }
+
+      async function loadCustomSites() {
+        const current = parseStoredSites(await storage.getItem(STORAGE_KEY));
+        return current;
+      }
+
+      async function loadSitesData() {
+        if (Array.isArray(window.__TOOLDESK_COMMON_SITES_DATA__)) {
+          return window.__TOOLDESK_COMMON_SITES_DATA__;
+        }
+
+        const response = await fetch('./sites.json', { cache: 'no-cache' });
+
+        if (!response.ok) {
+          throw new Error(`sites.json HTTP ${response.status}`);
+        }
+
+        return response.json();
+      }
+
+      async function loadBuiltInSites() {
+        try {
+          const raw = await loadSitesData();
+          if (!Array.isArray(raw)) {
+            throw new Error('sites.json must be an array');
+          }
+
+          builtInSites = raw.map((item) => normalizeSite(item, true)).filter(Boolean);
+          if (!builtInSites.length) {
+            throw new Error('sites.json contains no valid sites');
+          }
+          render();
+        } catch (error) {
+          console.warn('load built-in sites failed', error);
+          throw error;
+        }
+      }
+
+      function parseStoredSites(rawValue) {
+        try {
+          const raw = JSON.parse(rawValue || '[]');
+          if (!Array.isArray(raw)) {
+            return [];
+          }
+
+          return raw.map((item) => normalizeSite(item, false)).filter(Boolean);
+        } catch (error) {
+          console.warn(error);
+          return [];
+        }
+      }
+
+      function saveCustomSites(nextSites) {
+        if (Array.isArray(nextSites)) {
+          state.customSites = nextSites;
+        }
+
+        storage.setItem(STORAGE_KEY, JSON.stringify(state.customSites, null, 2));
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function splitQuery(value) {
+        const normalized = String(value || '').trim();
+        if (!normalized) {
+          return { keyword: '', searchText: '' };
+        }
+
+        const parts = normalized.split(/\s+/);
+        if (parts.length === 1) {
+          return { keyword: parts[0], searchText: '' };
+        }
+
+        return {
+          keyword: parts[0],
+          searchText: parts.slice(1).join(' ').trim()
+        };
+      }
+
+      function parseLaunchPayload(content) {
+        const text = String(content || '').trim();
+        if (!text) {
+          return { autoOpen: false, query: '', source: '' };
+        }
+
+        try {
+          const raw = JSON.parse(text);
+          if (raw && typeof raw === 'object' && String(raw.source || '').trim() === 'quick-common-sites') {
+            return {
+              autoOpen: Boolean(raw.autoOpen),
+              query: String(raw.query || '').trim(),
+              source: 'quick-common-sites'
+            };
+          }
+        } catch {
+          // ignore and treat as plain text
+        }
+
+        return {
+          autoOpen: false,
+          query: text,
+          source: ''
+        };
+      }
+
+      function looksLikeUrl(value) {
+        const text = String(value || '').trim();
+        return /^(https?:\/\/|[a-z0-9-]+\.[a-z]{2,})(\/.*)?$/i.test(text);
+      }
+
+      function getAllSites() {
+        return [...state.customSites, ...builtInSites];
+      }
+
+      function getSiteScore(site, query) {
+        if (!query) {
+          return 0;
+        }
+
+        const haystacks = [site.name, site.domain, ...(site.aliases || []), ...(site.tags || [])].map(normalizeKeyword);
+        if (haystacks.some((item) => item === query)) {
+          return 120;
+        }
+        if (haystacks.some((item) => item.startsWith(query))) {
+          return 90;
+        }
+        if (haystacks.some((item) => item.includes(query))) {
+          return 60;
+        }
+        return -1;
+      }
+
+      function getMatches(query) {
+        const { keyword } = splitQuery(query);
+        const matchKeyword = normalizeKeyword(keyword || query);
+
+        return getAllSites()
+          .map((site, index) => ({
+            index,
+            score: getSiteScore(site, matchKeyword),
+            site
+          }))
+          .filter((item) => !query || item.score >= 0)
+          .sort((current, next) => {
+            if (current.site.pinned !== next.site.pinned) {
+              return current.site.pinned ? -1 : 1;
+            }
+            if (current.score !== next.score) {
+              return next.score - current.score;
+            }
+            if (current.site.lastUsedAt !== next.site.lastUsedAt) {
+              return next.site.lastUsedAt - current.site.lastUsedAt;
+            }
+            if (current.site.builtIn !== next.site.builtIn) {
+              return current.site.builtIn ? 1 : -1;
+            }
+            return current.site.name.localeCompare(next.site.name, 'zh-CN');
+          })
+          .map((item) => item.site);
+      }
+
+      function getEffectiveSearchText(site, query) {
+        const normalizedQuery = String(query || '').trim();
+        const parts = splitQuery(normalizedQuery);
+        if (parts.searchText) {
+          return parts.searchText;
+        }
+        if (!normalizedQuery) {
+          return '';
+        }
+
+        const exactTerms = [site.name, site.domain, ...(site.aliases || []), ...(site.tags || [])].map(normalizeKeyword);
+        return exactTerms.includes(normalizeKeyword(normalizedQuery)) ? '' : normalizedQuery;
+      }
+
+      function buildSiteSearchUrl(site, searchText) {
+        return site.searchUrl.replace('{query}', encodeURIComponent(searchText));
+      }
+
+      async function openExternal(url) {
+        try {
+          if (typeof api.openExternalUrl === 'function') {
+            await api.openExternalUrl(url);
+            return;
+          }
+        } catch (error) {
+          console.warn(error);
+        }
+
+        const opened = window.open(url, '_blank', 'noopener,noreferrer');
+        if (!opened) {
+          showToast('当前环境无法打开外部网址', 'error');
+        }
+      }
+
+      function getTopMatch(query) {
+        if (looksLikeUrl(query)) {
+          return null;
+        }
+
+        const matches = getMatches(query);
+        return matches[0] || null;
+      }
+
+      function rememberUsage(siteId) {
+        const target = state.customSites.find((item) => item.id === siteId);
+        if (!target) {
+          return;
+        }
+
+        target.lastUsedAt = Date.now();
+        saveCustomSites();
+      }
+
+      async function openSite(site, useSearch, rawQuery) {
+        const effectiveSearchText = getEffectiveSearchText(site, rawQuery);
+        const targetUrl =
+          useSearch && effectiveSearchText && site.searchUrl && site.searchUrl.includes('{query}')
+            ? buildSiteSearchUrl(site, effectiveSearchText)
+            : site.openUrl;
+
+        rememberUsage(site.id);
+        await openExternal(targetUrl);
+        render();
+      }
+
+      function openSelectedResult() {
+        const query = searchInput.value.trim();
+        if (looksLikeUrl(query)) {
+          void openExternal(normalizeUrl(query));
+          return;
+        }
+
+        const selected = state.visibleSites.find((site) => site.id === state.selectedId) || state.visibleSites[0];
+        if (!selected) {
+          return;
+        }
+
+        const effectiveSearchText = getEffectiveSearchText(selected, query);
+        void openSite(selected, Boolean(effectiveSearchText), query);
+      }
+
+      function applyLaunchContext(payload) {
+        const launch = parseLaunchPayload(payload && payload.content);
+        const triggeredAt = Number(payload && payload.triggeredAt) || 0;
+
+        if (!launch.query) {
+          return;
+        }
+
+        if (triggeredAt && triggeredAt === state.lastLaunchTrigger) {
+          return;
+        }
+
+        if (triggeredAt) {
+          state.lastLaunchTrigger = triggeredAt;
+        }
+
+        searchInput.value = launch.query;
+        render();
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+
+        if (!launch.autoOpen) {
+          return;
+        }
+
+        if (looksLikeUrl(launch.query)) {
+          void openExternal(normalizeUrl(launch.query));
+          return;
+        }
+
+        const topMatch = getTopMatch(launch.query);
+        if (!topMatch) {
+          return;
+        }
+
+        const effectiveSearchText = getEffectiveSearchText(topMatch, launch.query);
+        void openSite(topMatch, Boolean(effectiveSearchText), launch.query);
+      }
+
+      function moveSelection(delta) {
+        if (!state.visibleSites.length) {
+          return;
+        }
+
+        const currentIndex = Math.max(
+          0,
+          state.visibleSites.findIndex((site) => site.id === state.selectedId)
+        );
+        const nextIndex = Math.min(state.visibleSites.length - 1, Math.max(0, currentIndex + delta));
+        state.selectedId = state.visibleSites[nextIndex].id;
+        renderResults();
+      }
+
+      function openDrawer(editSiteId) {
+        state.drawerVisible = true;
+        drawerBackdrop.classList.add('visible');
+        drawerBackdrop.setAttribute('aria-hidden', 'false');
+
+        if (editSiteId) {
+          startEdit(editSiteId);
+        } else if (!state.editingId) {
+          siteNameInput.focus();
+        }
+
+        renderCustomSites();
+      }
+
+      function closeDrawer() {
+        state.drawerVisible = false;
+        drawerBackdrop.classList.remove('visible');
+        drawerBackdrop.setAttribute('aria-hidden', 'true');
+      }
+
+      function resetForm(keepFocus) {
+        state.editingId = '';
+        siteForm.reset();
+        renderCustomSites();
+        if (keepFocus) {
+          siteNameInput.focus();
+        }
+      }
+
+      function startEdit(siteId) {
+        const site = state.customSites.find((item) => item.id === siteId);
+        if (!site) {
+          return;
+        }
+
+        state.editingId = site.id;
+        siteNameInput.value = site.name;
+        siteDomainInput.value = site.domain;
+        siteOpenUrlInput.value = site.openUrl;
+        siteSearchUrlInput.value = site.searchUrl;
+        siteAliasesInput.value = site.aliases.join(', ');
+        siteTagsInput.value = site.tags.join(', ');
+        renderCustomSites();
+        siteNameInput.focus();
+      }
+
+      function togglePin(siteId) {
+        const site = state.customSites.find((item) => item.id === siteId);
+        if (!site) {
+          return;
+        }
+
+        site.pinned = !site.pinned;
+        saveCustomSites();
+        render();
+      }
+
+      function moveCustomSite(siteId, delta) {
+        const index = state.customSites.findIndex((site) => site.id === siteId);
+        const targetIndex = index + delta;
+        if (index < 0 || targetIndex < 0 || targetIndex >= state.customSites.length) {
+          return;
+        }
+
+        const [item] = state.customSites.splice(index, 1);
+        state.customSites.splice(targetIndex, 0, item);
+        saveCustomSites();
+        render();
+      }
+
+      function removeCustomSite(siteId) {
+        const nextSites = state.customSites.filter((item) => item.id !== siteId);
+        const removed = state.customSites.find((item) => item.id === siteId);
+        saveCustomSites(nextSites);
+
+        if (state.editingId === siteId) {
+          resetForm(false);
+        }
+        if (state.selectedId === siteId) {
+          state.selectedId = '';
+        }
+
+        render();
+        showToast(`已删除 ${removed ? removed.name : '网站'}`, 'success');
+      }
+
+      function validatePayload(payload) {
+        if (!payload.name) {
+          return '请填写网站名称';
+        }
+        if (!payload.domain) {
+          return '请填写域名';
+        }
+        if (!payload.openUrl) {
+          return '请填写打开地址';
+        }
+        if (payload.searchUrl && !payload.searchUrl.includes('{query}')) {
+          return '搜索地址需要包含 {query}';
+        }
+        return '';
+      }
+
+      function createFormPayload() {
+        return normalizeSite(
+          {
+            aliases: splitInputList(siteAliasesInput.value),
+            domain: siteDomainInput.value,
+            id: state.editingId || `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+            lastUsedAt: state.customSites.find((item) => item.id === state.editingId)?.lastUsedAt || 0,
+            name: siteNameInput.value,
+            openUrl: siteOpenUrlInput.value,
+            pinned: state.customSites.find((item) => item.id === state.editingId)?.pinned || false,
+            searchUrl: siteSearchUrlInput.value,
+            tags: splitInputList(siteTagsInput.value)
+          },
+          false
+        );
+      }
+
+      function saveForm(event) {
+        event.preventDefault();
+        const payload = createFormPayload();
+        if (!payload) {
+          showToast('请填写完整的网站信息', 'error');
+          return;
+        }
+
+        const validationError = validatePayload(payload);
+        if (validationError) {
+          showToast(validationError, 'error');
+          return;
+        }
+
+        const currentIndex = state.customSites.findIndex((item) => item.id === payload.id);
+        if (currentIndex >= 0) {
+          state.customSites.splice(currentIndex, 1, payload);
+          showToast(`已更新 ${payload.name}`, 'success');
+        } else {
+          state.customSites.unshift(payload);
+          showToast(`已添加 ${payload.name}`, 'success');
+        }
+
+        saveCustomSites();
+        state.selectedId = payload.id;
+        resetForm(false);
+        render();
+      }
+
+      function renderStats(matches) {
+        metaStats.innerHTML = `
+          <span class="stats-pill">${matches.length} 项结果</span>
+          <span>${state.customSites.length} 个自定义</span>
+          <span>${state.customSites.filter((site) => site.pinned).length} 个置顶</span>
+        `;
+      }
+
+      function renderFooter() {
+        const selected = state.visibleSites.find((site) => site.id === state.selectedId);
+        if (!selected) {
+          footerSelected.textContent = '直接输入站点名、别名、标签或网址';
+          footerShortcuts.classList.add('hidden');
+          return;
+        }
+
+        footerShortcuts.classList.remove('hidden');
+        const tags = (selected.tags || []).slice(0, 2).join(' / ');
+        footerSelected.innerHTML = `
+          <span class="selected-guide">当前选中</span>
+          <span>${escapeHtml(selected.name)} · ${escapeHtml(selected.domain)}${tags ? ` · ${escapeHtml(tags)}` : ''}</span>
+        `;
+      }
+
+      function renderState(title, description) {
+        resultList.innerHTML = `
+          <div class="state-panel">
+            <div>
+              <strong>${escapeHtml(title)}</strong>
+              <span>${escapeHtml(description)}</span>
+            </div>
+          </div>
+        `;
+        renderFooter();
+      }
+
+      function renderTags(items, accent) {
+        return (items || [])
+          .slice(0, 2)
+          .map((item) => `<span class="tag${accent ? ' accent' : ''}">${escapeHtml(item)}</span>`)
+          .join('');
+      }
+
+      function renderResults() {
+        const query = searchInput.value.trim();
+        clearButton.classList.toggle('visible', query.length > 0);
+
+        if (looksLikeUrl(query)) {
+          state.visibleSites = [];
+          state.selectedId = '__url__';
+          renderStats([]);
+          resultList.innerHTML = '';
+
+          const row = document.createElement('div');
+          row.className = 'result-row active';
+          row.innerHTML = `
+            <div class="result-icon">URL</div>
+            <div class="result-main">
+              <div class="result-title">
+                <div class="result-name">直接打开网址</div>
+              </div>
+              <div class="result-domain">${escapeHtml(normalizeUrl(query))}</div>
+            </div>
+          `;
+
+          const actions = document.createElement('div');
+          actions.className = 'result-actions';
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'button primary compact';
+          button.textContent = '打开网址';
+          button.addEventListener('click', () => {
+            void openExternal(normalizeUrl(query));
+          });
+          actions.appendChild(button);
+          row.appendChild(actions);
+          resultList.appendChild(row);
+          footerSelected.textContent = `当前选中：直接打开 ${normalizeUrl(query)}`;
+          return;
+        }
+
+        const matches = getMatches(query);
+        state.visibleSites = matches;
+        renderStats(matches);
+
+        if (matches.length > 0 && !matches.some((site) => site.id === state.selectedId)) {
+          state.selectedId = matches[0].id;
+        }
+
+        if (!matches.length) {
+          state.selectedId = '';
+          renderState('没有匹配的网站', '试试输入 baidu、tb、jd、github，或直接输入完整域名。');
+          return;
+        }
+
+        resultList.innerHTML = '';
+        matches.forEach((site) => {
+          const row = document.createElement('div');
+          row.className = `result-row${state.selectedId === site.id ? ' active' : ''}`;
+          row.addEventListener('click', () => {
+            state.selectedId = site.id;
+            renderResults();
+          });
+          row.addEventListener('dblclick', () => {
+            void openSite(site, false, query);
+          });
+
+          const effectiveSearchText = getEffectiveSearchText(site, query);
+          row.innerHTML = `
+            <div class="result-icon">${escapeHtml(site.name.slice(0, 1).toUpperCase())}</div>
+            <div class="result-main">
+              <div class="result-title">
+                <div class="result-name">${escapeHtml(site.name)}</div>
+                <div class="result-tags">
+                  ${site.pinned ? '<span class="tag accent">置顶</span>' : ''}
+                  ${site.builtIn ? '<span class="tag">预置</span>' : ''}
+                </div>
+              </div>
+              <div class="result-meta-line">
+                <div class="result-domain">${escapeHtml(site.domain)}</div>
+                <div class="result-tags">${renderTags(site.tags, false)}</div>
+              </div>
+            </div>
+          `;
+
+          const actions = document.createElement('div');
+          actions.className = 'result-actions';
+
+          const openButton = document.createElement('button');
+          openButton.type = 'button';
+          openButton.className = `button compact${state.selectedId === site.id ? ' primary' : ''}`;
+          openButton.textContent = '打开';
+          openButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            void openSite(site, false, query);
+          });
+          actions.appendChild(openButton);
+
+          if (effectiveSearchText && site.searchUrl && site.searchUrl.includes('{query}')) {
+            const searchButton = document.createElement('button');
+            searchButton.type = 'button';
+            searchButton.className = 'button primary compact';
+            searchButton.textContent = '搜索';
+            searchButton.addEventListener('click', (event) => {
+              event.stopPropagation();
+              void openSite(site, true, query);
+            });
+            actions.appendChild(searchButton);
+          }
+
+          if (!site.builtIn) {
+            const editButton = document.createElement('button');
+            editButton.type = 'button';
+            editButton.className = 'button compact subtle';
+            editButton.textContent = '编辑';
+            editButton.addEventListener('click', (event) => {
+              event.stopPropagation();
+              openDrawer(site.id);
+            });
+            actions.appendChild(editButton);
+          }
+
+          row.appendChild(actions);
+          resultList.appendChild(row);
+        });
+        renderFooter();
+      }
+
+      function renderCustomSites() {
+        if (!state.customSites.length) {
+          customList.innerHTML = `
+            <div class="state-panel">
+              <div>
+                <strong>还没有自定义网站</strong>
+                <span>把内部系统、测试环境或常用后台加进来，会比默认站点更顺手。</span>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        customList.innerHTML = '';
+        state.customSites.forEach((site, index) => {
+          const item = document.createElement('div');
+          item.className = `custom-item${state.editingId === site.id ? ' active' : ''}`;
+          item.innerHTML = `
+            <div class="custom-top">
+              <div>
+                <div class="custom-name">${escapeHtml(site.name)}</div>
+                <div class="custom-domain">${escapeHtml(site.domain)}</div>
+              </div>
+              <div class="drawer-tags">
+                ${site.pinned ? '<span class="tag accent">置顶</span>' : ''}
+                ${renderTags(site.tags, false)}
+              </div>
+            </div>
+          `;
+
+          const actions = document.createElement('div');
+          actions.className = 'custom-actions';
+
+          const pinButton = document.createElement('button');
+          pinButton.type = 'button';
+          pinButton.className = 'button compact warn';
+          pinButton.textContent = site.pinned ? '取消置顶' : '置顶';
+          pinButton.addEventListener('click', () => togglePin(site.id));
+          actions.appendChild(pinButton);
+
+          const upButton = document.createElement('button');
+          upButton.type = 'button';
+          upButton.className = 'button compact subtle';
+          upButton.textContent = '上移';
+          upButton.disabled = index === 0;
+          upButton.addEventListener('click', () => moveCustomSite(site.id, -1));
+          actions.appendChild(upButton);
+
+          const downButton = document.createElement('button');
+          downButton.type = 'button';
+          downButton.className = 'button compact subtle';
+          downButton.textContent = '下移';
+          downButton.disabled = index === state.customSites.length - 1;
+          downButton.addEventListener('click', () => moveCustomSite(site.id, 1));
+          actions.appendChild(downButton);
+
+          const editButton = document.createElement('button');
+          editButton.type = 'button';
+          editButton.className = 'button compact';
+          editButton.textContent = '编辑';
+          editButton.addEventListener('click', () => startEdit(site.id));
+          actions.appendChild(editButton);
+
+          const deleteButton = document.createElement('button');
+          deleteButton.type = 'button';
+          deleteButton.className = 'button compact danger';
+          deleteButton.textContent = '删除';
+          deleteButton.addEventListener('click', () => removeCustomSite(site.id));
+          actions.appendChild(deleteButton);
+
+          item.appendChild(actions);
+          customList.appendChild(item);
+        });
+      }
+
+      function renderFatalState(error) {
+        console.error(error);
+        resultList.innerHTML = `
+          <div class="state-panel">
+            <div>
+              <strong>页面初始化失败</strong>
+              <span>请关闭后重新打开插件；如果仍然失败，请检查插件日志或重新安装插件。</span>
+            </div>
+          </div>
+        `;
+        footerSelected.textContent = '页面初始化失败';
+      }
+
+      function render() {
+        try {
+          renderResults();
+          renderCustomSites();
+        } catch (error) {
+          renderFatalState(error);
+        }
+      }
+
+      manageButton.addEventListener('click', () => openDrawer());
+      addButton.addEventListener('click', () => {
+        openDrawer();
+        resetForm(true);
+      });
+      closeDrawerButton.addEventListener('click', closeDrawer);
+      resetFormButton.addEventListener('click', () => resetForm(true));
+      cancelEditButton.addEventListener('click', () => resetForm(false));
+      siteForm.addEventListener('submit', saveForm);
+
+      clearButton.addEventListener('click', () => {
+        searchInput.value = '';
+        searchInput.focus();
+        render();
+      });
+
+      searchInput.addEventListener('input', render);
+      searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          moveSelection(1);
+          return;
+        }
+
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          moveSelection(-1);
+          return;
+        }
+
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          openSelectedResult();
+          return;
+        }
+
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+          event.preventDefault();
+          searchInput.select();
+        }
+      });
+
+      drawerBackdrop.addEventListener('click', (event) => {
+        if (event.target === drawerBackdrop) {
+          closeDrawer();
+        }
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && state.drawerVisible) {
+          closeDrawer();
+        }
+      });
+
+      async function init() {
+        try {
+          state.customSites = await loadCustomSites();
+          await loadBuiltInSites();
+        } catch (error) {
+          renderFatalState(error);
+        }
+      }
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-common-sites', capabilities: ['getPluginStorageItem', 'openExternalUrl', 'setPluginStorageItem'],
+                onLaunchContext(context) {
+                  applyLaunchContext(context);
+                }
+              };
+        const pluginOnReady = function () { void init(); };
+        const pluginOfflineReady = function () { void init(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

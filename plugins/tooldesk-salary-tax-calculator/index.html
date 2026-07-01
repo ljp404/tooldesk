@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>税后计算器</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+
+.tax-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+}
+
+.tax-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.tax-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.tax-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.tax-icon-badge {
+  align-items: center;
+  background: #edf3ff;
+  border-radius: 6px;
+  color: #2563eb;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.tax-meta {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.tax-form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.tax-field {
+  display: grid;
+  gap: 8px;
+}
+
+.tax-field input,
+.tax-field select {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  height: 38px;
+  outline: none;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.tax-field input:focus,
+.tax-field select:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.tax-grid-2 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tax-section-title {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.tax-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tax-preset {
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.tax-preset:hover { background: #eff6ff; }
+
+.tax-disclaimer {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.7;
+  margin: 0 16px 16px;
+  padding: 10px 12px;
+}
+
+.tax-copy-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  color: #2563eb;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  margin-left: auto;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.tax-copy-button:hover { background: #eff6ff; }
+.tax-copy-button:disabled { color: #94a3b8; opacity: .62; }
+
+.tax-highlight {
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  margin: 14px;
+  padding: 16px;
+}
+
+.tax-highlight-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tax-highlight-value {
+  color: #1d4ed8;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-top: 6px;
+}
+
+.tax-info-grid {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.tax-info-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.tax-info-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tax-info-row strong {
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.tax-info-row.emphasis {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.tax-info-row.emphasis strong {
+  color: #1d4ed8;
+}
+
+.tax-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 220px;
+  padding: 24px 20px;
+}
+
+.tax-empty-icon {
+  align-items: center;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border: 1px dashed #bfdbfe;
+  border-radius: 14px;
+  color: #2563eb;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.tax-empty strong {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.tax-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 16px;
+  padding: 10px 12px;
+}
+
+.tax-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 2;
+}
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content,
+  .tax-layout {
+    height: auto;
+    min-height: calc(100dvh - 20px);
+    overflow: visible;
+  }
+  .tax-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .tax-card {
+    overflow: visible;
+  }
+  .tax-card-head {
+    flex-wrap: wrap;
+  }
+  .tax-grid-2,
+  .tax-info-row {
+    grid-template-columns: 1fr;
+  }
+  .tax-info-row {
+    padding: 10px 12px;
+  }
+  .tax-info-row strong {
+    text-align: left;
+  }
+  .tax-highlight {
+    margin: 12px;
+  }
+  .tax-highlight-value {
+    font-size: 22px;
+    overflow-wrap: anywhere;
+  }
+}
+    </style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content tax-layout">
+      <section class="tax-card">
+        <div class="tax-card-head">
+          <span class="tax-icon-badge">税</span>
+          <strong>薪资参数</strong>
+        </div>
+        <div class="tax-form">
+          <label class="field small tax-field">
+            税前月薪（元）
+            <input id="gross" type="number" min="0" step="0.01" value="20000" />
+          </label>
+          <div class="tax-grid-2">
+            <label class="field small tax-field">
+              发薪月份
+              <select id="month">
+                <option value="1">1 月</option>
+                <option value="2">2 月</option>
+                <option value="3">3 月</option>
+                <option value="4">4 月</option>
+                <option value="5">5 月</option>
+                <option value="6" selected>6 月</option>
+                <option value="7">7 月</option>
+                <option value="8">8 月</option>
+                <option value="9">9 月</option>
+                <option value="10">10 月</option>
+                <option value="11">11 月</option>
+                <option value="12">12 月</option>
+              </select>
+            </label>
+            <label class="field small tax-field">
+              专项附加扣除（元/月）
+              <input id="special" type="number" min="0" step="0.01" value="2000" />
+            </label>
+          </div>
+          <label class="field small tax-field">
+            社保公积金基数（元）
+            <input id="socialBase" type="number" min="0" step="0.01" placeholder="默认同税前月薪" />
+          </label>
+          <div class="tax-section-title">个人缴纳比例（%）</div>
+          <div class="tax-grid-2">
+            <label class="field small tax-field">养老<input id="pensionRate" type="number" min="0" max="30" step="0.1" value="8" /></label>
+            <label class="field small tax-field">医疗<input id="medicalRate" type="number" min="0" max="30" step="0.1" value="2" /></label>
+            <label class="field small tax-field">失业<input id="unemploymentRate" type="number" min="0" max="30" step="0.1" value="0.5" /></label>
+            <label class="field small tax-field">公积金<input id="housingRate" type="number" min="0" max="30" step="0.1" value="7" /></label>
+          </div>
+          <label class="field small tax-field">
+            医疗固定扣款（元/月）
+            <input id="medicalFixed" type="number" min="0" step="0.01" value="3" />
+          </label>
+          <div class="tax-presets" id="presets"></div>
+        </div>
+        <p class="tax-disclaimer">免责声明：按现行累计预扣法估算，各地社保比例、基数上下限与附加扣除口径不同，结果仅供参考，不构成税务或薪酬建议。</p>
+        <p id="error" class="tax-error" hidden></p>
+      </section>
+      <section class="tax-card">
+        <div class="tax-card-head">
+          <span class="tax-icon-badge">税</span>
+          <strong>计算结果</strong>
+          <button id="copy" class="tax-copy-button" disabled>复制结果</button>
+        </div>
+        <span id="toast" class="tax-toast" hidden></span>
+        <div id="highlight" class="tax-highlight" hidden>
+          <div class="tax-highlight-label">税后到手（本月）</div>
+          <div id="netSalary" class="tax-highlight-value">-</div>
+        </div>
+        <div id="info" class="tax-info-grid"></div>
+        <div id="empty" class="tax-empty">
+          <span class="tax-empty-icon">税</span>
+          <strong>填写参数后自动计算</strong>
+        </div>
+      </section>
+    </main>
+<script>
+const TAX_BRACKETS = [
+        { limit: 36000, rate: 0.03, quick: 0 },
+        { limit: 144000, rate: 0.10, quick: 2520 },
+        { limit: 300000, rate: 0.20, quick: 16920 },
+        { limit: 420000, rate: 0.25, quick: 31920 },
+        { limit: 660000, rate: 0.30, quick: 52920 },
+        { limit: 960000, rate: 0.35, quick: 85920 },
+        { limit: Infinity, rate: 0.45, quick: 181920 }
+      ];
+      const BASIC_DEDUCTION = 5000;
+      const presets = [
+        { label: '示例 2 万', gross: 20000, special: 2000, month: 6 },
+        { label: '示例 1 万', gross: 10000, special: 1000, month: 1 },
+        { label: '示例 5 万', gross: 50000, special: 3000, month: 12 },
+        { label: '常见比例', pensionRate: 8, medicalRate: 2, unemploymentRate: 0.5, housingRate: 7 }
+      ];
+      let calcResult = null;
+      const $ = (id) => document.getElementById(id);
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function showToast(text) {
+        $('toast').textContent = text;
+        $('toast').hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600);
+      }
+
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      function readNumber(id, fallback = 0) {
+        const value = Number($(id).value);
+        return Number.isFinite(value) ? value : fallback;
+      }
+
+      function formatMoney(value) {
+        if (!Number.isFinite(value)) return '-';
+        return value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function calcCumulativeTax(cumulativeTaxable) {
+        if (cumulativeTaxable <= 0) return 0;
+        for (const bracket of TAX_BRACKETS) {
+          if (cumulativeTaxable <= bracket.limit) {
+            return cumulativeTaxable * bracket.rate - bracket.quick;
+          }
+        }
+        return 0;
+      }
+
+      function readParams() {
+        const gross = readNumber('gross');
+        const month = Number($('month').value) || 1;
+        const special = readNumber('special');
+        const socialBaseInput = $('socialBase').value.trim();
+        const socialBase = socialBaseInput ? readNumber('socialBase', gross) : gross;
+        const pensionRate = readNumber('pensionRate');
+        const medicalRate = readNumber('medicalRate');
+        const unemploymentRate = readNumber('unemploymentRate');
+        const housingRate = readNumber('housingRate');
+        const medicalFixed = readNumber('medicalFixed');
+
+        if (gross < 0 || socialBase < 0 || special < 0) {
+          return { valid: false, error: '金额不能为负数' };
+        }
+
+        if (month < 1 || month > 12) {
+          return { valid: false, error: '发薪月份应在 1-12 月' };
+        }
+
+        return {
+          valid: true,
+          gross,
+          month,
+          special,
+          socialBase,
+          pensionRate,
+          medicalRate,
+          unemploymentRate,
+          housingRate,
+          medicalFixed
+        };
+      }
+
+      function calculateSalaryTax(params) {
+        const pension = params.socialBase * params.pensionRate / 100;
+        const medical = params.socialBase * params.medicalRate / 100 + params.medicalFixed;
+        const unemployment = params.socialBase * params.unemploymentRate / 100;
+        const housingFund = params.socialBase * params.housingRate / 100;
+        const socialTotal = pension + medical + unemployment + housingFund;
+
+        const monthlyTaxable = params.gross - socialTotal - params.special - BASIC_DEDUCTION;
+        const cumulativeTaxable = Math.max(0, monthlyTaxable * params.month);
+        const prevCumulativeTaxable = Math.max(0, monthlyTaxable * Math.max(params.month - 1, 0));
+
+        const cumulativeTax = calcCumulativeTax(cumulativeTaxable);
+        const prevCumulativeTax = calcCumulativeTax(prevCumulativeTaxable);
+        const monthlyTax = Math.max(0, cumulativeTax - prevCumulativeTax);
+        const netSalary = params.gross - socialTotal - monthlyTax;
+
+        return {
+          valid: true,
+          gross: params.gross,
+          month: params.month,
+          pension,
+          medical,
+          unemployment,
+          housingFund,
+          socialTotal,
+          special: params.special,
+          basicDeduction: BASIC_DEDUCTION,
+          monthlyTaxable,
+          cumulativeTaxable,
+          monthlyTax,
+          cumulativeTax,
+          netSalary,
+          socialBase: params.socialBase
+        };
+      }
+
+      function applyLaunchContent(content) {
+        const text = String(content || '').trim().replace(/[¥￥,\s]/g, '');
+        if (!text || !/^-?\d+(?:\.\d+)?$/.test(text)) return;
+        $('gross').value = text;
+        render();
+      }
+
+      function render() {
+        const params = readParams();
+        if (!params.valid) {
+          calcResult = null;
+          $('error').textContent = params.error;
+          $('error').hidden = false;
+          $('copy').disabled = true;
+          $('highlight').hidden = true;
+          $('info').replaceChildren();
+          $('empty').hidden = true;
+          return;
+        }
+
+        calcResult = calculateSalaryTax(params);
+        $('error').hidden = true;
+        $('copy').disabled = false;
+        $('empty').hidden = true;
+        $('highlight').hidden = false;
+        $('netSalary').textContent = `¥ ${formatMoney(calcResult.netSalary)}`;
+
+        const rows = [
+          ['税前月薪', formatMoney(calcResult.gross), false],
+          ['养老保险（个人）', formatMoney(calcResult.pension), false],
+          ['医疗保险（个人）', formatMoney(calcResult.medical), false],
+          ['失业保险（个人）', formatMoney(calcResult.unemployment), false],
+          ['住房公积金（个人）', formatMoney(calcResult.housingFund), false],
+          ['五险一金合计', formatMoney(calcResult.socialTotal), false],
+          ['专项附加扣除', formatMoney(calcResult.special), false],
+          ['起征点（月）', formatMoney(calcResult.basicDeduction), false],
+          ['本月应纳税所得额', formatMoney(Math.max(calcResult.monthlyTaxable, 0)), false],
+          [`累计应纳税所得额（1-${calcResult.month}月）`, formatMoney(calcResult.cumulativeTaxable), false],
+          ['本月应缴个税', formatMoney(calcResult.monthlyTax), true],
+          ['累计已缴个税', formatMoney(calcResult.cumulativeTax), false],
+          ['税后到手', formatMoney(calcResult.netSalary), true]
+        ];
+
+        $('info').replaceChildren(...rows.map(([label, value, emphasis]) => {
+          const row = document.createElement('div');
+          row.className = `tax-info-row${emphasis ? ' emphasis' : ''}`;
+          row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+          return row;
+        }));
+      }
+
+      function bindInputs() {
+        [
+          'gross', 'special', 'socialBase', 'pensionRate', 'medicalRate',
+          'unemploymentRate', 'housingRate', 'medicalFixed', 'month'
+        ].forEach((id) => {
+          $(id).addEventListener('input', render);
+          $(id).addEventListener('change', render);
+        });
+      }
+
+      $('month').value = '6';
+
+      $('presets').replaceChildren(...presets.map((preset) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'tax-preset';
+        button.textContent = preset.label;
+        button.addEventListener('click', () => {
+          if (preset.gross !== undefined) $('gross').value = String(preset.gross);
+          if (preset.special !== undefined) $('special').value = String(preset.special);
+          if (preset.month !== undefined) $('month').value = String(preset.month);
+          if (preset.pensionRate !== undefined) $('pensionRate').value = String(preset.pensionRate);
+          if (preset.medicalRate !== undefined) $('medicalRate').value = String(preset.medicalRate);
+          if (preset.unemploymentRate !== undefined) $('unemploymentRate').value = String(preset.unemploymentRate);
+          if (preset.housingRate !== undefined) $('housingRate').value = String(preset.housingRate);
+          render();
+        });
+        return button;
+      }));
+
+      $('copy').addEventListener('click', () => {
+        if (!calcResult?.valid) return;
+        copyText([
+          `税前月薪: ${formatMoney(calcResult.gross)}`,
+          `五险一金: ${formatMoney(calcResult.socialTotal)}`,
+          `专项附加扣除: ${formatMoney(calcResult.special)}`,
+          `本月个税: ${formatMoney(calcResult.monthlyTax)}`,
+          `税后到手: ${formatMoney(calcResult.netSalary)}`
+        ].join('\n'), '计算结果已复制');
+      });
+
+      bindInputs();
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-salary-tax-calculator', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

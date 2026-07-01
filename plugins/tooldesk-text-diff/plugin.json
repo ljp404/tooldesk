@@ -1,0 +1,26 @@
+{
+  "accent": "blue",
+  "caption": "对比两段文本的差异",
+  "category": "text",
+  "defaultAlias": "db",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-text-diff",
+  "keywords": [
+    "diff",
+    "compare",
+    "文本",
+    "wbdb",
+    "wenbendui",
+    "duibi"
+  ],
+  "name": "文本对比",
+  "permissions": [],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [],
+  "windowIcon": "assets/window-icon.png"
+}

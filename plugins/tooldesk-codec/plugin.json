@@ -1,0 +1,47 @@
+{
+  "accent": "purple",
+  "caption": "Base64 / URL / JWT 编解码",
+  "category": "dev",
+  "defaultAlias": "bjm",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-codec",
+  "keywords": [
+    "base64",
+    "url",
+    "jwt",
+    "decode",
+    "encode",
+    "编解码",
+    "jm",
+    "bm",
+    "bianjiema"
+  ],
+  "name": "编解码",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png",
+  "clipboardMatch": [
+    {
+      "type": "jwt",
+      "priority": 88
+    },
+    {
+      "type": "base64",
+      "priority": 88
+    },
+    {
+      "type": "url-encoded",
+      "priority": 88
+    }
+  ]
+}

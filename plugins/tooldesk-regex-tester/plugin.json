@@ -1,0 +1,28 @@
+{
+  "accent": "violet",
+  "caption": "测试正则匹配、分组与替换",
+  "category": "text",
+  "defaultAlias": "zz",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-regex-tester",
+  "keywords": [
+    "regex",
+    "regexp",
+    "regular",
+    "??",
+    "??",
+    "zzcs",
+    "zhengze",
+    "pipei"
+  ],
+  "name": "正则测试",
+  "permissions": [],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [],
+  "windowIcon": "assets/window-icon.png"
+}

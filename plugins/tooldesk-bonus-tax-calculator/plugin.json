@@ -1,0 +1,36 @@
+{
+  "accent": "violet",
+  "caption": "全年一次性奖金单独计税与并入综合所得对比估算。",
+  "category": "finance",
+  "clipboardMatch": {
+    "type": "decimal-amount",
+    "priority": 80
+  },
+  "defaultAlias": "nzjjs",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-bonus-tax-calculator",
+  "keywords": [
+    "nzj",
+    "bonus",
+    "nianzhongjiang",
+    "tax",
+    "年终奖",
+    "个税",
+    "计税",
+    "单独计税"
+  ],
+  "name": "年终奖计税",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

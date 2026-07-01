@@ -1,0 +1,193 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>tooldesk 贴图</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+        -webkit-user-drag: none;
+        -webkit-user-select: none;
+      }
+
+      :root {
+        /* 与截图选区 #selection 边框色一致，外发光为多层级霓虹晕 */
+        --screenshot-border: #3b82f6;
+        --screenshot-glow-core: rgba(59, 130, 246, 0.92);
+        --screenshot-glow-mid: rgba(59, 130, 246, 0.52);
+        --screenshot-glow-outer: rgba(59, 130, 246, 0.24);
+        --screenshot-glow-fade: rgba(59, 130, 246, 0.1);
+        /* 失焦：浅灰白柔光晕 */
+        --pin-inactive-border: rgba(255, 255, 255, 0.3);
+        --pin-inactive-glow: rgba(255, 255, 255, 0.3);
+        --pin-inactive-glow-mid: rgba(230, 230, 235, 0.18);
+        --pin-inactive-glow-outer: rgba(200, 200, 210, 0.1);
+      }
+
+      html,
+      body {
+        background: transparent;
+        height: 100%;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      ::selection {
+        background: transparent;
+      }
+
+      .pin-shell {
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .pin-image-wrap {
+        align-items: flex-start;
+        background: transparent;
+        display: flex;
+        flex: 1;
+        justify-content: flex-start;
+        min-height: 0;
+        overflow: visible;
+        padding: 14px;
+        position: relative;
+        -webkit-app-region: no-drag;
+      }
+
+      .pin-zoom-label {
+        -webkit-app-region: no-drag;
+        background: rgba(15, 23, 42, 0.78);
+        border-radius: 4px;
+        color: #f8fafc;
+        font:
+          11px/1.35 'Segoe UI',
+          system-ui,
+          sans-serif;
+        left: 14px;
+        opacity: 0;
+        padding: 3px 8px;
+        pointer-events: none;
+        position: absolute;
+        top: 14px;
+        transition: opacity 0.2s ease;
+        visibility: hidden;
+        z-index: 6;
+      }
+
+      .pin-zoom-label.is-visible {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* 默认：贴图完成即显示浅灰白柔光晕（未选中） */
+      .pin-image-frame {
+        -webkit-app-region: no-drag;
+        --pin-frame-border-color: var(--pin-inactive-border);
+        border: 0;
+        border-radius: 2px;
+        box-shadow:
+          0 0 2px 1px var(--pin-inactive-glow),
+          0 0 6px 2px var(--pin-inactive-glow-mid),
+          0 0 12px 3px var(--pin-inactive-glow-outer);
+        flex: 1;
+        height: 100%;
+        outline: none;
+        overflow: visible;
+        position: relative;
+        transition:
+          box-shadow 0.22s ease,
+          filter 0.22s ease;
+        width: 100%;
+      }
+
+      .pin-image-frame::after {
+        border: 2px solid var(--pin-frame-border-color);
+        border-radius: 2px;
+        content: '';
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: 2;
+      }
+
+      /* 未选中 + 悬停：略提亮灰白光晕 */
+      .pin-image-wrap:not(.is-pin-focused).is-highlighted .pin-image-frame {
+        --pin-frame-border-color: rgba(255, 255, 255, 0.4);
+        box-shadow:
+          0 0 2px 1px rgba(255, 255, 255, 0.34),
+          0 0 8px 2px rgba(255, 255, 255, 0.2),
+          0 0 14px 3px rgba(220, 220, 228, 0.11);
+        filter: none;
+      }
+
+      /* 选中：蓝色光晕 */
+      .pin-image-wrap.is-pin-focused:not(.is-highlighted) .pin-image-frame {
+        --pin-frame-border-color: rgba(59, 130, 246, 0.55);
+        box-shadow:
+          0 0 2px 1px rgba(59, 130, 246, 0.42),
+          0 0 6px 2px var(--screenshot-glow-outer),
+          0 0 12px 3px var(--screenshot-glow-fade);
+        filter: none;
+      }
+
+      /* 选中 + 悬停 / 右键：略加强蓝晕 */
+      .pin-image-wrap.is-pin-focused.is-highlighted .pin-image-frame {
+        --pin-frame-border-color: rgba(59, 130, 246, 0.82);
+        box-shadow:
+          0 0 2px 1px rgba(59, 130, 246, 0.55),
+          0 0 8px 2px var(--screenshot-glow-outer),
+          0 0 14px 3px var(--screenshot-glow-fade);
+        filter: none;
+      }
+
+      /* 拖动：只比选中态略亮一点 */
+      .pin-image-wrap.is-pin-focused.is-dragging .pin-image-frame {
+        --pin-frame-border-color: rgba(59, 130, 246, 0.68);
+        box-shadow:
+          0 0 2px 1px rgba(59, 130, 246, 0.48),
+          0 0 7px 2px var(--screenshot-glow-outer),
+          0 0 13px 3px var(--screenshot-glow-fade);
+        filter: none;
+      }
+
+      .pin-image-wrap.is-dragging .pin-image-frame {
+        cursor: grabbing;
+        transition: none;
+        will-change: transform;
+      }
+
+      .pin-image-frame img {
+        -webkit-app-region: no-drag;
+        -webkit-user-drag: none;
+        display: block;
+        height: 100%;
+        object-fit: fill;
+        pointer-events: none;
+        position: relative;
+        user-select: none;
+        -webkit-user-select: none;
+        width: 100%;
+        z-index: 0;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="pin-shell">
+      <div class="pin-image-wrap" id="pin-hit">
+        <span class="pin-zoom-label" id="pin-zoom-label">缩放：100%</span>
+        <div class="pin-image-frame" id="pin-frame">
+          <img id="pin-image" alt="贴图" />
+        </div>
+      </div>
+    </div>
+    <script src="./tauri-screenshot-pin-bridge.js"></script>
+    <script src="./screenshot-pin.js"></script>
+  </body>
+</html>

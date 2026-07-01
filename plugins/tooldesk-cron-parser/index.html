@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Cron 解析</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:#f5f7fa;
+  color:#1e293b;
+  font-family:"Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+  font-size:13px;
+  line-height:1.5;
+}
+button,input,textarea,select{font:inherit;border:0;outline:none}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.5}
+[hidden]{display:none!important}
+
+/* ===== panel ===== */
+.cron-panel{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+}
+.cron-layout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  padding:16px;
+  flex:1;
+  overflow:auto;
+}
+@media(max-width:720px){.cron-layout{grid-template-columns:1fr}}
+
+/* ===== card ===== */
+.cron-card{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding:18px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+
+/* card header */
+.cron-card-head{
+  align-items:stretch;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid #f1f5f9;
+}
+.cron-card-title{
+  align-items:center;
+  display:inline-flex;
+  gap:10px;
+}
+.cron-card-title strong{
+  font-size:14px;
+  font-weight:700;
+  color:#0f172a;
+}
+.cron-icon-badge{
+  align-items:center;
+  background:#eff6ff;
+  border-radius:8px;
+  color:#3b82f6;
+  display:inline-flex;
+  height:32px;
+  width:32px;
+  justify-content:center;
+  flex-shrink:0;
+}
+.cron-icon-badge .icon-svg{height:16px;width:16px}
+
+/* inline control (count input) */
+.cron-inline-control{
+  align-items:center;
+  display:inline-flex;
+  gap:6px;
+  font-size:12px;
+  font-weight:600;
+  color:#64748b;
+  white-space:nowrap;
+}
+.cron-inline-control input[type=number]{
+  width:56px;
+  text-align:center;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:6px;
+  padding:5px 4px;
+  font-size:13px;
+  font-weight:600;
+  color:#0f172a;
+  transition:border-color .15s,box-shadow .15s;
+}
+.cron-inline-control input:focus{
+  border-color:#3b82f6;
+  box-shadow:0 0 0 3px rgba(59,130,246,.12);
+}
+
+.cron-type-tabs{
+  display:inline-flex;
+  gap:4px;
+  align-self:flex-start;
+  padding:3px;
+  background:#f1f5f9;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+}
+.cron-type-tab{
+  background:transparent;
+  border-radius:6px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:700;
+  min-height:28px;
+  padding:0 10px;
+}
+.cron-type-tab.active{
+  background:#2563eb;
+  color:#fff;
+  box-shadow:0 1px 2px rgba(37,99,235,.18);
+}
+
+/* cron input */
+.cron-input-wrap{
+  position:relative;
+}
+.cron-input{
+  width:100%;
+  background:#f8fafc;
+  border:1.5px solid #e2e8f0;
+  border-radius:8px;
+  padding:12px 14px;
+  font-size:14px;
+  font-weight:500;
+  color:#0f172a;
+  letter-spacing:.3px;
+  transition:border-color .15s,box-shadow .15s,background .15s;
+}
+.cron-input::placeholder{color:#94a3b8;font-weight:400}
+.cron-input:focus{
+  background:#fff;
+  border-color:#3b82f6;
+  box-shadow:0 0 0 3px rgba(59,130,246,.12);
+}
+.cron-input.valid{
+  border-color:#22c55e;
+  background:#f0fdf4;
+}
+.cron-input.invalid{
+  border-color:#ef4444;
+  background:#fef2f2;
+}
+
+/* description / error */
+.cron-desc{
+  font-size:12px;
+  font-weight:500;
+  color:#64748b;
+  min-height:18px;
+  word-break:break-all;
+}
+.cron-error{
+  font-size:12px;
+  font-weight:600;
+  color:#dc2626;
+  min-height:0;
+}
+.cron-error:empty{
+  display:none;
+}
+
+/* preset buttons */
+.cron-presets{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:-2px;
+}
+.cron-preset-btn{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:999px;
+  color:#475569;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
+  padding:6px 14px;
+  transition:all .15s;
+  user-select:none;
+}
+.cron-preset-btn:hover{
+  background:#eff6ff;
+  border-color:#bfdbfe;
+  color:#2563eb;
+}
+.cron-preset-btn.active{
+  background:#2563eb;
+  border-color:#2563eb;
+  color:#fff;
+}
+
+/* right card - results */
+.cron-meta{
+  font-size:12px;
+  font-weight:600;
+  color:#64748b;
+}
+.cron-empty{
+  align-items:center;
+  border:1px dashed #cbd5e1;
+  border-radius:8px;
+  color:#94a3b8;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  font-size:13px;
+  font-weight:500;
+  justify-content:center;
+  min-height:200px;
+  text-align:center;
+  background:#fafbfc;
+}
+.cron-empty .empty-icon{
+  font-size:28px;
+  opacity:.5;
+  line-height:1;
+}
+
+/* run list */
+.cron-run-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  flex:1;
+  list-style:none;
+  margin:0;
+  padding:0;
+  overflow-y:auto;
+}
+.cron-run-list::-webkit-scrollbar{width:4px}
+.cron-run-list::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+
+.cron-run-item{
+  align-items:center;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-left:3px solid #3b82f6;
+  border-radius:8px;
+  display:flex;
+  gap:12px;
+  min-height:43px;
+  padding:8px 14px;
+  transition:background .12s,border-color .12s;
+}
+.cron-run-item:hover{
+  background:#eff6ff;
+  border-color:#bfdbfe;
+}
+.cron-run-index{
+  align-items:center;
+  background:#e0e7ff;
+  border-radius:6px;
+  color:#4338ca;
+  display:inline-flex;
+  font-size:11px;
+  font-weight:700;
+  height:24px;
+  justify-content:center;
+  min-width:28px;
+  padding:0 6px;
+  flex-shrink:0;
+}
+.cron-run-time{
+  color:#0f172a;
+  font-size:13px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.2px;
+}
+</style></head><body>
+<main class="cron-panel">
+<div class="cron-layout">
+
+<!-- LEFT: expression input -->
+<section class="cron-card">
+  <div class="cron-card-head">
+    <div class="cron-card-title">
+      <span class="cron-icon-badge"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+      <strong>Cron 表达式</strong>
+      <label class="cron-inline-control">次数<input id="runCount" type="number" min="1" max="20" value="8"/></label>
+    </div>
+    <div id="cronTypeTabs" class="cron-type-tabs" role="tablist" aria-label="Cron 类型">
+      <button type="button" class="cron-type-tab active" data-type="java" role="tab" aria-selected="true">Java 6 段</button>
+      <button type="button" class="cron-type-tab" data-type="linux" role="tab" aria-selected="false">Linux 5 段</button>
+    </div>
+  </div>
+  <div class="cron-input-wrap">
+    <input id="cronInput" class="cron-input" type="text" name="tooldesk-cron-expression" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="秒 分 时 日 月 周，例如 0/5 * * * * ?"/>
+  </div>
+  <p id="cronDesc" class="cron-desc"></p>
+  <p id="cronError" class="cron-error" role="alert"></p>
+  <div id="cronPresets" class="cron-presets"></div>
+</section>
+
+<!-- RIGHT: next execution times -->
+<section class="cron-card">
+  <div class="cron-card-head">
+    <div class="cron-card-title">
+      <span class="cron-icon-badge"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+      <strong>下次执行时间</strong>
+    </div>
+  </div>
+  <div id="cronEmpty" class="cron-empty" hidden>
+    <span class="empty-icon">🕐</span>
+    输入 Cron 表达式后查看执行时间
+  </div>
+  <ul id="cronRuns" class="cron-run-list"></ul>
+</section>
+
+</div>
+</main>
+<script>
+const plugin=TooldeskPlugin.create({id:'tooldesk-cron-parser',capabilities:[]});const api=plugin.api;
+function byId(id){return document.getElementById(id)}
+function escapeHtml(v){return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+const CRON_TYPES={
+  java:{
+    label:'Java 6 段',
+    fields:6,
+    labels:['秒','分','时','日','月','周'],
+    step:'second',
+    placeholder:'秒 分 时 日 月 周，例如 0/5 * * * * ?',
+    emptyText:'输入 Java 6 段 Cron 表达式后查看执行时间',
+    errorText:'Java Cron 表达式需要 6 段：秒 分 时 日 月 周',
+    presets:[['0/10 * * * * ?','每 10 秒钟'],['0 * * * * ?','每分钟'],['0 0/5 * * * ?','每 5 分钟'],['0 0 * * * ?','每小时整点'],['0 0 0 * * ?','每天 00:00'],['0 0 12 * * ?','每天 12:00'],['0 0 0 ? * 1','每周一 00:00'],['0 0 0 1 * ?','每月 1 日'],['0 0 0 1 1 ?','每年 1 月 1 日'],['0 0 9-18 ? * 1-5','工作日 9-18 点']]
+  },
+  linux:{
+    label:'Linux 5 段',
+    fields:5,
+    labels:['分','时','日','月','周'],
+    step:'minute',
+    placeholder:'分 时 日 月 周，例如 */5 * * * *',
+    emptyText:'输入 Linux 5 段 Cron 表达式后查看执行时间',
+    errorText:'Linux Cron 表达式需要 5 段：分 时 日 月 周',
+    presets:[['* * * * *','每分钟'],['*/5 * * * *','每 5 分钟'],['0 * * * *','每小时整点'],['0 0 * * *','每天 00:00'],['0 12 * * *','每天 12:00'],['0 0 * * 1','每周一 00:00'],['0 0 1 * *','每月 1 日'],['0 0 1 1 *','每年 1 月 1 日'],['0 9-18 * * 1-5','工作日 9-18 点']]
+  }
+};
+let cronType='java';
+
+function currentType(){return CRON_TYPES[cronType]}
+
+// highlight active preset
+function setActivePreset(exp){
+  document.querySelectorAll('.cron-preset-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.exp===exp);
+  });
+}
+
+function renderPresets(){
+  byId('cronPresets').innerHTML=currentType().presets.map(([exp,label])=>'<button type="button" class="cron-preset-btn" data-exp="'+escapeHtml(exp)+'">'+label+'</button>').join('');
+  setActivePreset(byId('cronInput').value.trim());
+}
+
+function renderTypeTabs(){
+  document.querySelectorAll('.cron-type-tab').forEach(b=>{
+    const active=b.dataset.type===cronType;
+    b.classList.toggle('active',active);
+    b.setAttribute('aria-selected',String(active));
+  });
+  byId('cronInput').placeholder=currentType().placeholder;
+}
+
+function parts(exp){
+  const type=currentType();
+  const f=exp.trim().split(/\s+/).filter(Boolean);
+  if(f.length===type.fields)return{fields:f,labels:type.labels,step:type.step};
+  throw new Error(type.errorText);
+}
+function isCronForAnyType(exp){
+  const previousType=cronType;
+  try{
+    cronType='java';
+    parts(exp);
+    return true;
+  }catch{}
+  try{
+    cronType='linux';
+    parts(exp);
+    return true;
+  }catch{
+    return false;
+  }finally{
+    cronType=previousType;
+  }
+}
+function desc(exp){try{const i=parts(exp);return i.fields.map((f,idx)=>i.labels[idx]+'='+f).join(' · ')}catch{return''}}
+function field(v,min,max,cur,allowQuestion){return v.split(',').some(part=>{let[r,s]=part.split('/');s=Number(s||1);let a,b;if(r==='*'||(allowQuestion&&r==='?')){a=min;b=max}else if(r.includes('-')){[a,b]=r.split('-').map(Number)}else{a=b=Number(r)}return Number.isFinite(a)&&Number.isFinite(b)&&s>0&&cur>=a&&cur<=b&&(cur-a)%s===0})}
+function matches(exp,d){
+  const i=parts(exp);const f=i.fields;
+  if(f.length===6)return field(f[0],0,59,d.getSeconds(),false)&&field(f[1],0,59,d.getMinutes(),false)&&field(f[2],0,23,d.getHours(),false)&&field(f[3],1,31,d.getDate(),true)&&field(f[4],1,12,d.getMonth()+1,false)&&field(f[5],0,7,d.getDay(),true);
+  return field(f[0],0,59,d.getMinutes(),false)&&field(f[1],0,23,d.getHours(),false)&&field(f[2],1,31,d.getDate(),false)&&field(f[3],1,12,d.getMonth()+1,false)&&field(f[4],0,7,d.getDay(),false);
+}
+function fmt(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0')}
+function fixedNumber(value,min,max){const n=Number(value);return Number.isInteger(n)&&n>=min&&n<=max?n:null}
+function makeCursor(fields){
+  const d=new Date();
+  d.setMilliseconds(0);
+  if(fields.length===6){
+    const second=fixedNumber(fields[0],0,59);
+    const minute=fixedNumber(fields[1],0,59);
+    const hour=fixedNumber(fields[2],0,23);
+    if(second!==null&&minute!==null&&hour!==null){d.setHours(hour,minute,second,0);if(d<=new Date())d.setDate(d.getDate()+1);return{date:d,unit:'day',limit:370*25}}
+    if(second!==null&&minute!==null){d.setMinutes(minute,second,0);if(d<=new Date())d.setHours(d.getHours()+1);return{date:d,unit:'hour',limit:24*370*25}}
+    if(second!==null){d.setSeconds(second,0);if(d<=new Date())d.setMinutes(d.getMinutes()+1);return{date:d,unit:'minute',limit:60*24*370*25}}
+    d.setSeconds(d.getSeconds()+1);
+    return{date:d,unit:'second',limit:31622400};
+  }
+  const minute=fixedNumber(fields[0],0,59);
+  const hour=fixedNumber(fields[1],0,23);
+  if(minute!==null&&hour!==null){d.setHours(hour,minute,0,0);if(d<=new Date())d.setDate(d.getDate()+1);return{date:d,unit:'day',limit:370*25}}
+  if(minute!==null){d.setMinutes(minute,0,0);if(d<=new Date())d.setHours(d.getHours()+1);return{date:d,unit:'hour',limit:24*370*25}}
+  d.setSeconds(0,0);d.setMinutes(d.getMinutes()+1);
+  return{date:d,unit:'minute',limit:60*24*370*25};
+}
+function advanceCursor(cursor){
+  if(cursor.unit==='day')cursor.date.setDate(cursor.date.getDate()+1);
+  else if(cursor.unit==='hour')cursor.date.setHours(cursor.date.getHours()+1);
+  else if(cursor.unit==='minute')cursor.date.setMinutes(cursor.date.getMinutes()+1);
+  else cursor.date.setSeconds(cursor.date.getSeconds()+1);
+}
+function runs(exp,count){
+  const i=parts(exp);const out=[];const cursor=makeCursor(i.fields);
+  for(let n=0;n<cursor.limit&&out.length<count;n++){if(matches(exp,cursor.date))out.push(new Date(cursor.date));advanceCursor(cursor)}
+  return out;
+}
+
+function render(){
+  const exp=byId('cronInput').value.trim();
+  const inp=byId('cronInput');
+  const empty=byId('cronEmpty');
+  inp.classList.remove('valid','invalid');
+  byId('cronDesc').textContent='';
+  byId('cronError').textContent='';
+  byId('cronRuns').innerHTML='';
+  empty.querySelector('.empty-icon').textContent='🕐';
+  empty.lastChild.textContent=currentType().emptyText;
+
+  if(!exp){
+    empty.hidden=false;
+    setActivePreset('');
+    return;
+  }
+  try{
+    byId('cronDesc').textContent=desc(exp);
+    const count=Math.max(1,Math.min(20,Number(byId('runCount').value)||8));
+    const arr=runs(exp,count);
+    empty.hidden=true;
+    inp.classList.add('valid');
+    byId('cronRuns').innerHTML=arr.map((d,i)=>'<li class="cron-run-item"><span class="cron-run-index">'+(i+1)+'</span><span class="cron-run-time">'+fmt(d)+'</span></li>').join('');
+    setActivePreset(exp);
+  }catch(e){
+    byId('cronError').textContent=e.message||'Cron 表达式无效';
+    empty.hidden=false;
+    empty.querySelector('.empty-icon').textContent='⚠️';
+    empty.lastChild.textContent='表达式无效，请检查字段格式';
+    inp.classList.add('invalid');
+    setActivePreset('');
+  }
+}
+
+byId('cronInput').addEventListener('input',render);
+byId('runCount').addEventListener('input',render);
+byId('cronTypeTabs').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-type]');
+  if(!b||b.dataset.type===cronType)return;
+  cronType=b.dataset.type;
+  byId('cronInput').value='';
+  renderTypeTabs();
+  renderPresets();
+  render();
+});
+byId('cronPresets').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-exp]');
+  if(b){byId('cronInput').value=b.dataset.exp;render()}
+});
+
+// launch content support
+window.addEventListener('message',ev=>{
+  const c=ev.data||{};
+  const content=typeof c.content==='string'?c.content.trim():'';
+  if(c.source==='tooldesk-host'&&c.type==='launch-context'&&content&&isCronForAnyType(content)){
+    byId('cronInput').value=content;
+    render();
+  }
+});
+
+void plugin.connect().then(()=>{});
+renderTypeTabs();
+renderPresets();
+render();
+</script></body></html>

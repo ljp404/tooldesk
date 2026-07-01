@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>会计期间</title>
+    <style>
+* { box-sizing: border-box; } html, body { height: 100%; margin: 0; }
+body { background: #eef3f8; color: #111827; font-family: "Microsoft YaHei","Segoe UI",Arial,sans-serif; font-size: 13px; }
+button, input, select { font: inherit; } button { border: 0; cursor: pointer; }
+.tool-content { height: 100%; min-height: 0; } .field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-layout { display: grid; gap: 16px; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); }
+.fin-card { background: #fff; border: 1px solid #dbe4ef; border-radius: 8px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; position: relative; }
+.fin-head { align-items: center; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; min-height: 48px; padding: 0 14px; }
+.fin-head strong { font-size: 14px; font-weight: 800; }
+.fin-badge { align-items: center; background: #edf3ff; border-radius: 6px; color: #2563eb; display: inline-flex; font-size: 12px; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.fin-form { display: grid; gap: 12px; padding: 16px; }
+.fin-field { display: grid; gap: 8px; }
+.fin-field input, .fin-field select { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; height: 38px; outline: none; padding: 0 10px; width: 100%; }
+.fin-quick { display: flex; flex-wrap: wrap; gap: 8px; }
+.fin-quick button { background: #fff; border: 1px solid #bfdbfe; border-radius: 999px; color: #2563eb; font-size: 12px; font-weight: 800; min-height: 30px; padding: 0 12px; }
+.fin-note { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 7px; color: #1d4ed8; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 16px 16px; padding: 10px 12px; }
+.fin-copy { background: #fff; border: 1px solid #bfdbfe; border-radius: 7px; color: #2563eb; font-size: 12px; font-weight: 800; height: 30px; margin-left: auto; padding: 0 10px; }
+.fin-highlight { background: linear-gradient(180deg,#eff6ff 0%,#fff 100%); border: 1px solid #bfdbfe; border-radius: 8px; margin: 14px; padding: 16px; }
+.fin-highlight small { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-highlight strong { color: #1d4ed8; display: block; font-size: 22px; font-weight: 800; margin-top: 6px; }
+.fin-grid { display: grid; gap: 8px; padding: 0 14px 14px; }
+.fin-row { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; display: grid; gap: 12px; grid-template-columns: 120px minmax(0,1fr); min-height: 42px; padding: 0 12px; }
+.fin-row span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-row strong { color: #111827; font-size: 13px; font-weight: 800; }
+.fin-error { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 7px; color: #9a3412; font-size: 12px; font-weight: 700; margin: 0 16px; padding: 10px 12px; }
+.fin-toast { background: rgba(15,23,42,.88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; padding: 7px 10px; position: absolute; right: 14px; top: 56px; z-index: 2; }
+    
+/* tooldesk responsive plugin layout */
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content, .fin-layout { height: auto; min-height: calc(100dvh - 20px); overflow: visible; }
+  .fin-layout { grid-template-columns: 1fr !important; gap: 12px; }
+  .fin-card { min-height: auto; overflow: visible; }
+  .fin-body, .fin-table-wrap { overflow: auto; }
+  .fin-grid2, .fin-row { grid-template-columns: 1fr !important; }
+  .fin-actions, .fin-quick { flex-wrap: wrap; }
+  .fin-result { font-size: 18px; margin: 12px; }
+  input, select, textarea, button { max-width: 100%; }
+}
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content fin-layout">
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">期</span><strong>日期参数</strong></div>
+        <div class="fin-form">
+          <label class="field small fin-field">业务日期<input id="date" type="date" /></label>
+          <label class="field small fin-field">会计年度起始月<select id="fiscalStart">
+            <option value="1">1 月</option>
+            <option value="2">2 月</option>
+            <option value="3">3 月</option>
+            <option value="4">4 月</option>
+            <option value="5">5 月</option>
+            <option value="6">6 月</option>
+            <option value="7">7 月</option>
+            <option value="8">8 月</option>
+            <option value="9">9 月</option>
+            <option value="10">10 月</option>
+            <option value="11">11 月</option>
+            <option value="12">12 月</option>
+          </select></label>
+          <div class="fin-quick"><button type="button" id="today">今天</button><button type="button" data-month="1">自然年</button><button type="button" data-month="4">四月起算</button></div>
+        </div>
+        <p class="fin-note">会计年度以起始月所在自然年为年度名称。例：起始月 4 月时，2025-03-15 属于 2024 会计年度第 12 期。</p>
+        <p id="error" class="fin-error" hidden></p>
+      </section>
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">期</span><strong>期间解析</strong><button id="copy" class="fin-copy">复制结果</button></div>
+        <span id="toast" class="fin-toast" hidden></span>
+        <div class="fin-highlight"><small>会计期间</small><strong id="periodLabel">-</strong></div>
+        <div id="grid" class="fin-grid"></div>
+      </section>
+    </main>
+<script>
+const MONTH_NAMES = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+      const $ = (id) => document.getElementById(id);
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function pad2(n) { return String(n).padStart(2, '0'); }
+      function formatDate(date) { return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`; }
+      function monthEnd(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0); }
+      function parseAccountingPeriod(dateValue, fiscalStart) {
+        if (!dateValue) return { valid: false, error: '请选择日期' };
+        const date = new Date(`${dateValue}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return { valid: false, error: '日期无效' };
+        const year = date.getFullYear(); const month = date.getMonth() + 1; const day = date.getDate();
+        const fiscalYear = month >= fiscalStart ? year : year - 1;
+        const accountingMonth = month >= fiscalStart ? month - fiscalStart + 1 : 12 - fiscalStart + month + 1;
+        const quarter = Math.ceil(accountingMonth / 3);
+        const quarterInYear = ['第一','第二','第三','第四'][quarter - 1];
+        const naturalQuarter = Math.ceil(month / 3);
+        const end = monthEnd(date);
+        const daysInMonth = end.getDate();
+        const weekDay = ['日','一','二','三','四','五','六'][date.getDay()];
+        return {
+          valid: true,
+          input: dateValue,
+          calendarYear: year,
+          calendarMonth: month,
+          calendarMonthName: MONTH_NAMES[month - 1],
+          day,
+          weekDay,
+          fiscalStart,
+          fiscalYear,
+          accountingMonth,
+          quarter,
+          quarterLabel: `${fiscalYear}会计年度${quarterInYear}季度（Q${quarter}）`,
+          periodLabel: `${fiscalYear}会计年度第${accountingMonth}期`,
+          naturalQuarter: `自然年 Q${naturalQuarter}`,
+          monthEnd: formatDate(end),
+          daysInMonth,
+          isMonthEnd: day === daysInMonth,
+          isQuarterEnd: [3, 6, 9, 12].includes(accountingMonth) && day === daysInMonth,
+          isYearEnd: accountingMonth === 12 && day === daysInMonth
+        };
+      }
+      let lastResult = null;
+      function applyLaunchContent(content) {
+        const text = String(content || '').trim();
+        const match = /\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.exec(text);
+        if (!match) return;
+        $('date').value = match[0].replace(/[/.]/g, '-');
+        render();
+      }
+      function render() {
+        const fiscalStart = Number($('fiscalStart').value) || 1;
+        const result = parseAccountingPeriod($('date').value, fiscalStart);
+        if (!result.valid) {
+          lastResult = null; $('error').textContent = result.error; $('error').hidden = false;
+          $('periodLabel').textContent = '-'; $('grid').replaceChildren(); return;
+        }
+        lastResult = result; $('error').hidden = true;
+        $('periodLabel').textContent = result.periodLabel;
+        const rows = [
+          ['业务日期', result.input],
+          ['自然年月', `${result.calendarYear}年${result.calendarMonth}月（${result.calendarMonthName}）`],
+          ['星期', `星期${result.weekDay}`],
+          ['会计年度', `${result.fiscalYear}年度（${result.fiscalStart}月起算）`],
+          ['会计月份', `第 ${result.accountingMonth} 期 / 共 12 期`],
+          ['会计季度', result.quarterLabel],
+          ['自然季度', result.naturalQuarter],
+          ['本月最后一天', result.monthEnd],
+          ['本月天数', `${result.daysInMonth} 天`],
+          ['是否月末', result.isMonthEnd ? '是' : '否'],
+          ['是否季末', result.isQuarterEnd ? '是' : '否'],
+          ['是否年末', result.isYearEnd ? '是（会计年度末）' : '否']
+        ];
+        $('grid').replaceChildren(...rows.map(([label, value]) => {
+          const row = document.createElement('div'); row.className = 'fin-row';
+          row.innerHTML = `<span>${label}</span><strong>${value}</strong>`; return row;
+        }));
+      }
+      $('fiscalStart').value = '1';
+      const today = new Date(); $('date').value = formatDate(today);
+      $('today').addEventListener('click', () => { $('date').value = formatDate(new Date()); render(); });
+      document.querySelectorAll('[data-month]').forEach((button) => {
+        button.addEventListener('click', () => { $('fiscalStart').value = button.dataset.month; render(); });
+      });
+      ['date','fiscalStart'].forEach((id) => { $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+      $('copy').addEventListener('click', async () => {
+        if (!lastResult) return;
+        const text = [
+          `业务日期: ${lastResult.input}`,
+          `会计期间: ${lastResult.periodLabel}`,
+          `会计季度: ${lastResult.quarterLabel}`,
+          `会计年度: ${lastResult.fiscalYear}`,
+          `月末日期: ${lastResult.monthEnd}`
+        ].join('\n');
+        await api.copyText(text);
+        $('toast').textContent = '已复制'; $('toast').hidden = false; setTimeout(() => { $('toast').hidden = true; }, 1600);
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-accounting-period', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tooldesk 截图</title>
+    <link rel="stylesheet" href="./screenshot-toolbar.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        background: transparent;
+        cursor: crosshair;
+        height: 100%;
+        overflow: hidden;
+        user-select: none;
+        width: 100%;
+      }
+
+      body.scroll-capture-mode {
+        cursor: default;
+      }
+
+      body.scroll-capture-mode #screen-border {
+        display: none !important;
+      }
+
+      body.scroll-capture-mode #selection {
+        box-shadow: none;
+      }
+
+      body.recording-region-mode,
+      body.recording-region-mode * {
+        cursor: none !important;
+      }
+
+      body.mosaic-cursor-active,
+      body.mosaic-cursor-active #root,
+      body.mosaic-cursor-active #selection,
+      body.mosaic-cursor-active #paint-layer,
+      body.mosaic-cursor-active #annotate-layer,
+      body.mosaic-cursor-active #selection-handles,
+      body.mosaic-cursor-active .selection-handle {
+        cursor: none !important;
+      }
+
+      #root {
+        height: 100%;
+        position: relative;
+        width: 100%;
+        transition: none;
+      }
+
+      #root.overlay-pending {
+        opacity: 0;
+        transition: none;
+      }
+
+      #screen-border {
+        animation: none;
+        border: 2px solid #3b82f6;
+        box-sizing: border-box;
+        inset: 0;
+        pointer-events: none;
+        position: fixed;
+        transition: none;
+        z-index: 4;
+      }
+
+      #screen-border[hidden] {
+        display: none !important;
+      }
+
+      #selection-mask {
+        display: none;
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: 1;
+      }
+
+      #selection-mask .selection-mask-piece {
+        background: rgba(15, 23, 42, 0.42);
+        position: absolute;
+      }
+
+      #selection-drag {
+        border: 2px solid #3b82f6;
+        box-sizing: border-box;
+        display: none;
+        left: 0;
+        pointer-events: none;
+        position: fixed;
+        top: 0;
+        transform: translate3d(0, 0, 0);
+        will-change: transform, width, height;
+        z-index: 5;
+      }
+
+      #selection-drag[hidden] {
+        display: none !important;
+      }
+
+      #selection {
+        border: 2px solid #3b82f6;
+        display: none;
+        overflow: visible;
+        pointer-events: none;
+        position: absolute;
+        z-index: 2;
+      }
+
+      #selection.with-mask {
+        box-shadow: none;
+      }
+
+      #selection.recording-region {
+        border-color: transparent;
+        outline: 2px solid #3b82f6;
+        outline-offset: 0;
+      }
+
+      #selection.playback-region {
+        overflow: hidden;
+        pointer-events: auto;
+      }
+
+      #recording-playback {
+        display: none;
+        flex-direction: column;
+        inset: 0;
+        position: absolute;
+        z-index: 6;
+      }
+
+      #selection.playback-region #recording-playback {
+        display: flex;
+      }
+
+      #selection.playback-region #selection-handles,
+      #selection.playback-region #annotate-layer,
+      #selection.playback-region #paint-layer,
+      #selection.playback-region #text-layer {
+        display: none !important;
+      }
+
+      .recording-playback-video-wrap {
+        background: #000;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        position: relative;
+      }
+
+      #recording-playback-video {
+        display: block;
+        left: 0;
+        position: absolute;
+        top: 0;
+      }
+
+      .recording-playback-controls {
+        align-items: center;
+        background: rgba(15, 23, 42, 0.92);
+        display: flex;
+        flex-shrink: 0;
+        gap: 8px;
+        padding: 6px 8px;
+        pointer-events: auto;
+        position: relative;
+        z-index: 2;
+      }
+
+      #recording-playback-toggle {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 4px;
+        color: #e2e8f0;
+        cursor: pointer;
+        display: inline-flex;
+        flex-shrink: 0;
+        height: 24px;
+        justify-content: center;
+        padding: 0;
+        width: 24px;
+      }
+
+      #recording-playback-toggle:hover {
+        background: rgba(148, 163, 184, 0.18);
+        color: #ffffff;
+      }
+
+      #recording-playback-toggle .recording-playback-icon {
+        display: block;
+        fill: currentColor;
+        height: 16px;
+        width: 16px;
+      }
+
+      #recording-playback-toggle[data-state='playing'] .recording-playback-icon-play {
+        display: none;
+      }
+
+      #recording-playback-toggle[data-state='paused'] .recording-playback-icon-pause {
+        display: none;
+      }
+
+      #recording-playback-seek {
+        accent-color: #3b82f6;
+        cursor: pointer;
+        flex: 1;
+        height: 4px;
+      }
+
+      #recording-playback-time {
+        color: #e2e8f0;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        min-width: 72px;
+        text-align: right;
+      }
+
+      #selection-handles[hidden] {
+        display: none !important;
+      }
+
+      .selection-handle {
+        background: #ffffff;
+        border: 1.5px solid #64748b;
+        box-sizing: border-box;
+        height: 8px;
+        pointer-events: none;
+        position: absolute;
+        width: 8px;
+      }
+
+      .selection-handle.nw {
+        left: -5px;
+        top: -5px;
+      }
+
+      .selection-handle.n {
+        left: 50%;
+        top: -5px;
+        transform: translateX(-50%);
+      }
+
+      .selection-handle.ne {
+        right: -5px;
+        top: -5px;
+      }
+
+      .selection-handle.w {
+        left: -5px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .selection-handle.e {
+        right: -5px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .selection-handle.sw {
+        bottom: -5px;
+        left: -5px;
+      }
+
+      .selection-handle.s {
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .selection-handle.se {
+        bottom: -5px;
+        right: -5px;
+      }
+
+      #annotate-layer {
+        inset: 0;
+        overflow: visible;
+        pointer-events: none;
+        position: absolute;
+        z-index: 1;
+      }
+
+      #annotate-layer.interactive {
+        pointer-events: auto;
+        z-index: 3;
+      }
+
+      #paint-layer {
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        z-index: 2;
+      }
+
+      #paint-layer.interactive {
+        pointer-events: auto;
+        z-index: 3;
+      }
+
+      #annotate-layer .annotate-shape {
+        fill: none;
+        pointer-events: none;
+      }
+
+      #annotate-layer .annotate-selection-handle {
+        fill: #ffffff;
+        pointer-events: none;
+        stroke: #64748b;
+        stroke-width: 1.5;
+      }
+
+      #annotate-layer .annotate-text {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        font-weight: 600;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .annotate-text-input {
+        background: transparent;
+        border: 2px solid currentColor;
+        border-radius: 4px;
+        cursor: text;
+        font:
+          600 16px/1.35 'Segoe UI',
+          system-ui,
+          sans-serif;
+        max-width: calc(100vw - 32px);
+        min-height: 28px;
+        min-width: calc(2em + 20px);
+        outline: none;
+        overflow: hidden;
+        padding: 4px 8px;
+        pointer-events: auto;
+        position: absolute;
+        resize: none;
+        width: calc(2em + 20px);
+        z-index: 5;
+      }
+
+      #text-layer {
+        inset: 0;
+        overflow: hidden;
+        pointer-events: auto;
+        position: absolute;
+        user-select: text;
+        z-index: 1;
+      }
+
+      #text-layer .ocr-word {
+        box-sizing: border-box;
+        color: transparent;
+        cursor: text;
+        font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        line-height: 1;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        white-space: nowrap;
+      }
+
+      #text-layer .ocr-line {
+        color: transparent;
+        cursor: text;
+        line-height: 1.2;
+        position: absolute;
+        user-select: text;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      #text-layer.selectable .ocr-word:hover {
+        background: rgba(59, 130, 246, 0.18);
+      }
+
+      #text-layer .ocr-word::selection,
+      #text-layer .ocr-line::selection {
+        background: rgba(59, 130, 246, 0.35);
+        color: transparent;
+      }
+
+      #text-layer .translate-result {
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(59, 130, 246, 0.28);
+        border-radius: 6px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        color: #0f172a;
+        cursor: text;
+        inset: 4px;
+        line-height: 1.55;
+        overflow: auto;
+        padding: 8px 10px;
+        position: absolute;
+        user-select: text;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      #text-layer .translate-line {
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 3px;
+        box-decoration-break: clone;
+        color: #111827;
+        cursor: text;
+        line-height: 1.18;
+        overflow: visible;
+        padding: 1px 3px;
+        position: absolute;
+        user-select: text;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      #ocr-status {
+        background: rgba(15, 23, 42, 0.88);
+        border-radius: 6px;
+        color: rgba(255, 255, 255, 0.92);
+        display: none;
+        font:
+          11px/1.4 'Segoe UI',
+          system-ui,
+          sans-serif;
+        padding: 3px 8px;
+        pointer-events: none;
+        position: absolute;
+        white-space: nowrap;
+        z-index: 2;
+      }
+
+      #ocr-result-open {
+        background: rgba(37, 99, 235, 0.92);
+        border: 0;
+        border-radius: 6px;
+        color: #ffffff;
+        cursor: pointer;
+        display: inline-flex;
+        font:
+          11px/1.4 'Segoe UI',
+          system-ui,
+          sans-serif;
+        padding: 3px 8px;
+        pointer-events: auto;
+        position: absolute;
+        white-space: nowrap;
+        z-index: 3;
+      }
+
+      #ocr-result-open[hidden] {
+        display: none !important;
+      }
+
+      #ocr-result-panel {
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(59, 130, 246, 0.28);
+        border-radius: 8px;
+        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.18);
+        color: #0f172a;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: min(460px, calc(100vh - 32px));
+        min-width: 320px;
+        padding: 10px;
+        pointer-events: auto;
+        position: absolute;
+        width: min(420px, calc(100vw - 32px));
+        z-index: 20;
+      }
+
+      #ocr-result-panel[hidden] {
+        display: none !important;
+      }
+
+      .ocr-result-panel-head {
+        align-items: center;
+        cursor: move;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        user-select: none;
+      }
+
+      .ocr-result-panel-head strong {
+        font:
+          600 13px/1.4 'Segoe UI',
+          system-ui,
+          sans-serif;
+      }
+
+      .ocr-result-panel-actions {
+        display: inline-flex;
+        gap: 6px;
+      }
+
+      .ocr-result-panel-actions button {
+        background: #f8fafc;
+        border: 1px solid #dbe3ef;
+        border-radius: 6px;
+        color: #0f172a;
+        cursor: pointer;
+        font:
+          12px/1.4 'Segoe UI',
+          system-ui,
+          sans-serif;
+        padding: 4px 8px;
+      }
+
+      .ocr-result-panel-actions button:hover {
+        background: #eef4ff;
+        border-color: #bfdbfe;
+      }
+
+      #ocr-result-text {
+        background: #ffffff;
+        border: 1px solid #dbe3ef;
+        border-radius: 6px;
+        color: #111827;
+        flex: 0 0 auto;
+        font:
+          14px/1.65 'Microsoft YaHei UI',
+          'Microsoft YaHei',
+          'PingFang SC',
+          sans-serif;
+        min-height: 72px;
+        outline: none;
+        padding: 8px;
+        resize: none;
+      }
+
+      #size-label {
+        background: rgba(15, 23, 42, 0.82);
+        border-radius: 6px;
+        color: #ffffff;
+        display: none;
+        font:
+          12px/1.4 'Segoe UI',
+          system-ui,
+          sans-serif;
+        padding: 4px 8px;
+        pointer-events: none;
+        position: absolute;
+        white-space: nowrap;
+      }
+
+      #toolbar-wrap {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        pointer-events: auto;
+        position: absolute;
+        z-index: 3;
+      }
+
+      #toolbar {
+        display: inline-flex;
+      }
+
+      #hint {
+        bottom: 18px;
+        color: rgba(255, 255, 255, 0.88);
+        font:
+          12px/1.5 'Segoe UI',
+          system-ui,
+          sans-serif;
+        left: 50%;
+        pointer-events: none;
+        position: fixed;
+        text-align: center;
+        transform: translateX(-50%);
+      }
+
+      #picker-info {
+        background: rgba(55, 65, 81, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        box-shadow:
+          0 8px 20px rgba(15, 23, 42, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.94);
+        display: inline-flex;
+        flex-direction: column;
+        font:
+          11px/1.4 'Segoe UI',
+          system-ui,
+          sans-serif;
+        gap: 4px;
+        padding: 7px 8px;
+        pointer-events: none;
+        position: fixed;
+        white-space: nowrap;
+        z-index: 6;
+      }
+
+      #picker-info[hidden] {
+        display: none !important;
+      }
+
+      #picker-info .picker-info-divider {
+        color: rgba(255, 255, 255, 0.28);
+      }
+
+      #picker-info .picker-magnifier {
+        background: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.38);
+        border-radius: 6px;
+        box-shadow: inset 0 0 0 1px rgba(31, 41, 55, 0.18);
+        display: block;
+        height: 74px;
+        image-rendering: pixelated;
+        width: 98px;
+      }
+
+      #picker-info .picker-info-swatch {
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 3px;
+        display: inline-block;
+        flex-shrink: 0;
+        height: 12px;
+        width: 12px;
+      }
+
+      #picker-info .picker-info-hint {
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      #picker-info .picker-info-hint kbd {
+        background: rgba(255, 255, 255, 0.14);
+        border-radius: 3px;
+        font-family: inherit;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 0 4px;
+      }
+
+      #mosaic-cursor {
+        border: 1.5px solid rgba(15, 23, 42, 0.82);
+        border-radius: 999px;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.86),
+          0 2px 8px rgba(15, 23, 42, 0.18);
+        height: var(--mosaic-cursor-size, 14px);
+        left: 0;
+        pointer-events: none;
+        position: fixed;
+        top: 0;
+        transform: translate(-50%, -50%);
+        width: var(--mosaic-cursor-size, 14px);
+        z-index: 11;
+      }
+
+      #mosaic-cursor[hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" class="overlay-pending">
+      <div id="screen-border" hidden aria-hidden="true"></div>
+      <div id="selection-drag" hidden aria-hidden="true"></div>
+      <div id="selection-mask" aria-hidden="true">
+        <div class="selection-mask-piece" data-mask-piece="top"></div>
+        <div class="selection-mask-piece" data-mask-piece="right"></div>
+        <div class="selection-mask-piece" data-mask-piece="bottom"></div>
+        <div class="selection-mask-piece" data-mask-piece="left"></div>
+      </div>
+      <div id="selection" aria-hidden="true">
+        <svg id="annotate-layer" aria-hidden="true"></svg>
+        <canvas id="paint-layer" aria-hidden="true"></canvas>
+        <div id="text-layer" hidden></div>
+        <div id="ocr-status" aria-live="polite"></div>
+        <button id="ocr-result-open" type="button" hidden>查看文字</button>
+        <div id="ocr-result-panel" hidden>
+          <div class="ocr-result-panel-head">
+            <strong>OCR 识别结果</strong>
+            <div class="ocr-result-panel-actions">
+              <button id="ocr-result-copy" type="button">复制</button>
+              <button id="ocr-result-close" type="button">关闭</button>
+            </div>
+          </div>
+          <textarea id="ocr-result-text" spellcheck="false"></textarea>
+        </div>
+        <div id="recording-playback" hidden>
+          <div class="recording-playback-video-wrap">
+            <video id="recording-playback-video" playsinline preload="auto"></video>
+          </div>
+          <div class="recording-playback-controls">
+            <button id="recording-playback-toggle" type="button" data-state="paused" title="播放" aria-label="播放">
+              <svg class="recording-playback-icon recording-playback-icon-play" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 5.14v14.72a1 1 0 0 0 1.5.86l11.04-7.36a1 1 0 0 0 0-1.72L9.5 4.28A1 1 0 0 0 8 5.14Z" />
+              </svg>
+              <svg class="recording-playback-icon recording-playback-icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 6a2 2 0 0 1 2 2v8a2 2 0 1 1-4 0V8a2 2 0 0 1 2-2Zm8 0a2 2 0 0 1 2 2v8a2 2 0 1 1-4 0V8a2 2 0 0 1 2-2Z" />
+              </svg>
+            </button>
+            <input id="recording-playback-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="播放进度" />
+            <span id="recording-playback-time">00:00 / 00:00</span>
+          </div>
+        </div>
+        <div id="selection-handles" aria-hidden="true" hidden>
+          <span class="selection-handle nw"></span>
+          <span class="selection-handle n"></span>
+          <span class="selection-handle ne"></span>
+          <span class="selection-handle w"></span>
+          <span class="selection-handle e"></span>
+          <span class="selection-handle sw"></span>
+          <span class="selection-handle s"></span>
+          <span class="selection-handle se"></span>
+        </div>
+      </div>
+      <div id="size-label" aria-hidden="true"></div>
+      <div id="picker-info" hidden>
+        <canvas id="picker-magnifier" class="picker-magnifier" width="98" height="74" aria-hidden="true"></canvas>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span id="picker-coords">0, 0</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span id="picker-swatch" class="picker-info-swatch" aria-hidden="true"></span>
+          <span id="picker-hex">--</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span id="picker-hint" class="picker-info-hint">按 <kbd>Ctrl</kbd>+<kbd>C</kbd> 复制并退出</span>
+        </div>
+      </div>
+      <div id="mosaic-cursor" aria-hidden="true" hidden></div>
+      <div id="toolbar-wrap">
+        <div id="toolbar" class="screenshot-toolbar" role="toolbar" aria-label="截图操作">
+          <button
+            type="button"
+            class="screenshot-toolbar-drag-handle"
+            data-action="drag-toolbar"
+            title="拖动工具栏"
+            aria-label="拖动工具栏"
+          >
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M11 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm6 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM11 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm6 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM11 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm6 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z" />
+            </svg>
+          </button>
+          <button type="button" data-tool="rect" title="矩形" aria-label="矩形">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 3h16c.55 0 1 .45 1 1v16c0 .55-.45 1-1 1H4c-.55 0-1-.45-1-1V4c0-.55.45-1 1-1Zm1 2v14h14V5H5Z" />
+            </svg>
+          </button>
+          <button type="button" data-tool="ellipse" title="椭圆" aria-label="椭圆">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10Zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+            </svg>
+          </button>
+          <button type="button" data-tool="arrow" title="箭头" aria-label="箭头">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m16 9.41-8.6 8.61-1.42-1.41L14.59 8H7V6h11v11h-2V9.41Z" />
+            </svg>
+          </button>
+          <button type="button" data-tool="brush" title="画笔" aria-label="画笔">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m15.73 9.58-1.42-1.42L5 17.48v1.41h1.41l9.32-9.31Zm1.41-1.42 1.42-1.41-1.42-1.42-1.41 1.42 1.41 1.41ZM7.24 20.89H3v-4.24L16.44 3.21a1 1 0 0 1 1.41 0l2.83 2.83a1 1 0 0 1 0 1.41L7.24 20.89Z" />
+            </svg>
+          </button>
+          <button type="button" data-tool="mosaic" title="马赛克" aria-label="马赛克">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 5h6v6H5V5Zm8 0h6v6h-6V5ZM5 13h6v6H5v-6Zm8 0h6v6h-6v-6Z" />
+            </svg>
+          </button>
+          <button type="button" data-tool="text" title="文本" aria-label="文本">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 6v15H8V6H2V4h16v2h-8Zm9 8v7h-2v-7h-3v-2h8v2h-3Z" />
+            </svg>
+          </button>
+          <span class="screenshot-toolbar-divider" aria-hidden="true"></span>
+          <button type="button" data-action="record" title="录屏" aria-label="录屏">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4.5 7.75A1.75 1.75 0 0 1 6.25 6h7.5a1.75 1.75 0 0 1 1.75 1.75v8.5A1.75 1.75 0 0 1 13.75 18h-7.5a1.75 1.75 0 0 1-1.75-1.75v-8.5Z" />
+              <path d="m15.5 10 4-2.5v9l-4-2.5" />
+            </svg>
+          </button>
+          <button type="button" data-action="scroll-capture" title="滚动截图" aria-label="滚动截图">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7.5 7v9.5" />
+              <path d="m4.75 13.75 2.75 2.75 2.75-2.75" />
+              <path d="M16.5 17v-9.5" />
+              <path d="m13.75 10.25 2.75-2.75 2.75 2.75" />
+            </svg>
+          </button>
+          <button type="button" data-action="ocr" title="文字识别" aria-label="文字识别">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 5c0-.55.45-1 1-1h4v2H6v3H4V5Zm14 1h-3V4h4c.55 0 1 .45 1 1v4h-2V6ZM6 15v3h3v2H5c-.55 0-1-.45-1-1v-4h2Zm14 0v4c0 .55-.45 1-1 1h-4v-2h3v-3h2ZM8 9h5v2h-1.5v5h-2v-5H8V9Zm8.5 0 3 7h-2.05l-.43-1.2h-2.54L14.05 16H12l3-7h1.5Zm-1.35 4h1.7L16 10.65 15.15 13Z" />
+            </svg>
+          </button>
+          <button type="button" data-action="translate" title="翻译" aria-label="翻译">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18.5 10 22.9 21h-2.15l-1.21-3h-4.08l-1.2 3H12.1l4.4-11h2ZM10 2v2h6v2h-1.97a18.12 18.12 0 0 1-3.62 6.3c.72.65 1.5 1.22 2.34 1.71L12 15.89a18.8 18.8 0 0 1-3-2.17 18.6 18.6 0 0 1-6.2 3.55l-.54-1.93a16.6 16.6 0 0 0 5.33-3.04A17.44 17.44 0 0 1 4.77 8h2.24A15.38 15.38 0 0 0 9 10.88 15.63 15.63 0 0 0 11.91 6H2V4h6V2h2Zm7.5 10.89L16.25 16h2.5l-1.25-3.11Z" />
+            </svg>
+          </button>
+          <button type="button" data-action="pin" title="贴图" aria-label="贴图">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m13.83 1.69 8.48 8.49-1.41 1.41-.71-.71-4.24 4.25-.71 3.53-1.41 1.42-4.25-4.25-4.94 4.95-1.42-1.41 4.95-4.95-4.24-4.24 1.41-1.42 3.54-.7 4.24-4.25-.71-.71 1.42-1.41Zm.7 3.54L9.86 9.9l-2.82.56 6.5 6.5.57-2.82 4.67-4.67-4.25-4.24Z" />
+            </svg>
+          </button>
+          <button type="button" data-action="undo" title="撤销" aria-label="撤销" disabled>
+            <svg class="toolbar-remix-icon screenshot-undo-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M19 10v9h-2v-7H6.83l3.95 3.95-1.42 1.41L3 11l6.36-6.36 1.42 1.41L6.83 10H19Z" />
+            </svg>
+          </button>
+          <button type="button" data-action="download" title="下载" aria-label="下载">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M13 10h5l-6 6-6-6h5V3h2v7ZM4 19h16v-7h2v8c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1v-8h2v7Z" />
+            </svg>
+          </button>
+          <button type="button" data-action="close" title="关闭" aria-label="关闭">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m12 10.59 4.95-4.95 1.41 1.41L13.41 12l4.95 4.95-1.41 1.41L12 13.41l-4.95 4.95-1.41-1.41L10.59 12 5.64 7.05l1.41-1.41L12 10.59Z" />
+            </svg>
+          </button>
+          <button type="button" data-action="done" class="done" title="完成（复制并退出）" aria-label="完成">
+            <svg class="toolbar-remix-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m10 15.17 9.19-9.19 1.42 1.41L10 18 3.64 11.64l1.41-1.42L10 15.17Z" />
+            </svg>
+          </button>
+        </div>
+        <div id="annotate-options-wrap" class="annotate-options-wrap" hidden>
+          <div id="annotate-options" class="screenshot-toolbar screenshot-annotate-options" role="toolbar" aria-label="标注选项">
+            <div class="annotate-options-row">
+              <div class="annotate-shape-controls" data-group="stroke">
+                <button type="button" class="annotate-stroke-trigger" title="线条粗细" aria-label="线条粗细" aria-haspopup="true">
+                  <svg class="annotate-stroke-weight-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="annotate-stroke-weight-line annotate-stroke-weight-line--thin" d="M5 7h14" />
+                    <path class="annotate-stroke-weight-line annotate-stroke-weight-line--mid" d="M5 12h14" />
+                    <path class="annotate-stroke-weight-line annotate-stroke-weight-line--thick" d="M5 17h14" />
+                  </svg>
+                </button>
+                <div class="annotate-line-style-picker" data-group="line-style">
+                  <button
+                    type="button"
+                    class="annotate-line-style-trigger"
+                    title="线条样式"
+                    aria-label="线条样式"
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                  >
+                    <svg class="annotate-line-style-icon" viewBox="0 0 40 16" aria-hidden="true">
+                      <path id="annotate-line-preview" d="M2 8h36" />
+                    </svg>
+                    <svg class="annotate-line-style-caret" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M8 10l4 4 4-4" />
+                    </svg>
+                  </button>
+                  <div class="annotate-line-style-menu" role="listbox" aria-label="线条样式">
+                    <button type="button" class="annotate-line-style-option" data-line-style="solid" title="实线" aria-label="实线">
+                      <svg class="annotate-line-style-option-icon" viewBox="0 0 40 16" aria-hidden="true">
+                        <path d="M2 8h36" />
+                      </svg>
+                    </button>
+                    <button type="button" class="annotate-line-style-option" data-line-style="dash1" title="虚线间距 1" aria-label="虚线间距 1">
+                      <svg class="annotate-line-style-option-icon" viewBox="0 0 40 16" aria-hidden="true">
+                        <path d="M2 8h36" stroke-dasharray="4 4" />
+                      </svg>
+                    </button>
+                    <button type="button" class="annotate-line-style-option" data-line-style="dash2" title="虚线间距 2" aria-label="虚线间距 2">
+                      <svg class="annotate-line-style-option-icon" viewBox="0 0 40 16" aria-hidden="true">
+                        <path d="M2 8h36" stroke-dasharray="8 6" />
+                      </svg>
+                    </button>
+                    <button type="button" class="annotate-line-style-option" data-line-style="dash3" title="虚线间距 3" aria-label="虚线间距 3">
+                      <svg class="annotate-line-style-option-icon" viewBox="0 0 40 16" aria-hidden="true">
+                        <path d="M2 8h36" stroke-dasharray="12 8" />
+                      </svg>
+                    </button>
+                    <button type="button" class="annotate-line-style-option" data-line-style="dash4" title="虚线间距 4" aria-label="虚线间距 4">
+                      <svg class="annotate-line-style-option-icon" viewBox="0 0 40 16" aria-hidden="true">
+                        <path d="M2 8h36" stroke-dasharray="16 10" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="annotate-brush-controls" data-group="brush">
+                <button type="button" class="annotate-brush-trigger" title="画笔粗细" aria-label="画笔粗细" aria-haspopup="true">
+                  <span id="annotate-brush-preview" class="annotate-brush-preview" aria-hidden="true"></span>
+                </button>
+              </div>
+              <span class="screenshot-toolbar-divider annotate-option-divider" aria-hidden="true"></span>
+              <div class="annotate-option-group annotate-color-group" data-group="color">
+                <button type="button" data-color="#ef4444" title="红色" aria-label="红色" style="--swatch: #ef4444"></button>
+                <button type="button" data-color="#f59e0b" title="橙色" aria-label="橙色" style="--swatch: #f59e0b"></button>
+                <button type="button" data-color="#22c55e" title="绿色" aria-label="绿色" style="--swatch: #22c55e"></button>
+                <button type="button" data-color="#3b82f6" title="蓝色" aria-label="蓝色" style="--swatch: #3b82f6"></button>
+                <button type="button" data-color="#ffffff" title="白色" aria-label="白色" style="--swatch: #ffffff"></button>
+                <button type="button" data-color="#111827" title="黑色" aria-label="黑色" style="--swatch: #111827"></button>
+              </div>
+            </div>
+          </div>
+          <div class="annotate-tertiary annotate-stroke-tertiary screenshot-toolbar" role="group" aria-label="线条粗细">
+            <span id="annotate-stroke-value" class="annotate-tertiary-value">2px</span>
+            <input
+              id="annotate-stroke-slider"
+              class="annotate-tertiary-slider"
+              type="range"
+              min="2"
+              max="12"
+              step="1"
+              value="2"
+              aria-label="拖动调整线条粗细"
+            />
+          </div>
+          <div class="annotate-tertiary annotate-brush-tertiary screenshot-toolbar" role="group" aria-label="画笔粗细">
+            <span id="annotate-brush-value" class="annotate-tertiary-value">14px</span>
+            <input
+              id="annotate-brush-slider"
+              class="annotate-tertiary-slider"
+              type="range"
+              min="2"
+              max="32"
+              step="1"
+              value="14"
+              aria-label="拖动调整画笔粗细"
+            />
+          </div>
+        </div>
+      </div>
+      <p id="hint"></p>
+    </div>
+    <script src="./tauri-screenshot-overlay-bridge.js"></script>
+    <script src="./screenshot-overlay.js"></script>
+  </body>
+</html>

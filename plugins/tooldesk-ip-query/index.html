@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IP 查询</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+[hidden] { display: none !important; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #2563eb; color: #fff; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+
+
+
+.ip-query-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.ip-query-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.ip-query-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.ip-query-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.ip-query-icon-badge {
+  align-items: center;
+  background: #ecfdf5;
+  border-radius: 6px;
+  color: #059669;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.ip-query-icon-badge .app-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.ip-query-loading {
+  color: #059669;
+  font-size: 12px;
+  font-weight: 800;
+  margin-left: auto;
+}
+
+.ip-query-primary {
+  border-bottom: 1px solid #e5e7eb;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.ip-query-primary > span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tool-panel .ip-query-primary button {
+  background: transparent;
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 24px;
+  justify-content: flex-start;
+  line-height: 1.2;
+  min-height: 34px;
+  overflow-wrap: anywhere;
+  padding: 0;
+  text-align: left;
+}
+
+.tool-panel .ip-query-primary button:hover {
+  background: transparent;
+  color: #2563eb;
+}
+
+.tool-panel .ip-query-primary button:disabled {
+  color: #111827;
+  cursor: default;
+  opacity: 1;
+}
+
+.ip-query-primary p {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.ip-query-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.ip-query-field {
+  display: grid;
+  gap: 8px;
+}
+
+.ip-query-field input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  height: 38px;
+  outline: none;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.ip-query-field input:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.ip-query-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.tool-panel .ip-query-primary-button,
+.tool-panel .ip-query-secondary-button,
+.ip-query-primary-button,
+.ip-query-secondary-button {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.tool-panel .ip-query-secondary-button,
+.tool-panel .ip-query-copy-button,
+.ip-query-secondary-button,
+.ip-query-copy-button {
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  color: #2563eb;
+}
+
+.tool-panel .ip-query-secondary-button:hover,
+.tool-panel .ip-query-copy-button:hover,
+.ip-query-secondary-button:hover,
+.ip-query-copy-button:hover {
+  background: #f8fbff;
+  color: #2563eb;
+}
+
+.tool-panel .ip-query-primary-button:disabled,
+.tool-panel .ip-query-secondary-button:disabled,
+.tool-panel .ip-query-copy-button:disabled,
+.ip-query-primary-button:disabled,
+.ip-query-secondary-button:disabled,
+.ip-query-copy-button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.tool-panel .ip-query-copy-button,
+.ip-query-copy-button {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  margin-left: auto;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.ip-query-info-grid {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.ip-query-info-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.ip-query-info-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ip-query-info-row strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ip-query-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.ip-query-empty .app-icon {
+  height: 42px;
+  width: 42px;
+}
+
+.ip-query-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 14px;
+  padding: 10px 12px;
+}
+
+.ip-query-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 2;
+}
+
+.ip-query-copy-toast::before {
+  border-bottom: 5px solid rgba(15, 23, 42, 0.88);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: -5px;
+}
+
+
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content ip-query-layout">
+      <section class="ip-query-card ip-query-hero">
+        <div class="ip-query-card-head"><span class="ip-query-icon-badge">IP</span><strong>当前查询</strong><span id="loading" class="ip-query-loading" hidden>查询中</span></div>
+        <div class="ip-query-primary">
+          <span>IP 地址</span>
+          <button id="primaryIp" class="ip-query-primary-ip" type="button">-</button>
+          <p id="location" class="ip-query-location">等待查询</p>
+        </div>
+        <div class="ip-query-form">
+          <label class="field small ip-query-field">查询 IP<input id="ipInput" type="text" placeholder="输入 IP，留空查询当前 IP" /></label>
+          <div class="ip-query-actions"><button id="query" class="ip-query-primary-button tool-primary-button">查询</button><button id="current" class="ip-query-secondary-button">当前 IP</button></div>
+        </div>
+      </section>
+      <section class="ip-query-card ip-query-result">
+        <div class="ip-query-card-head"><span class="ip-query-icon-badge">IP</span><strong>归属信息</strong><button id="copy" class="ip-query-copy-button" disabled>复制结果</button></div>
+        <span id="toast" class="ip-query-copy-toast" hidden></span>
+        <p id="error" class="ip-query-error" hidden></p>
+        <div id="result" class="ip-query-info-grid"></div>
+        <div id="empty" class="ip-query-empty">正在读取当前 IP</div>
+      </section>
+    </main>
+<script>
+let ipInfo = null;
+      let directIpInfo = null;
+      let directIpError = '';
+      let proxyIpInfo = null;
+      const $ = (id) => document.getElementById(id);
+
+      let api = null;
+      let pluginConnect = Promise.resolve();
+      let querySerial = 0;
+
+      async function requestJson(url, options = {}) {
+        const result = await api.sendHttpRequest({
+          body: options.body,
+          headers: options.headers || {},
+          method: options.method || 'GET',
+          timeoutMs: 30000,
+          url
+        });
+
+        if (!result?.ok) {
+          throw new Error(result?.error || (result?.status ? `HTTP ${result.status}` : '网络请求失败'));
+        }
+
+        return result.body ? JSON.parse(result.body) : null;
+      }
+
+      async function firstSuccessfulQuery(tasks) {
+        const errors = [];
+        for (const task of tasks) {
+          try {
+            return await task();
+          } catch (error) {
+            errors.push(error instanceof Error ? error.message : String(error || '请求失败'));
+          }
+        }
+        throw new Error(errors.find(Boolean) || 'IP 查询失败');
+      }
+      function joinParts(parts) {
+        return parts.filter(Boolean).join(' / ') || '-';
+      }
+      function detectIpType(value) {
+        return String(value).includes(':') ? 'IPv6' : 'IPv4';
+      }
+      function createPendingIpInfo(ip) {
+        return { city: '-', continent: '-', country: '', ip, isp: '-', org: '-', pending: true, region: '', timezone: '-', type: detectIpType(ip) };
+      }
+      function setError(message) {
+        $('error').textContent = message;
+        $('error').hidden = !message;
+      }
+      function setLoading(value) {
+        $('loading').hidden = !value;
+        $('query').disabled = value;
+        $('current').disabled = value;
+      }
+      function rows() {
+        if (!ipInfo) return [];
+        const baseRows = [
+          ['IP 地址', ipInfo.ip],
+          ['类型', ipInfo.type],
+          ['国家 / 地区', joinParts([ipInfo.country, ipInfo.region, ipInfo.city])],
+          ['洲', ipInfo.continent],
+          ['运营商', ipInfo.isp],
+          ['组织', ipInfo.org],
+          ['时区', ipInfo.timezone]
+        ];
+
+        if (directIpInfo) {
+          const directRows = [
+            ['直连出口 IP', directIpInfo.ip],
+            ['直连归属', joinParts([directIpInfo.country, directIpInfo.region, directIpInfo.city])],
+            ['直连运营商', directIpInfo.isp]
+          ];
+
+          if (proxyIpInfo && proxyIpInfo.ip !== directIpInfo.ip) {
+            return [
+              ['代理出口 IP', proxyIpInfo.ip],
+              ['代理归属', joinParts([proxyIpInfo.country, proxyIpInfo.region, proxyIpInfo.city])],
+              ['代理运营商', proxyIpInfo.isp],
+              ...directRows
+            ];
+          }
+
+          return [...baseRows, ...directRows];
+        }
+
+        if (directIpError) {
+          return [...baseRows, ['直连出口 IP', directIpError]];
+        }
+
+        return baseRows;
+      }
+      function render() {
+        $('primaryIp').textContent = ipInfo?.ip || $('ipInput').value.trim() || '-';
+        $('primaryIp').disabled = !ipInfo?.ip;
+        $('location').textContent = ipInfo ? (ipInfo.pending ? '正在查询归属信息' : joinParts([ipInfo.country, ipInfo.region, ipInfo.city])) : '等待查询';
+        const data = rows();
+        $('copy').disabled = data.length === 0;
+        $('empty').hidden = data.length > 0 || !$('error').hidden;
+        $('empty').textContent = $('loading').hidden ? '等待查询结果' : '正在查询归属信息';
+        $('result').replaceChildren(...data.map(([label, value]) => {
+          const row = document.createElement('div');
+          row.className = 'ip-query-info-row';
+          row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+          return row;
+        }));
+      }
+      function showToast(text) {
+        $('toast').textContent = text;
+        $('toast').hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600);
+      }
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      async function queryIpApi(target) {
+        const endpoint = target ? `http://ip-api.com/json/${encodeURIComponent(target)}?lang=zh-CN` : 'http://ip-api.com/json/?lang=zh-CN';
+        const data = await requestJson(endpoint);
+        if (data.status !== 'success' || !data.query) throw new Error(data.message || 'IP 查询失败');
+        return { city: data.city || '-', continent: '-', country: data.country || '-', ip: data.query, isp: data.isp || '-', org: data.org || '-', region: data.regionName || '-', timezone: data.timezone || '-', type: detectIpType(data.query) };
+      }
+      async function queryCurrentIpAddress() {
+        const data = await firstSuccessfulQuery([
+          () => requestJson('https://api64.ipify.org?format=json'),
+          () => requestJson('https://api.ipify.org?format=json'),
+          () => requestJson('https://ipwho.is/')
+        ]);
+        if (data.ip) return data.ip;
+        if (data.query) return data.query;
+        if (data.ipAddress) return data.ipAddress;
+        throw new Error('当前 IP 读取失败');
+      }
+      async function queryIpWhoIs(target) {
+        const endpoint = target ? `https://ipwho.is/${encodeURIComponent(target)}?lang=zh-CN` : 'https://ipwho.is/?lang=zh-CN';
+        const data = await requestJson(endpoint);
+        if (!data.ip) throw new Error('当前 IP 读取失败');
+        if (data.success === false) throw new Error(data.message || 'IP 查询失败');
+        return { city: data.city || '-', continent: data.continent || '-', country: data.country || '-', ip: data.ip, isp: data.connection?.isp || data.connection?.org || '-', org: data.connection?.org || data.connection?.isp || '-', region: data.region || '-', timezone: data.timezone?.id || '-', type: data.type ? data.type.toUpperCase() : detectIpType(data.ip) };
+      }
+      async function queryFreeIpApi(target) {
+        const data = await requestJson(`https://freeipapi.com/api/json/${encodeURIComponent(target)}`);
+        if (!data.ipAddress) throw new Error('IP 查询失败');
+        return { city: data.cityName || '-', continent: data.continent || '-', country: data.countryName || '-', ip: data.ipAddress, isp: data.asnOrganization || '-', org: data.asnOrganization || '-', region: data.regionName || '-', timezone: data.timeZones?.[0] || '-', type: data.ipVersion ? `IPv${data.ipVersion}` : detectIpType(data.ipAddress) };
+      }
+      async function resolveIpInfo(target) {
+        if (target) {
+          return firstSuccessfulQuery([
+            () => queryIpWhoIs(target),
+            () => queryFreeIpApi(target),
+            () => queryIpApi(target)
+          ]);
+        }
+
+        return firstSuccessfulQuery([
+          () => queryIpWhoIs(''),
+          async () => queryFreeIpApi(await queryCurrentIpAddress()),
+          () => queryIpApi('')
+        ]);
+      }
+      async function enrichCurrentIpInfo(proxyInfo, queryId) {
+        proxyIpInfo = proxyInfo;
+        ipInfo = proxyInfo;
+        directIpInfo = null;
+        directIpError = '';
+        render();
+
+        try {
+          const direct = await api.queryDirectExternalIp();
+          if (queryId !== querySerial) return;
+          if (direct?.ip) {
+            directIpInfo = direct.ip === proxyInfo.ip ? proxyInfo : await resolveIpInfo(direct.ip);
+            if (queryId !== querySerial) return;
+          }
+        } catch (error) {
+          directIpInfo = null;
+          directIpError = error instanceof Error ? error.message : '直连出口 IP 查询失败';
+        }
+
+        ipInfo = directIpInfo && directIpInfo.ip !== proxyInfo.ip ? proxyInfo : proxyInfo;
+        render();
+      }
+      async function resolveCurrentIpInfos(currentIp, queryId) {
+        const proxyInfo = await resolveIpInfo(currentIp);
+        if (queryId !== querySerial) return;
+        await enrichCurrentIpInfo(proxyInfo, queryId);
+      }
+      async function queryIp(target = $('ipInput').value.trim()) {
+        const queryId = ++querySerial;
+        setLoading(true); setError('');
+        try {
+          directIpInfo = null;
+          directIpError = '';
+          proxyIpInfo = null;
+
+          if (target) {
+            ipInfo = createPendingIpInfo(target);
+            $('ipInput').value = target;
+            render();
+            ipInfo = await resolveIpInfo(target);
+            if (queryId !== querySerial) return;
+          } else {
+            ipInfo = null;
+            render();
+            try {
+              const currentIp = await queryCurrentIpAddress();
+              if (queryId !== querySerial) return;
+              ipInfo = createPendingIpInfo(currentIp);
+              proxyIpInfo = ipInfo;
+              $('ipInput').value = currentIp;
+              render();
+              await resolveCurrentIpInfos(currentIp, queryId);
+            } catch {
+              const proxyInfo = await resolveIpInfo('');
+              if (queryId !== querySerial) return;
+              $('ipInput').value = proxyInfo.ip;
+              await enrichCurrentIpInfo(proxyInfo, queryId);
+            }
+            if (queryId !== querySerial) return;
+          }
+          $('ipInput').value = ipInfo.ip;
+        } catch (error) {
+          if (queryId !== querySerial) return;
+          ipInfo = null;
+          directIpInfo = null;
+          directIpError = '';
+          proxyIpInfo = null;
+          setError(error instanceof Error ? error.message : 'IP 查询失败');
+        } finally {
+          if (queryId !== querySerial) return;
+          setLoading(false);
+          render();
+        }
+      }
+      function queryCurrentIp() {
+        $('ipInput').value = '';
+        queryIp('');
+      }
+
+      $('query').addEventListener('click', () => queryIp());
+      $('current').addEventListener('click', queryCurrentIp);
+      $('ipInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') queryIp(); });
+      $('primaryIp').addEventListener('click', () => { if (ipInfo?.ip) copyText(ipInfo.ip, 'IP 已复制'); });
+      $('copy').addEventListener('click', () => { if (ipInfo) copyText(rows().map(([label, value]) => `${label}: ${value}`).join('\n'), '查询结果已复制'); });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-ip-query', capabilities: ['copyText', 'queryDirectExternalIp', 'sendHttpRequest'] };
+        const pluginOnReady = function () { queryCurrentIp(); };
+        const pluginOfflineReady = function () { queryCurrentIp(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

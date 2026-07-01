@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>价税分离</title>
+    <style>
+* { box-sizing: border-box; } html, body { height: 100%; margin: 0; }
+body { background: #eef3f8; color: #111827; font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif; font-size: 13px; }
+button, input, select { font: inherit; } button { border: 0; cursor: pointer; }
+.tool-content { height: 100%; min-height: 0; } .field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #d97706; color: #fff; }
+.fin-layout { display: grid; gap: 16px; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
+.fin-card { background: #fff; border: 1px solid #dbe4ef; border-radius: 8px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; position: relative; }
+.fin-head { align-items: center; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; min-height: 48px; padding: 0 14px; }
+.fin-head strong { font-size: 14px; font-weight: 800; }
+.fin-badge { align-items: center; background: #fffbeb; border-radius: 6px; color: #d97706; display: inline-flex; font-size: 12px; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.fin-form { display: grid; gap: 12px; padding: 16px; }
+.fin-field { display: grid; gap: 8px; }
+.fin-field input, .fin-field select { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; height: 38px; outline: none; padding: 0 10px; width: 100%; }
+.fin-field input:focus, .fin-field select:focus { border-color: #fcd34d; box-shadow: 0 0 0 3px rgba(217,119,6,.12); }
+.fin-segmented { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 7px; display: grid; gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; }
+.fin-segmented button { background: transparent; border-radius: 5px; color: #64748b; font-size: 12px; font-weight: 800; min-height: 30px; }
+.fin-segmented button.active { background: #fff; box-shadow: 0 1px 4px rgba(15,23,42,.08); color: #d97706; }
+.fin-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.fin-preset { background: #fff; border: 1px solid #fde68a; border-radius: 999px; color: #b45309; font-size: 12px; font-weight: 800; min-height: 30px; padding: 0 12px; }
+.fin-note { background: #fffbeb; border: 1px solid #fde68a; border-radius: 7px; color: #92400e; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 16px 16px; padding: 10px 12px; }
+.fin-copy { background: #fff; border: 1px solid #fde68a; border-radius: 7px; color: #d97706; font-size: 12px; font-weight: 800; height: 30px; margin-left: auto; padding: 0 10px; }
+.fin-highlight { background: linear-gradient(180deg,#fffbeb 0%,#fff 100%); border: 1px solid #fde68a; border-radius: 8px; margin: 14px; padding: 16px; }
+.fin-highlight small { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-highlight strong { color: #b45309; display: block; font-family: Consolas, monospace; font-size: 24px; font-weight: 800; margin-top: 6px; }
+.fin-grid { display: grid; gap: 8px; padding: 0 14px 14px; }
+.fin-row { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; display: grid; gap: 12px; grid-template-columns: 120px minmax(0,1fr); min-height: 42px; padding: 0 12px; }
+.fin-row span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-row strong { color: #111827; font-family: Consolas, monospace; font-size: 13px; font-weight: 800; text-align: right; }
+.fin-formula { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #475569; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 14px 14px; padding: 12px; }
+.fin-toast { background: rgba(15,23,42,.88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; padding: 7px 10px; position: absolute; right: 14px; top: 56px; z-index: 2; }
+    
+/* tooldesk responsive plugin layout */
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content, .fin-layout { height: auto; min-height: calc(100dvh - 20px); overflow: visible; }
+  .fin-layout { grid-template-columns: 1fr !important; gap: 12px; }
+  .fin-card { min-height: auto; overflow: visible; }
+  .fin-body, .fin-table-wrap { overflow: auto; }
+  .fin-grid2, .fin-row { grid-template-columns: 1fr !important; }
+  .fin-actions, .fin-quick { flex-wrap: wrap; }
+  .fin-result { font-size: 18px; margin: 12px; }
+  input, select, textarea, button { max-width: 100%; }
+}
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content fin-layout">
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">税</span><strong>价税参数</strong></div>
+        <div class="fin-form">
+          <label class="field small fin-field">计算方向<div class="fin-segmented"><button type="button" class="active" data-mode="included">已知含税价</button><button type="button" data-mode="excluded">已知不含税价</button></div></label>
+          <label class="field small fin-field">金额（元）<input id="amount" type="number" min="0" step="0.01" value="11300" /></label>
+          <label class="field small fin-field">税率<select id="rate"><option value="13">13%（一般货物/劳务）</option><option value="9">9%（农产品/交通等）</option><option value="6">6%（现代服务/金融）</option><option value="3">3%（简易征收）</option><option value="1">1%（小规模优惠）</option><option value="0">0%（免税）</option><option value="custom">自定义</option></select></label>
+          <label class="field small fin-field" id="customRateField" hidden>自定义税率（%）<input id="customRate" type="number" min="0" max="100" step="0.01" value="13" /></label>
+          <div class="fin-presets"><button type="button" class="fin-preset" data-amount="11300" data-rate="13">11300 @13%</button><button type="button" class="fin-preset" data-amount="10600" data-rate="6">10600 @6%</button></div>
+        </div>
+        <p class="fin-note">公式：不含税 = 含税 ÷ (1+税率)；税额 = 不含税 × 税率。结果四舍五入至分。</p>
+      </section>
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">税</span><strong>计算结果</strong><button id="copy" class="fin-copy">复制结果</button></div>
+        <span id="toast" class="fin-toast" hidden></span>
+        <div class="fin-highlight"><small>税额</small><strong id="taxAmount">-</strong></div>
+        <div id="grid" class="fin-grid"></div>
+        <p id="formula" class="fin-formula"></p>
+      </section>
+    </main>
+<script>
+const state = { mode: 'included' };
+      const $ = (id) => document.getElementById(id);
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const fmt = (v) => Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const round2 = (v) => Math.round(v * 100) / 100;
+      function getRate() { return $('rate').value === 'custom' ? Number($('customRate').value) / 100 : Number($('rate').value) / 100; }
+      function calc() {
+        const amount = Number($('amount').value); const rate = getRate();
+        if (!Number.isFinite(amount) || amount < 0 || !Number.isFinite(rate) || rate < 0) return null;
+        let excluded, included, tax;
+        if (state.mode === 'included') {
+          excluded = rate === 0 ? amount : round2(amount / (1 + rate));
+          tax = round2(amount - excluded); included = round2(amount);
+        } else {
+          excluded = round2(amount); tax = round2(excluded * rate); included = round2(excluded + tax);
+        }
+        const formula = state.mode === 'included'
+          ? `不含税 = ${fmt(included)} ÷ (1 + ${(rate * 100).toFixed(2)}%) = ${fmt(excluded)}；税额 = ${fmt(excluded)} × ${(rate * 100).toFixed(2)}% = ${fmt(tax)}`
+          : `税额 = ${fmt(excluded)} × ${(rate * 100).toFixed(2)}% = ${fmt(tax)}；含税 = ${fmt(excluded)} + ${fmt(tax)} = ${fmt(included)}`;
+        return { excluded, included, tax, rate, formula };
+      }
+      function applyLaunchContent(content) {
+        const text = String(content || '').trim().replace(/[¥￥,\s]/g, '');
+        if (!text || !/^-?\d+(?:\.\d+)?$/.test(text)) return;
+        $('amount').value = text;
+        render();
+      }
+      function render() {
+        $('customRateField').hidden = $('rate').value !== 'custom';
+        const r = calc(); if (!r) return;
+        $('taxAmount').textContent = `¥ ${fmt(r.tax)}`;
+        $('formula').textContent = r.formula;
+        $('grid').replaceChildren(...[
+          ['不含税金额', fmt(r.excluded)], ['税额', fmt(r.tax)], ['含税金额', fmt(r.included)], ['适用税率', `${(r.rate * 100).toFixed(2)}%`]
+        ].map(([a,b]) => { const row = document.createElement('div'); row.className = 'fin-row'; row.innerHTML = `<span>${a}</span><strong>${b}</strong>`; return row; }));
+      }
+      document.querySelectorAll('[data-mode]').forEach((btn) => btn.addEventListener('click', () => {
+        state.mode = btn.dataset.mode;
+        document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('active', b === btn));
+        render();
+      }));
+      document.querySelectorAll('.fin-preset').forEach((btn) => btn.addEventListener('click', () => {
+        $('amount').value = btn.dataset.amount; $('rate').value = btn.dataset.rate; render();
+      }));
+      ['amount','rate','customRate'].forEach((id) => { $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+      $('copy').addEventListener('click', async () => {
+        const r = calc(); if (!r) return;
+        await api.copyText(`不含税: ${fmt(r.excluded)}\n税额: ${fmt(r.tax)}\n含税: ${fmt(r.included)}`);
+        $('toast').textContent = '已复制'; $('toast').hidden = false; setTimeout(() => { $('toast').hidden = true; }, 1600);
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-vat-calculator', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

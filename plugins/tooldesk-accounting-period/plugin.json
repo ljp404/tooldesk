@@ -1,0 +1,39 @@
+{
+  "accent": "blue",
+  "caption": "输入日期解析会计年度、会计月份、季度与月末日期。",
+  "category": "finance",
+  "clipboardMatch": {
+    "type": "iso-date",
+    "priority": 85
+  },
+  "defaultAlias": "kjqj",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-accounting-period",
+  "keywords": [
+    "period",
+    "kuaijiqijian",
+    "kjnd",
+    "kjyf",
+    "accounting",
+    "fiscal",
+    "会计",
+    "期间",
+    "季度",
+    "会计月",
+    "会计年度"
+  ],
+  "name": "会计期间",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

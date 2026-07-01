@@ -1,0 +1,61 @@
+{
+  "accent": "blue",
+  "caption": "解析 Compose、多镜像拉取；支持本机 Docker、SSH 远程或导出服务器脚本。",
+  "category": "dev",
+  "defaultAlias": "jxlq",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-docker-pull",
+  "keywords": [
+    "docker",
+    "compose",
+    "jingxianglaqu",
+    "pull",
+    "mirror",
+    "ssh",
+    "remote",
+    "镜像",
+    "容器",
+    "拉取",
+    "远程",
+    "脚本"
+  ],
+  "manifestVersion": 1,
+  "minHostVersion": "0.1.0",
+  "name": "镜像拉取",
+  "permissions": [
+    "clipboard",
+    "docker",
+    "filesystem",
+    "http",
+    "ssh"
+  ],
+  "publisher": "tooldesk",
+  "sdkVersion": "1.0.0",
+  "capabilities": [
+    "checkDockerAvailable",
+    "copyText",
+    "dockerImageExists",
+    "dockerPullImage",
+    "dockerTagImage",
+    "getPluginStorageItem",
+    "onSshExecOutput",
+    "readTextFile",
+    "runDockerCompose",
+    "sendHttpRequest",
+    "setPluginStorageItem",
+    "showOpenDialog",
+    "sshExec",
+    "sshExecStream",
+    "testSshConnection"
+  ],
+  "sync": {
+    "localStorageKeys": [
+      "tooldesk-docker-pull-mirrors",
+      "tooldesk-docker-pull-mode",
+      "tooldesk-docker-pull-ssh-config"
+    ]
+  },
+  "version": "0.1.0",
+  "windowIcon": "assets/window-icon.png"
+}

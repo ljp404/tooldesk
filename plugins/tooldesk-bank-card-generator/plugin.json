@@ -1,0 +1,37 @@
+{
+  "accent": "green",
+  "caption": "按指定银行生成符合 Luhn 校验规则的测试银行卡号，含储蓄卡与贷记卡。",
+  "category": "dev",
+  "defaultAlias": "yhksc",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-bank-card-generator",
+  "keywords": [
+    "yhkhsc",
+    "cardgen",
+    "yinhangkashengcheng",
+    "bank",
+    "card",
+    "generate",
+    "银行卡",
+    "卡号",
+    "储蓄卡",
+    "贷记卡",
+    "信用卡",
+    "测试卡号",
+    "luhn"
+  ],
+  "name": "银行卡号生成器",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

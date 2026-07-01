@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>银行卡号生成器</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #16a34a; color: #fff; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+
+.bank-card-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.bank-card-config,
+.bank-card-result {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.bank-card-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.bank-card-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bank-card-icon-badge {
+  align-items: center;
+  background: #ecfdf5;
+  border-radius: 6px;
+  color: #16a34a;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 900;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.bank-card-count {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.bank-card-form-grid {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.bank-card-field {
+  display: grid;
+  gap: 8px;
+}
+
+.bank-card-field select,
+.bank-card-field input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  height: 38px;
+  outline: none;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.bank-card-bank-picker {
+  position: relative;
+}
+
+.bank-card-bank-dropdown {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  left: 0;
+  max-height: 220px;
+  overflow: auto;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+}
+
+.bank-card-bank-option {
+  background: transparent;
+  color: #334155;
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.bank-card-bank-option:hover,
+.bank-card-bank-option.active {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.bank-card-bank-empty {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 12px 10px;
+}
+
+.bank-card-common-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.bank-card-recent-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bank-card-recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bank-card-recent-chip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.bank-card-recent-chip:hover,
+.bank-card-recent-chip.active {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.bank-card-recent-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.bank-card-field select:focus,
+.bank-card-field input:focus {
+  border-color: #86efac;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+.bank-card-hint {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.bank-card-actions {
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding: 14px 16px;
+}
+
+.tool-panel .bank-card-secondary-button,
+.bank-card-secondary-button {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.tool-panel .bank-card-secondary-button,
+.bank-card-secondary-button {
+  background: #ffffff;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+}
+
+.tool-panel .bank-card-secondary-button:hover,
+.bank-card-secondary-button:hover {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.tool-panel .bank-card-secondary-button:disabled,
+.bank-card-secondary-button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.bank-card-result-table {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.bank-card-result-body {
+  display: grid;
+  gap: 0;
+}
+
+.bank-card-result-head,
+.tool-panel .bank-card-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 100px minmax(0, 1fr) 72px;
+  justify-items: start;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.bank-card-result-head {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 32px;
+}
+
+.bank-card-list {
+  display: grid;
+  gap: 8px;
+}
+
+.bank-card-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 2;
+}
+
+.bank-card-copy-toast::before {
+  border-bottom: 5px solid rgba(15, 23, 42, 0.88);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: -5px;
+}
+
+.tool-panel .bank-card-row {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #334155;
+  min-height: 42px;
+}
+
+.tool-panel .bank-card-row:hover {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.bank-card-result-head > span,
+.bank-card-row > span,
+.bank-card-row > code {
+  justify-self: start;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bank-card-row code {
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.bank-card-row span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bank-card-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  min-height: 160px;
+  padding: 24px 20px;
+}
+
+.bank-card-empty[hidden] {
+  display: none !important;
+}
+
+.bank-card-empty strong {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bank-card-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 16px;
+  padding: 10px 12px;
+}
+
+.bank-card-disclaimer {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.7;
+  margin: 0 16px 16px;
+  padding: 10px 12px;
+}
+    </style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content bank-card-layout">
+      <section class="bank-card-config">
+        <div class="bank-card-card-head"><span class="bank-card-icon-badge">卡</span><strong>生成配置</strong></div>
+        <div class="bank-card-form-grid">
+          <label class="field small bank-card-field">
+            <span>发卡银行</span>
+            <div class="bank-card-bank-picker">
+              <input id="bankSearch" type="text" autocomplete="off" placeholder="搜索银行名称" />
+              <div id="bankDropdown" class="bank-card-bank-dropdown" hidden></div>
+            </div>
+          </label>
+          <div class="bank-card-common-panel">
+            <span class="bank-card-recent-label">常用银行</span>
+            <div id="commonBanks" class="bank-card-recent-list">
+              <button type="button" class="bank-card-recent-chip" data-bank="工商银行" title="工商银行">工行</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="农业银行" title="农业银行">农行</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="中国银行" title="中国银行">中行</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="建设银行" title="建设银行">建行</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="交通银行" title="交通银行">交行</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="招商银行" title="招商银行">招行</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="邮政储蓄银行" title="邮政储蓄银行">邮储</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="浦东发展银行" title="浦东发展银行">浦发</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="民生银行" title="民生银行">民生</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="光大银行" title="光大银行">光大</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="中信银行" title="中信银行">中信</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="兴业银行" title="兴业银行">兴业</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="平安银行" title="平安银行">平安</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="华夏银行" title="华夏银行">华夏</button>
+              <button type="button" class="bank-card-recent-chip" data-bank="广发银行" title="广发银行">广发</button>
+            </div>
+          </div>
+          <label class="field small bank-card-field">
+            <span>数量</span>
+            <input id="count" min="1" max="20" type="number" value="10" />
+          </label>
+          <p class="bank-card-hint">每次生成将交替输出储蓄卡与贷记卡。卡号通过 Luhn 校验：储蓄卡（D）19 位，贷记卡（C）16 位。</p>
+        </div>
+        <p class="bank-card-disclaimer">免责声明：本工具生成的银行卡号仅用于软件开发、表单校验和测试演示，不代表真实账户信息，不能用于支付、开户、实名认证、风控绕过或任何违法违规用途。</p>
+        <div class="bank-card-actions">
+          <button id="copyAll" class="bank-card-secondary-button" disabled>复制全部</button>
+        </div>
+      </section>
+      <section class="bank-card-result">
+        <div class="bank-card-card-head"><span class="bank-card-icon-badge">卡</span><strong>生成结果</strong><span id="resultCount" class="bank-card-count">0 条</span></div>
+        <span id="toast" class="bank-card-copy-toast" hidden></span>
+        <p id="error" class="bank-card-error" hidden></p>
+        <div class="bank-card-result-body">
+          <div class="bank-card-result-table">
+            <div id="resultHead" class="bank-card-result-head" hidden>
+              <span>银行名称</span>
+              <span>卡号</span>
+              <span>卡种</span>
+            </div>
+            <div id="list" class="bank-card-list"></div>
+          </div>
+          <div id="empty" class="bank-card-empty" hidden><strong>请选择银行</strong></div>
+        </div>
+      </section>
+    </main>
+    <!-- TOOLDESK_INLINE_PLUGIN_DATA -->
+<script>
+const MIN_PREFERRED_BIN_LENGTH = 6;
+      const MIN_FALLBACK_BIN_LENGTH = 4;
+      const CARD_TYPE_SPECS = {
+        C: { label: '贷记卡', length: 16 },
+        D: { label: '储蓄卡', length: 19 }
+      };
+      const MAX_ATTEMPTS_PER_CARD = 80;
+      const MAX_DROPDOWN_ITEMS = 12;
+
+      let bankIndex = new Map();
+      let bankNames = [];
+      let binMap = null;
+      let selectedBankName = '';
+      let dropdownActiveIndex = -1;
+      let suppressBankDropdown = false;
+      const state = { cards: [] };
+      const $ = (id) => document.getElementById(id);
+
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function showToast(text) {
+        const toast = $('toast');
+        toast.textContent = text;
+        toast.hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { toast.hidden = true; }, 1600);
+      }
+
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      function setError(message) {
+        $('error').textContent = message;
+        $('error').hidden = !message;
+      }
+
+      function bankHasBins(bankName) {
+        const groups = bankIndex.get(bankName);
+        return Boolean(groups && (groups.debit.length || groups.credit.length));
+      }
+
+      function getAvailableCommonBankNames() {
+        return [...$('commonBanks').querySelectorAll('[data-bank]')]
+          .map((chip) => chip.dataset.bank || '')
+          .filter((bankName) => bankName && bankHasBins(bankName));
+      }
+
+      function updateCommonBankState() {
+        $('commonBanks').querySelectorAll('[data-bank]').forEach((chip) => {
+          const bankName = chip.dataset.bank || '';
+          const available = !bankIndex.size || bankHasBins(bankName);
+          chip.disabled = !available;
+          chip.classList.toggle('active', bankName === selectedBankName);
+        });
+      }
+
+      function filterBankNames(query) {
+        const keyword = String(query || '').trim().toLowerCase();
+        if (!keyword) return bankNames.slice(0, MAX_DROPDOWN_ITEMS);
+        return bankNames.filter((name) => name.toLowerCase().includes(keyword)).slice(0, MAX_DROPDOWN_ITEMS);
+      }
+
+      function renderBankDropdown(items) {
+        const dropdown = $('bankDropdown');
+        dropdownActiveIndex = items.length ? 0 : -1;
+
+        if (!items.length) {
+          dropdown.replaceChildren(Object.assign(document.createElement('div'), {
+            className: 'bank-card-bank-empty',
+            textContent: '未找到匹配银行'
+          }));
+          dropdown.hidden = false;
+          return;
+        }
+
+        dropdown.replaceChildren(...items.map((name, index) => {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = `bank-card-bank-option${index === dropdownActiveIndex ? ' active' : ''}`;
+          option.textContent = name;
+          option.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            selectBank(name);
+          });
+          return option;
+        }));
+        dropdown.hidden = false;
+      }
+
+      function hideBankDropdown() {
+        $('bankDropdown').hidden = true;
+        dropdownActiveIndex = -1;
+      }
+
+      function showBankDropdown() {
+        if ($('bankSearch').disabled) return;
+        renderBankDropdown(filterBankNames($('bankSearch').value));
+      }
+
+      function updateDropdownActiveIndex(nextIndex, items) {
+        if (!items.length) return;
+        dropdownActiveIndex = (nextIndex + items.length) % items.length;
+        [...$('bankDropdown').children].forEach((node, index) => {
+          if (node.classList) node.classList.toggle('active', index === dropdownActiveIndex);
+        });
+      }
+
+      function selectBank(bankName, options = {}) {
+        if (!bankName) return;
+        if (bankIndex.size && !bankHasBins(bankName)) return;
+        selectedBankName = bankName;
+        $('bankSearch').value = bankName;
+        hideBankDropdown();
+        updateCommonBankState();
+        if (!options.skipGenerate) {
+          generate();
+        }
+        if (options.suppressDropdown) return;
+        $('bankSearch').focus();
+      }
+
+      function resolveSelectedBank() {
+        const query = $('bankSearch').value.trim();
+        if (!query) return '';
+        if (bankIndex.has(query)) return query;
+        const matches = filterBankNames(query);
+        return matches.length === 1 ? matches[0] : '';
+      }
+
+      function formatCardNumber(value) {
+        const digits = String(value || '').replace(/\D/g, '');
+        return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+      }
+
+      function getLuhnCheckDigit(partial) {
+        let sum = 0;
+        let shouldDouble = false;
+        for (let index = partial.length - 1; index >= 0; index -= 1) {
+          let digit = Number(partial[index]);
+          if (shouldDouble) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+          }
+          sum += digit;
+          shouldDouble = !shouldDouble;
+        }
+        return String((10 - (sum % 10)) % 10);
+      }
+
+      function isLuhnValid(cardNumber) {
+        const digits = String(cardNumber || '').replace(/\D/g, '');
+        if (!digits) return false;
+        let sum = 0;
+        let shouldDouble = false;
+        for (let index = digits.length - 1; index >= 0; index -= 1) {
+          let digit = Number(digits[index]);
+          if (shouldDouble) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+          }
+          sum += digit;
+          shouldDouble = !shouldDouble;
+        }
+        return sum % 10 === 0;
+      }
+
+      function randomDigits(length) {
+        let result = '';
+        for (let index = 0; index < length; index += 1) {
+          result += String(Math.floor(Math.random() * 10));
+        }
+        return result;
+      }
+
+      function normalizeBinRecords(records) {
+        const unique = new Map();
+        for (const record of records) {
+          const bin = String(record.BANK_CARD_BIN || '').trim();
+          const bankName = String(record.BANK_NAME || '').trim();
+          if (!bin || !bankName || !/^\d+$/.test(bin)) continue;
+          const cardType = record.CARD_TYPE === 'C' ? 'C' : 'D';
+          const key = `${bankName}::${cardType}::${bin}`;
+          unique.set(key, {
+            bankCode: String(record.BANK_CODE || '').trim(),
+            bankName,
+            bin,
+            cardType
+          });
+        }
+        return [...unique.values()];
+      }
+
+      function buildBankIndex(records) {
+        const index = new Map();
+        for (const record of records) {
+          if (!index.has(record.bankName)) {
+            index.set(record.bankName, { credit: [], debit: [] });
+          }
+          const groups = index.get(record.bankName);
+          if (record.cardType === 'C') {
+            groups.credit.push(record);
+          } else {
+            groups.debit.push(record);
+          }
+        }
+
+        for (const [bankName, groups] of index.entries()) {
+          groups.debit.sort((left, right) => right.bin.length - left.bin.length);
+          groups.credit.sort((left, right) => right.bin.length - left.bin.length);
+          if (!groups.debit.length && !groups.credit.length) index.delete(bankName);
+        }
+
+        return index;
+      }
+
+      function getGenerationSpecs(bankName) {
+        const groups = bankIndex.get(bankName);
+        if (!groups) return [];
+        const specs = [];
+        if (groups.debit.length) specs.push({ cardType: 'D', ...CARD_TYPE_SPECS.D });
+        if (groups.credit.length) specs.push({ cardType: 'C', ...CARD_TYPE_SPECS.C });
+        return specs;
+      }
+
+      function pickBinRecords(records, totalLength) {
+        const preferred = records.filter((record) => record.bin.length >= MIN_PREFERRED_BIN_LENGTH && record.bin.length < totalLength);
+        const fallback = records.filter((record) => record.bin.length >= MIN_FALLBACK_BIN_LENGTH && record.bin.length < totalLength);
+        const pool = preferred.length ? preferred : fallback;
+        if (!pool.length) return null;
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      function lookupBankBin(cardNumber) {
+        const digits = String(cardNumber || '').replace(/\D/g, '');
+        for (let length = Math.min(11, digits.length); length >= 1; length -= 1) {
+          const prefix = digits.slice(0, length);
+          const record = binMap.get(prefix);
+          if (record) return { matchedBin: prefix, record };
+        }
+        return null;
+      }
+
+      function generateCardNumber(record, totalLength) {
+        const randomLength = totalLength - record.bin.length - 1;
+        if (randomLength < 0) return null;
+        const partial = `${record.bin}${randomDigits(randomLength)}`;
+        return `${partial}${getLuhnCheckDigit(partial)}`;
+      }
+
+      function createCard(bankName, spec) {
+        const groups = bankIndex.get(bankName);
+        if (!groups) return null;
+
+        const pool = spec.cardType === 'C' ? groups.credit : groups.debit;
+        if (!pool.length) return null;
+
+        for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_CARD; attempt += 1) {
+          const record = pickBinRecords(pool, spec.length);
+          if (!record) return null;
+
+          const cardNumber = generateCardNumber(record, spec.length);
+          if (!cardNumber || !isLuhnValid(cardNumber)) continue;
+
+          const lookup = lookupBankBin(cardNumber);
+          if (!lookup || lookup.record.BANK_NAME !== bankName) continue;
+          if (lookup.record.CARD_TYPE !== spec.cardType) continue;
+
+          return {
+            bankName,
+            bin: record.bin,
+            cardNumber,
+            cardType: spec.cardType,
+            cardTypeLabel: spec.label
+          };
+        }
+
+        return null;
+      }
+
+      function render() {
+        $('resultCount').textContent = `${state.cards.length} 条`;
+        $('copyAll').disabled = state.cards.length === 0;
+        $('empty').hidden = state.cards.length > 0;
+        $('resultHead').hidden = state.cards.length === 0;
+        document.querySelector('.bank-card-result-table').hidden = state.cards.length === 0;
+        $('list').replaceChildren(...state.cards.map((card) => {
+          const row = document.createElement('button');
+          row.className = 'bank-card-row';
+          row.type = 'button';
+          row.title = '点击复制银行卡号';
+          row.innerHTML = `<span>${card.bankName}</span><code>${formatCardNumber(card.cardNumber)}</code><span>${card.cardTypeLabel}</span>`;
+          row.addEventListener('click', () => copyText(card.cardNumber, '银行卡号已复制'));
+          return row;
+        }));
+      }
+
+      function getRequestedCount() {
+        const count = Math.min(Math.max(Number($('count').value) || 1, 1), 20);
+        $('count').value = String(count);
+        return count;
+      }
+
+      function createUniqueCardForBank(bankName, used) {
+        const specs = getGenerationSpecs(bankName);
+
+        for (const spec of specs) {
+          const card = createCard(bankName, spec);
+          if (card && !used.has(card.cardNumber)) {
+            used.add(card.cardNumber);
+            return card;
+          }
+        }
+
+        return null;
+      }
+
+      function generateDefaultCommonCards() {
+        const count = getRequestedCount();
+        const bankNames = getAvailableCommonBankNames();
+
+        if (!bankNames.length) {
+          state.cards = [];
+          setError('暂无可用的常用银行 BIN 数据');
+          render();
+          return;
+        }
+
+        const used = new Set();
+        state.cards = [];
+        setError('');
+
+        for (let index = 0; state.cards.length < count && index < bankNames.length; index += 1) {
+          const card = createUniqueCardForBank(bankNames[index], used);
+          if (card) {
+            state.cards.push(card);
+          }
+        }
+
+        if (state.cards.length < count) {
+          setError(`仅生成 ${state.cards.length} 条，常用银行可用 BIN 有限`);
+        }
+
+        render();
+      }
+
+      function generate() {
+        const bankName = resolveSelectedBank() || selectedBankName;
+        if (bankName && bankName !== selectedBankName) {
+          selectBank(bankName);
+        }
+
+        if (!bankName) {
+          generateDefaultCommonCards();
+          return;
+        }
+
+        const count = getRequestedCount();
+        const specs = getGenerationSpecs(bankName);
+
+        if (!bankName || !specs.length) {
+          state.cards = [];
+          setError('当前银行没有可用的储蓄/贷记卡 BIN 数据，请更换银行');
+          render();
+          return;
+        }
+
+        const used = new Set();
+        state.cards = [];
+
+        setError('');
+        while (state.cards.length < count) {
+          const spec = specs[state.cards.length % specs.length];
+          const card = createCard(bankName, spec);
+          if (!card) break;
+          if (!used.has(card.cardNumber)) {
+            used.add(card.cardNumber);
+            state.cards.push(card);
+          }
+        }
+
+        if (!state.cards.length) {
+          setError('生成失败，请更换银行或稍后重试');
+        } else if (state.cards.length < count) {
+          setError(`仅生成 ${state.cards.length} 条，该银行可用 BIN 有限`);
+        }
+
+        render();
+      }
+
+      async function loadBinDatabase() {
+        if (window.__TOOLDESK_BANK_BIN_DATA__) {
+          return window.__TOOLDESK_BANK_BIN_DATA__;
+        }
+
+        const response = await fetch('./bank_info_bin.json', { cache: 'no-cache' });
+
+        if (!response.ok) {
+          throw new Error('银行卡 BIN 数据加载失败');
+        }
+
+        return response.json();
+      }
+
+      async function init() {
+        try {
+          const database = await loadBinDatabase();
+          const records = normalizeBinRecords(database.RECORDS || []);
+          binMap = new Map(records.map((record) => [record.bin, {
+            BANK_CARD_BIN: record.bin,
+            BANK_CODE: record.bankCode,
+            BANK_NAME: record.bankName,
+            CARD_TYPE: record.cardType
+          }]));
+          bankIndex = buildBankIndex(records);
+          bankNames = [...bankIndex.keys()].sort((left, right) => left.localeCompare(right, 'zh-CN'));
+          selectedBankName = '';
+          $('bankSearch').value = '';
+          updateCommonBankState();
+          generateDefaultCommonCards();
+        } catch (error) {
+          setError(error instanceof Error ? error.message : 'BIN 数据加载失败');
+        }
+      }
+
+      $('bankSearch').addEventListener('input', () => {
+        const query = $('bankSearch').value.trim();
+        if (!query) {
+          selectedBankName = '';
+          updateCommonBankState();
+          generateDefaultCommonCards();
+          showBankDropdown();
+          return;
+        }
+
+        const bankName = resolveSelectedBank();
+        if (bankName && bankName === query) {
+          selectBank(bankName, { skipFocus: true, suppressDropdown: true });
+          return;
+        }
+
+        selectedBankName = '';
+        state.cards = [];
+        setError('请选择发卡银行');
+        render();
+        showBankDropdown();
+        updateCommonBankState();
+      });
+      $('bankSearch').addEventListener('focus', () => {
+        if (suppressBankDropdown) {
+          suppressBankDropdown = false;
+          return;
+        }
+        showBankDropdown();
+      });
+      $('bankSearch').addEventListener('blur', () => {
+        setTimeout(hideBankDropdown, 120);
+      });
+      $('bankSearch').addEventListener('keydown', (event) => {
+        const items = filterBankNames($('bankSearch').value);
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          if ($('bankDropdown').hidden) showBankDropdown();
+          updateDropdownActiveIndex(dropdownActiveIndex + 1, items);
+          return;
+        }
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          if ($('bankDropdown').hidden) showBankDropdown();
+          updateDropdownActiveIndex(dropdownActiveIndex - 1, items);
+          return;
+        }
+        if (event.key === 'Enter') {
+          if (!$('bankDropdown').hidden && dropdownActiveIndex >= 0 && items[dropdownActiveIndex]) {
+            event.preventDefault();
+            selectBank(items[dropdownActiveIndex]);
+            return;
+          }
+          const bankName = resolveSelectedBank();
+          if (bankName) {
+            selectBank(bankName);
+          }
+          return;
+        }
+        if (event.key === 'Escape') {
+          hideBankDropdown();
+        }
+      });
+
+      $('commonBanks').addEventListener('mousedown', (event) => {
+        const chip = event.target.closest('[data-bank]');
+        if (!chip || chip.disabled) return;
+        event.preventDefault();
+        suppressBankDropdown = true;
+        selectBank(chip.dataset.bank, { suppressDropdown: true });
+      });
+
+      $('copyAll').addEventListener('click', () => {
+        copyText(state.cards.map((card) => card.cardNumber).join('\n'), '全部银行卡号已复制');
+      });
+      $('count').addEventListener('input', generate);
+      $('count').addEventListener('change', generate);
+      $('count').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          generate();
+        }
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-bank-card-generator', capabilities: ['copyText'] };
+        const pluginOnReady = function () { init(); };
+        const pluginOfflineReady = function () { init(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

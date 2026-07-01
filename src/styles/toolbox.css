@@ -1,0 +1,182 @@
+.tool-home {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.home-toolbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.content-tabs {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.content-tabs button {
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  height: 40px;
+  padding: 0 14px;
+}
+
+.content-tabs button.active {
+  border-bottom-color: var(--brand);
+  color: var(--text-main);
+}
+
+.sort-row {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sort-row span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tool-section {
+  display: grid;
+  gap: 12px;
+}
+
+.tool-section h2 {
+  color: var(--text-main);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 2px 4px;
+}
+
+.tool-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+}
+
+.tool-card {
+  background: linear-gradient(135deg, var(--panel-bg), var(--panel-soft));
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+  min-height: 92px;
+  position: relative;
+}
+
+.tool-card:hover {
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow: var(--shadow);
+}
+
+.favorite-button {
+  align-items: center;
+  background: transparent;
+  color: #8a98ad;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 28px;
+  z-index: 1;
+}
+
+.favorite-button:hover {
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+}
+
+.favorite-button.active {
+  color: #f59e0b;
+}
+
+.favorite-button.active:hover {
+  color: #d97706;
+}
+
+.favorite-button .app-icon {
+  height: 17px;
+  width: 17px;
+}
+
+.card-main {
+  align-items: center;
+  background: transparent;
+  color: var(--text-main);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 36px minmax(0, 1fr);
+  height: 100%;
+  min-height: 92px;
+  padding: 18px 42px 18px 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.card-main:hover {
+  background: transparent;
+}
+
+.card-main strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-main small {
+  color: var(--text-muted);
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+
+@media (width <= 760px) {
+  .tool-home {
+    gap: 12px;
+  }
+
+  .home-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .content-tabs {
+    display: none;
+  }
+
+  .sort-row {
+    justify-content: flex-start;
+  }
+
+  .sort-row span {
+    margin-right: 0;
+  }
+
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-card {
+    min-height: 78px;
+  }
+
+  .card-main {
+    min-height: 78px;
+    padding: 14px 42px 14px 14px;
+  }
+
+  .tool-section h2 {
+    margin-left: 0;
+  }
+}

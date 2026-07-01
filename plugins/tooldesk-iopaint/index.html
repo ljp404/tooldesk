@@ -1,0 +1,1893 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 去水印</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: transparent;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  padding: 18px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .58; }
+[hidden] { display: none !important; }
+.panel {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 18px;
+}
+.title {
+  display: block;
+  min-width: 0;
+}
+.icon-button svg, .primary-button svg, .tool-tab svg {
+  display: block;
+  height: 14px;
+  width: 14px;
+}
+.title strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.title span {
+  color: #64748b;
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+}
+.head-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  min-width: 0;
+}
+.head-actions .secondary-button,
+.head-actions .primary-button {
+  font-size: 12px;
+  height: 32px;
+  min-width: 0;
+  padding: 0 12px;
+}
+.head-actions .primary-button {
+  min-width: 96px;
+}
+.endpoint-input {
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  color: #334155;
+  height: 32px;
+  min-width: 280px;
+  padding: 0 12px;
+}
+.endpoint-input:focus, select:focus, input:focus, textarea:focus {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+  outline: 0;
+}
+.badge {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+.badge.ok {
+  background: rgba(34, 197, 94, .1);
+  border-color: rgba(34, 197, 94, .28);
+  color: #15803d;
+}
+.badge.warn {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+.layout {
+  display: grid;
+  flex: 1;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  padding: 18px 18px 22px;
+}
+.layout.settings-open {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+.workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+}
+.toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  min-width: 0;
+}
+.toolbar-left, .toolbar-right {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.toolbar-left .tool-tab,
+.toolbar-left .icon-button,
+.toolbar-left .secondary-button {
+  font-size: 12px;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+}
+.toolbar-left .icon-button {
+  width: 28px;
+}
+.toolbar-right .secondary-button,
+.toolbar-right .primary-button {
+  height: 30px;
+}
+.toolbar-right {
+  margin-left: auto;
+}
+#toggleSettingsButton.active {
+  background: #f5f3ff;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+}
+.workspace-error {
+  margin: 0;
+}
+.side {
+  display: none;
+  gap: 12px;
+  min-height: 0;
+}
+.layout.settings-open .side {
+  display: grid;
+}
+.tool-tab, .icon-button, .secondary-button, .primary-button {
+  align-items: center;
+  border-radius: 8px;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 7px;
+  height: 34px;
+  justify-content: center;
+  padding: 0 12px;
+}
+.tool-tab {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  color: #475569;
+}
+.tool-tab.active {
+  background: #f5f3ff;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+}
+.icon-button {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  color: #475569;
+  width: 34px;
+  padding: 0;
+}
+.primary-button {
+  background: #7c3aed;
+  color: #ffffff;
+  min-width: 112px;
+}
+.primary-button:hover:not(:disabled) { background: #6d28d9; }
+.secondary-button {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  color: #475569;
+}
+.canvas-shell {
+  background:
+    linear-gradient(45deg, #f1f5f9 25%, transparent 25%) 0 0 / 18px 18px,
+    linear-gradient(45deg, transparent 75%, #f1f5f9 75%) 0 0 / 18px 18px,
+    linear-gradient(45deg, transparent 75%, #f1f5f9 75%) 9px 9px / 18px 18px,
+    linear-gradient(45deg, #f1f5f9 25%, #ffffff 25%) 9px 9px / 18px 18px;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  flex: 1;
+  min-height: 560px;
+  overflow: hidden;
+  position: relative;
+}
+.canvas-stage {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.canvas-stage.can-scroll {
+  overflow: auto;
+}
+.canvas-wrap {
+  height: auto;
+  margin: 0 auto;
+  position: relative;
+  transform-origin: top center;
+  width: auto;
+}
+.stage-root,
+.compare-grid {
+  align-items: stretch;
+  display: grid;
+  flex: 1;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 0;
+}
+.canvas-stage.is-dragging,
+.result-viewport.is-dragging {
+  cursor: grabbing;
+}
+.canvas-stage.pan-enabled,
+.result-viewport.pan-enabled {
+  cursor: grab;
+}
+.stage-panel {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 12px 14px;
+}
+.result-stage-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 560px;
+}
+.result-stage-panel .result-box {
+  flex: none;
+  height: auto;
+  min-height: 0;
+}
+.stage-panel[hidden] {
+  display: none !important;
+}
+.edit-stage-panel {
+  min-height: 560px;
+}
+.zoom-controls {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+}
+.zoom-controls .icon-button {
+  height: 24px;
+  width: 24px;
+}
+.zoom-controls .secondary-button {
+  font-size: 11px;
+  height: 24px;
+  padding: 0 6px;
+}
+.zoom-label {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 44px;
+  text-align: center;
+}
+.pane-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  min-height: 24px;
+}
+.pane-head strong {
+  color: #111827;
+  font-size: 13px;
+}
+.pane-head span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 800;
+}
+.pane-head-meta {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.pane-head-right {
+  align-items: center;
+  display: inline-flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.pane-zoom-controls {
+  flex-shrink: 0;
+}
+#imageSizeMeta {
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+canvas {
+  left: 0;
+  max-height: none;
+  max-width: none;
+  position: absolute;
+  top: 0;
+}
+#imageCanvas { z-index: 1; }
+#maskCanvas {
+  z-index: 2;
+  touch-action: none;
+}
+.empty-state {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: absolute;
+  text-align: center;
+  z-index: 3;
+}
+.empty-state strong {
+  color: #111827;
+  font-size: 16px;
+}
+.empty-state span {
+  font-size: 12px;
+  font-weight: 700;
+}
+.file-input { display: none; }
+.card {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  padding: 14px;
+}
+.card h3 {
+  color: #111827;
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+.form-grid {
+  display: grid;
+  gap: 10px;
+}
+.settings-card {
+  min-height: 0;
+  overflow: auto;
+}
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field > span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+select, input[type="number"], input[type="text"], textarea {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  color: #111827;
+  min-width: 0;
+}
+select, input[type="number"], input[type="text"] {
+  height: 34px;
+  padding: 0 10px;
+}
+textarea {
+  min-height: 64px;
+  padding: 9px 10px;
+  resize: vertical;
+}
+.inline-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.range-row {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 44px;
+}
+input[type="range"] { width: 100%; }
+.result-card {
+  display: contents;
+}
+.result-box {
+  align-items: stretch;
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+.result-viewport {
+  cursor: ew-resize;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  width: 100%;
+}
+.result-viewport.can-scroll {
+  overflow: auto;
+}
+.result-zoom-wrap {
+  position: relative;
+  --split: 50%;
+}
+.result-compare-image {
+  display: block;
+  height: 100%;
+  inset: 0;
+  object-fit: fill;
+  pointer-events: none;
+  position: absolute;
+  user-select: none;
+  width: 100%;
+  z-index: 1;
+}
+.result-zoom-wrap.has-result #compareSourceImage {
+  clip-path: inset(0 0 0 var(--split));
+}
+.result-layer {
+  clip-path: inset(0 calc(100% - var(--split)) 0 0);
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+.result-handle {
+  background: #7c3aed;
+  bottom: 0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .72);
+  left: var(--split);
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: 2px;
+  z-index: 4;
+}
+.result-handle::before {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #c4b5fd;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, .16);
+  color: #7c3aed;
+  content: "↔";
+  display: block;
+  font-size: 13px;
+  font-weight: 900;
+  height: 30px;
+  left: 50%;
+  line-height: 28px;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+}
+.result-label {
+  background: rgba(15, 23, 42, .72);
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 5px 9px;
+  pointer-events: none;
+  position: absolute;
+  top: 12px;
+  z-index: 3;
+}
+.result-label.after { left: 12px; }
+.result-label.before { right: 12px; }
+.toolbar.view-result .edit-only {
+  display: none;
+}
+.result-only {
+  display: none;
+}
+.toolbar.view-result .result-only {
+  display: inline-flex;
+}
+.toolbar.view-result label.result-only {
+  display: inline-flex;
+}
+#togglePanButton.active {
+  background: #f5f3ff;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+}
+.result-box:has(.result-zoom-wrap.has-result) .result-empty,
+.result-empty[hidden] {
+  display: none !important;
+}
+.result-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  inset: 0;
+  justify-content: center;
+  pointer-events: none;
+  position: absolute;
+  z-index: 3;
+}
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.error {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+  margin: 0;
+}
+@media (max-width: 760px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
+  }
+  body { padding: 10px; }
+  .panel {
+    height: auto;
+    min-height: calc(100dvh - 20px);
+    overflow: visible;
+  }
+  .head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+  .head-actions { flex-wrap: wrap; width: 100%; }
+  .endpoint-input {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+  .layout {
+    grid-template-columns: 1fr;
+    overflow: visible;
+    padding: 12px;
+  }
+  .layout.settings-open {
+    grid-template-columns: 1fr;
+  }
+  .toolbar,
+  .result-actions {
+    flex-wrap: wrap;
+  }
+  .tool-tab,
+  .secondary-button,
+  .primary-button {
+    min-height: 28px;
+  }
+  .compare-grid {
+    grid-template-columns: 1fr;
+  }
+  .canvas-shell,
+  .result-box {
+    min-height: 360px;
+  }
+  .edit-stage-panel,
+  .result-stage-panel {
+    min-height: 360px;
+  }
+  .side {
+    grid-template-rows: auto;
+  }
+  .settings-card {
+    overflow: visible;
+  }
+}
+    </style>
+  </head>
+  <body>
+    <main class="panel">
+      <header class="head">
+        <div class="title">
+          <strong>AI 去水印</strong>
+          <span>擦除物体、去水印和局部修复</span>
+        </div>
+        <div class="head-actions">
+          <input id="endpointInput" class="endpoint-input" type="text" spellcheck="false" hidden />
+          <button id="connectButton" class="secondary-button" type="button" hidden>连接</button>
+          <button id="toggleSettingsButton" class="secondary-button" type="button" aria-expanded="false">修复设置</button>
+          <button id="runButton" class="primary-button" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M5 3l14 9-14 9V3z" /></svg>
+            开始修复
+          </button>
+          <span id="statusBadge" class="badge" hidden>连接中</span>
+        </div>
+      </header>
+
+      <section id="layoutRoot" class="layout">
+        <section class="workspace">
+          <div id="toolbarRoot" class="toolbar">
+            <div class="toolbar-left">
+            <label id="uploadButton" class="secondary-button" title="选择本地图片并载入编辑区">
+              <span id="uploadButtonText">上传图片</span>
+              <input id="fileInput" class="file-input" type="file" accept="image/*" />
+            </label>
+            <button id="togglePanButton" class="tool-tab" type="button" title="开启后拖动图片位置，方便放大后查看局部">移动</button>
+            <button class="tool-tab" data-tool="brush" type="button" title="画笔：在图片上涂抹要修复、擦除或去水印的区域" aria-label="画笔：涂抹要修复的区域">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 11 6-6 4 4-6 6" /><path d="M5 19c2 0 4-2 4-4" /></svg>
+              画笔
+            </button>
+            <button class="tool-tab edit-only" data-tool="eraser" type="button" title="橡皮：擦掉已经画出的红色蒙版" aria-label="橡皮：擦除蒙版">橡皮</button>
+            <button class="tool-tab edit-only" data-tool="rect" type="button" title="矩形：拖拽框选一整块要修复的区域" aria-label="矩形：框选修复区域">矩形</button>
+            <button id="undoButton" class="icon-button edit-only" type="button" title="撤销上一步蒙版操作" aria-label="撤销上一步蒙版操作">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14 4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 0 12h-1" /></svg>
+            </button>
+            <button id="clearMaskButton" class="secondary-button edit-only" type="button" title="清空当前所有红色蒙版区域" aria-label="清空当前所有蒙版">清空蒙版</button>
+            <button id="useResultButton" class="secondary-button" type="button" disabled>继续编辑</button>
+            <button id="downloadButton" class="secondary-button" type="button" disabled>下载结果</button>
+            </div>
+          </div>
+          <p id="errorText" class="error workspace-error" hidden></p>
+
+          <div id="stageRoot" class="compare-grid">
+            <section id="editStage" class="stage-panel edit-stage-panel">
+              <div class="pane-head">
+                <strong>编辑蒙版</strong>
+                <div class="pane-head-right">
+                  <div class="zoom-controls pane-zoom-controls">
+                    <button id="editZoomOutButton" class="icon-button" type="button" title="缩小 (Ctrl+滚轮)" aria-label="缩小">−</button>
+                    <span id="editZoomLabel" class="zoom-label">100%</span>
+                    <button id="editZoomInButton" class="icon-button" type="button" title="放大 (Ctrl+滚轮)" aria-label="放大">+</button>
+                    <button id="editZoomResetButton" class="secondary-button" type="button" title="适应窗口">适应</button>
+                    <button id="editZoomNativeButton" class="secondary-button" type="button" title="按图片原始分辨率显示">原尺寸</button>
+                  </div>
+                  <div class="pane-head-meta">
+                    <span id="imageSizeMeta"></span>
+                    <span id="maskMeta">蒙版：0%</span>
+                  </div>
+                </div>
+              </div>
+              <div id="dropZone" class="canvas-shell">
+                <div class="canvas-stage">
+                  <div class="canvas-wrap">
+                    <canvas id="imageCanvas"></canvas>
+                    <canvas id="maskCanvas"></canvas>
+                  </div>
+                </div>
+                <div id="emptyState" class="empty-state">
+                  <strong>上传图片</strong>
+                  <span>选择一张图片开始编辑</span>
+                </div>
+              </div>
+            </section>
+
+            <section id="resultStage" class="stage-panel result-stage-panel">
+              <div class="pane-head">
+                <strong>修复结果</strong>
+                <div class="pane-head-right">
+                  <div class="zoom-controls pane-zoom-controls">
+                    <button id="resultZoomOutButton" class="icon-button" type="button" title="缩小 (Ctrl+滚轮)" aria-label="缩小">−</button>
+                    <span id="resultZoomLabel" class="zoom-label">100%</span>
+                    <button id="resultZoomInButton" class="icon-button" type="button" title="放大 (Ctrl+滚轮)" aria-label="放大">+</button>
+                    <button id="resultZoomResetButton" class="secondary-button" type="button" title="适应窗口">适应</button>
+                    <button id="resultZoomNativeButton" class="secondary-button" type="button" title="按图片原始分辨率显示">原尺寸</button>
+                  </div>
+                  <span id="resultMeta">等待生成 · 拖拽中线对比</span>
+                </div>
+              </div>
+              <div class="result-box">
+                <div id="resultViewport" class="result-viewport">
+                  <div id="resultZoomWrap" class="result-zoom-wrap">
+                    <img id="compareSourceImage" class="result-compare-image" alt="原图" hidden />
+                    <div id="resultLayer" class="result-layer" hidden>
+                      <img id="resultImage" class="result-compare-image" alt="修复结果" />
+                    </div>
+                    <span id="resultAfterLabel" class="result-label after" hidden>修复后</span>
+                    <span id="resultBeforeLabel" class="result-label before" hidden>原图</span>
+                    <span id="resultHandle" class="result-handle" hidden></span>
+                  </div>
+                </div>
+                <span id="resultEmpty" class="result-empty">暂无结果</span>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <aside id="settingsPanel" class="side">
+          <section class="card settings-card">
+            <h3>修复设置</h3>
+            <div class="form-grid">
+              <div class="inline-grid">
+                <label class="field">
+                  <span>高清策略</span>
+                  <select id="hdStrategy">
+                    <option value="Crop">Crop</option>
+                    <option value="Resize">Resize</option>
+                    <option value="Original">Original</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>画笔大小</span>
+                  <input id="brushSize" type="number" min="4" max="160" step="2" value="32" />
+                </label>
+              </div>
+              <label class="field">
+                <span>橡皮大小</span>
+                <input id="eraserSize" type="number" min="4" max="200" step="2" value="48" />
+              </label>
+              <div class="inline-grid">
+                <label class="field">
+                  <span>Crop 边距</span>
+                  <input id="cropMargin" type="number" min="0" max="512" step="8" value="128" />
+                </label>
+                <label class="field">
+                  <span>Resize 限制</span>
+                  <input id="resizeLimit" type="number" min="256" max="4096" step="64" value="1280" />
+                </label>
+              </div>
+              <label class="field">
+                <span>蒙版调整</span>
+                <div class="toolbar">
+                  <button id="expandMaskButton" class="secondary-button" type="button">膨胀</button>
+                  <button id="shrinkMaskButton" class="secondary-button" type="button">收缩</button>
+                  <button id="reverseMaskButton" class="secondary-button" type="button">反选</button>
+                </div>
+              </label>
+              <label class="field" id="cv2Settings">
+                <span>CV2 参数</span>
+                <div class="inline-grid">
+                  <select id="cv2Flag">
+                    <option value="INPAINT_NS">INPAINT_NS</option>
+                    <option value="INPAINT_TELEA">INPAINT_TELEA</option>
+                  </select>
+                  <input id="cv2Radius" type="number" min="1" max="32" value="4" />
+                </div>
+              </label>
+              <label class="field" id="promptSettings">
+                <span>Prompt</span>
+                <textarea id="promptInput" placeholder="扩散模型可用；当前 Lama/CV2 通常不需要"></textarea>
+              </label>
+              <label class="field" id="negativePromptSettings">
+                <span>Negative Prompt</span>
+                <textarea id="negativePromptInput" placeholder="不希望出现的内容"></textarea>
+              </label>
+            </div>
+          </section>
+        </aside>
+      </section></main>
+
+    <script>
+      let api = null;
+      let pluginConnect = Promise.resolve();
+      let pluginBootRetryTimer = 0;
+
+      const SETTINGS_KEY = 'tooldesk-iopaint-settings';
+      const DEFAULT_ENDPOINT = 'http://159.75.219.43:8089/';
+      const state = {
+        connected: false,
+        endpoint: DEFAULT_ENDPOINT,
+        imageDataUrl: '',
+        imageName: 'iopaint-result.png',
+        imageSize: { width: 0, height: 0 },
+        isDrawing: false,
+        lastPoint: null,
+        maskHistory: [],
+        modelInfo: null,
+        resultDataUrl: '',
+        resultCompareDragging: false,
+        serverConfig: null,
+        activePointers: new Map(),
+        tool: '',
+        editZoom: 1,
+        resultZoom: 1,
+        editFitScale: 1,
+        resultFitScale: 1,
+        panMode: false,
+        isPanDragging: false,
+        panStart: null,
+        panSurface: null
+      };
+      const ZOOM_MIN = 0.25;
+      const ZOOM_MAX = 5;
+      const ZOOM_STEP = 0.25;
+      const $ = (id) => document.getElementById(id);
+      const imageCanvas = $('imageCanvas');
+      const maskCanvas = $('maskCanvas');
+      const imageCtx = imageCanvas.getContext('2d');
+      const maskCtx = maskCanvas.getContext('2d');
+      function normalizeEndpoint(value) {
+        const trimmed = String(value || '').trim() || DEFAULT_ENDPOINT;
+        return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+      }
+
+      function saveSettings() {
+        localStorage.setItem(
+          SETTINGS_KEY,
+          JSON.stringify({
+            endpoint: state.endpoint,
+            settingsOpen: $('layoutRoot').classList.contains('settings-open')
+          })
+        );
+      }
+
+      function loadSettings() {
+        let settingsOpen = false;
+        try {
+          const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+          state.endpoint = normalizeEndpoint(settings.endpoint || DEFAULT_ENDPOINT);
+          settingsOpen = Boolean(settings.settingsOpen);
+        } catch {
+          state.endpoint = normalizeEndpoint(DEFAULT_ENDPOINT);
+        }
+        $('endpointInput').value = state.endpoint;
+        setSettingsPanelOpen(settingsOpen, false);
+      }
+
+      function setSettingsPanelOpen(open, persist = true) {
+        $('layoutRoot').classList.toggle('settings-open', open);
+        $('toggleSettingsButton').classList.toggle('active', open);
+        $('toggleSettingsButton').textContent = open ? '收起设置' : '修复设置';
+        $('toggleSettingsButton').setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (persist) {
+          saveSettings();
+        }
+        window.setTimeout(syncPreviewLayout, 50);
+      }
+
+      function setPanMode(on) {
+        state.panMode = Boolean(on);
+        if (state.panMode) {
+          state.tool = '';
+          updateToolTabs();
+        }
+        $('togglePanButton').classList.toggle('active', state.panMode);
+        updateInteractionCursors();
+        syncPreviewLayout();
+      }
+
+      function updateInteractionCursors() {
+        const editStage = $('dropZone')?.querySelector('.canvas-stage');
+        const resultViewport = $('resultViewport');
+        for (const surface of [editStage, resultViewport]) {
+          if (!surface) continue;
+          surface.classList.toggle('pan-enabled', state.panMode);
+        }
+        if (!state.panMode) {
+          updateCanvasCursor();
+        } else {
+          maskCanvas.style.cursor = 'grab';
+        }
+        maskCanvas.style.pointerEvents = state.panMode ? 'none' : 'auto';
+        if (resultViewport) {
+          resultViewport.style.cursor = state.panMode ? 'grab' : (state.resultDataUrl ? 'ew-resize' : 'default');
+        }
+      }
+
+      function beginPanDrag(event, surface) {
+        if (!state.panMode || !state.imageDataUrl || event.button !== 0) return false;
+        state.isPanDragging = true;
+        state.panSurface = surface;
+        state.panStart = {
+          x: event.clientX,
+          y: event.clientY,
+          scrollLeft: surface.scrollLeft,
+          scrollTop: surface.scrollTop
+        };
+        surface.classList.add('is-dragging');
+        surface.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+        return true;
+      }
+
+      function movePanDrag(event) {
+        if (!state.isPanDragging || !state.panSurface || !state.panStart) return;
+        const dx = event.clientX - state.panStart.x;
+        const dy = event.clientY - state.panStart.y;
+        state.panSurface.scrollLeft = state.panStart.scrollLeft - dx;
+        state.panSurface.scrollTop = state.panStart.scrollTop - dy;
+        event.preventDefault();
+      }
+
+      function endPanDrag(event) {
+        if (!state.isPanDragging) return;
+        state.isPanDragging = false;
+        state.panStart = null;
+        if (state.panSurface) {
+          state.panSurface.classList.remove('is-dragging');
+          state.panSurface.releasePointerCapture?.(event.pointerId);
+          state.panSurface = null;
+        }
+      }
+
+      function setBadge(text, tone = '') {
+        const badge = $('statusBadge');
+        const show = text === '未就绪' || text === '连接中' || text === '连接失败';
+        badge.hidden = !show;
+        if (!show) return;
+        badge.textContent = text;
+        badge.className = `badge ${tone}`.trim();
+      }
+
+      function hideStatusBadge() {
+        $('statusBadge').hidden = true;
+      }
+
+      function setConnectionControlsVisible(visible) {
+        $('endpointInput').hidden = !visible;
+        $('connectButton').hidden = !visible;
+      }
+
+      function setError(message) {
+        $('errorText').hidden = !message;
+        $('errorText').textContent = message || '';
+      }
+
+      function updateRunButtonState() {
+        $('runButton').disabled = !state.connected || !state.imageDataUrl;
+      }
+      function apiUrl(path) {
+        return `${state.endpoint}${path.startsWith('/') ? path : `/${path}`}`;
+      }
+
+      async function hostRequest(url, options = {}) {
+        if (!api?.sendHttpRequest) {
+          throw new Error('插件宿主连接尚未就绪，请稍后重试。');
+        }
+
+        const method = String(options.method || 'GET').toUpperCase();
+        const result = await api.sendHttpRequest({
+          body: options.body,
+          headers: options.headers || {},
+          method,
+          timeoutMs: options.timeoutMs ?? 120000,
+          url
+        });
+
+        if (!result.ok) {
+          throw new Error(result.error || result.body || `HTTP ${result.status}`);
+        }
+
+        return result;
+      }
+
+      async function apiJson(path, options = {}) {
+        const result = await hostRequest(apiUrl(path), {
+          body: options.body,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+          },
+          method: options.method || 'GET',
+          timeoutMs: options.timeoutMs
+        });
+
+        return result.body ? JSON.parse(result.body) : null;
+      }
+
+      function readHostImageResult(result) {
+        const type = String(result.headers['content-type'] || result.headers['Content-Type'] || '').toLowerCase();
+
+        if (type.includes('application/json') || result.bodyEncoding === 'utf-8') {
+          return normalizeImageResponse(JSON.parse(result.body), type);
+        }
+
+        const mime = type.includes('image/') ? type.split(';')[0] : 'image/png';
+        return `data:${mime};base64,${result.body}`;
+      }
+
+      async function connectServer() {
+        if (!api?.sendHttpRequest) {
+          state.connected = false;
+          updateRunButtonState();
+          setConnectionControlsVisible(true);
+          setBadge('未就绪', 'warn');
+          setError('插件宿主连接尚未就绪，请稍后重试。');
+          return;
+        }
+
+        state.endpoint = normalizeEndpoint($('endpointInput').value);
+        $('endpointInput').value = state.endpoint;
+        saveSettings();
+        state.connected = false;
+        updateRunButtonState();
+        setBadge('连接中', 'warn');
+        setError('');
+        setConnectionControlsVisible(false);
+        try {
+          const [config, currentModel] = await Promise.all([
+            apiJson('/api/v1/server-config'),
+            apiJson('/api/v1/model')
+          ]);
+          state.serverConfig = config;
+          state.modelInfo = currentModel;
+          renderModels();
+          state.connected = true;
+          updateRunButtonState();
+          setConnectionControlsVisible(false);
+          hideStatusBadge();
+        } catch (error) {
+          state.connected = false;
+          updateRunButtonState();
+          setConnectionControlsVisible(true);
+          setBadge('连接失败', 'warn');
+          const message = `无法连接 IOPaint：${error instanceof Error ? error.message : '请求失败'}。`;
+          setError(`${message}请确认服务地址可用。`);
+        }
+      }
+
+      function renderModels() {
+        updateModelFields();
+      }
+
+      function updateModelFields() {
+        const modelName = state.modelInfo?.name || '';
+        const model = (state.serverConfig?.modelInfos || []).find((item) => item.name === modelName) || state.modelInfo;
+        const isCv2 = modelName === 'cv2';
+        $('cv2Settings').hidden = !isCv2;
+        $('promptSettings').hidden = !model?.need_prompt;
+        $('negativePromptSettings').hidden = !model?.need_prompt;
+      }
+
+      function dataUrlToBase64(dataUrl) {
+        return String(dataUrl).split(',')[1] || '';
+      }
+
+      function setResultCompareSplit(clientX) {
+        const wrap = $('resultZoomWrap');
+        const rect = wrap?.getBoundingClientRect();
+        if (!rect?.width) return;
+        const percent = Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100));
+        wrap.style.setProperty('--split', `${percent}%`);
+      }
+
+      function waitForCompareImages() {
+        return new Promise((resolve) => {
+          const source = $('compareSourceImage');
+          const result = $('resultImage');
+          let pending = 0;
+          const finish = () => {
+            pending -= 1;
+            if (pending <= 0) resolve();
+          };
+          for (const image of [source, result]) {
+            if (image.complete && image.naturalWidth > 0) continue;
+            pending += 1;
+            image.addEventListener('load', finish, { once: true });
+            image.addEventListener('error', finish, { once: true });
+          }
+          if (pending === 0) resolve();
+        });
+      }
+
+      function resetResult() {
+        state.resultDataUrl = '';
+        const wrap = $('resultZoomWrap');
+        wrap.classList.remove('has-result');
+        wrap.style.setProperty('--split', '50%');
+        wrap.style.width = '';
+        wrap.style.height = '';
+        wrap.style.margin = '';
+        $('resultViewport')?.classList.remove('can-scroll');
+        if (resultViewport) {
+          resultViewport.scrollLeft = 0;
+          resultViewport.scrollTop = 0;
+        }
+        $('compareSourceImage').hidden = true;
+        $('resultLayer').hidden = true;
+        $('resultAfterLabel').hidden = true;
+        $('resultBeforeLabel').hidden = true;
+        $('resultHandle').hidden = true;
+        $('resultEmpty').hidden = false;
+        $('downloadButton').disabled = true;
+        $('useResultButton').disabled = true;
+        $('resultMeta').textContent = '等待生成 · 拖拽中线对比';
+      }
+
+      function getCanvasPoint(event) {
+        const rect = maskCanvas.getBoundingClientRect();
+        return {
+          x: ((event.clientX - rect.left) / rect.width) * maskCanvas.width,
+          y: ((event.clientY - rect.top) / rect.height) * maskCanvas.height
+        };
+      }
+      function updateToolTabs() {
+        document.querySelectorAll('[data-tool]').forEach((button) => {
+          button.classList.toggle('active', button.dataset.tool === state.tool);
+        });
+      }
+
+      function updateCanvasCursor() {
+        if (!state.tool) {
+          maskCanvas.style.cursor = 'default';
+          return;
+        }
+        if (state.tool === 'rect') {
+          maskCanvas.style.cursor = 'crosshair';
+          return;
+        }
+        const rawSize = state.tool === 'eraser' ? Number($('eraserSize').value) || 48 : Number($('brushSize').value) || 32;
+        const size = Math.max(12, Math.min(64, rawSize));
+        const radius = Math.floor(size / 2) - 2;
+        const color = state.tool === 'eraser' ? '#dc2626' : '#7c3aed';
+        const fill = state.tool === 'eraser' ? 'rgba(220,38,38,.08)' : 'rgba(124,58,237,.08)';
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${radius}" fill="${fill}" stroke="${color}" stroke-width="2"/><line x1="${size / 2}" y1="2" x2="${size / 2}" y2="7" stroke="${color}" stroke-width="1.5"/><line x1="${size / 2}" y1="${size - 7}" x2="${size / 2}" y2="${size - 2}" stroke="${color}" stroke-width="1.5"/><line x1="2" y1="${size / 2}" x2="7" y2="${size / 2}" stroke="${color}" stroke-width="1.5"/><line x1="${size - 7}" y1="${size / 2}" x2="${size - 2}" y2="${size / 2}" stroke="${color}" stroke-width="1.5"/></svg>`;
+        maskCanvas.style.cursor = `url("data:image/svg+xml,${encodeURIComponent(svg)}") ${size / 2} ${size / 2}, crosshair`;
+      }
+
+      function pushMaskHistory() {
+        if (!maskCanvas.width || !maskCanvas.height) return;
+        state.maskHistory.push(maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height));
+        if (state.maskHistory.length > 30) state.maskHistory.shift();
+      }
+
+      function updateMaskMeta() {
+        if (!maskCanvas.width || !maskCanvas.height) {
+          $('maskMeta').textContent = '蒙版：0%';
+          updateImageSizeMeta();
+          return;
+        }
+        const data = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
+        let marked = 0;
+        for (let index = 3; index < data.length; index += 4) {
+          if (data[index] > 10) marked += 1;
+        }
+        const ratio = (marked / (maskCanvas.width * maskCanvas.height)) * 100;
+        $('maskMeta').textContent = `蒙版：${ratio < 0.1 && ratio > 0 ? '<0.1' : ratio.toFixed(1)}%`;
+        updateImageSizeMeta();
+      }
+
+      function updateImageSizeMeta() {
+        const { width, height } = state.imageSize;
+        $('imageSizeMeta').textContent = width && height ? `${width} × ${height}` : '';
+      }
+
+      const ZOOM_PANES = ['edit', 'result'];
+
+      function getPaneZoom(pane) {
+        return pane === 'edit' ? state.editZoom : state.resultZoom;
+      }
+
+      function setPaneZoomValue(pane, value) {
+        if (pane === 'edit') state.editZoom = value;
+        else state.resultZoom = value;
+      }
+
+      function getPaneFitScaleValue(pane) {
+        return pane === 'edit' ? state.editFitScale : state.resultFitScale;
+      }
+
+      function getPaneScrollStage(pane) {
+        if (pane === 'edit') return $('dropZone')?.querySelector('.canvas-stage');
+        return $('resultViewport');
+      }
+
+      function computePaneFitScale(columnWidth, maxH) {
+        const imageSize = getImageSizeForLayout();
+        if (!imageSize.width || !imageSize.height) return 1;
+        return Math.min(columnWidth / imageSize.width, maxH / imageSize.height);
+      }
+
+      function getNativeZoomForPane(pane) {
+        const fitScale = getPaneFitScaleValue(pane);
+        if (!fitScale) return 1;
+        return 1 / fitScale;
+      }
+
+      function isNativeZoomForPane(pane) {
+        if (!state.imageDataUrl) return false;
+        return Math.abs(getPaneZoom(pane) - getNativeZoomForPane(pane)) < 0.02;
+      }
+
+      function isFitZoomForPane(pane) {
+        return Math.abs(getPaneZoom(pane) - 1) < 0.02;
+      }
+
+      function updatePaneZoomControls(pane) {
+        const hasImage = Boolean(state.imageDataUrl);
+        const zoom = getPaneZoom(pane);
+        const { width, height } = state.imageSize;
+        $(`${pane}ZoomInButton`).disabled = !hasImage || zoom >= ZOOM_MAX;
+        $(`${pane}ZoomOutButton`).disabled = !hasImage || zoom <= ZOOM_MIN;
+        $(`${pane}ZoomResetButton`).disabled = !hasImage || isFitZoomForPane(pane);
+        $(`${pane}ZoomNativeButton`).disabled = !hasImage || isNativeZoomForPane(pane);
+        $(`${pane}ZoomLabel`).textContent = `${Math.round(zoom * 100)}%`;
+        $(`${pane}ZoomNativeButton`).title = width && height
+          ? `按原始分辨率 ${width} × ${height} 显示 (1:1)`
+          : '按图片原始分辨率显示';
+      }
+
+      function updateAllZoomControls() {
+        for (const pane of ZOOM_PANES) {
+          updatePaneZoomControls(pane);
+        }
+      }
+
+      function setPaneZoom(pane, value, { clampMax = true } = {}) {
+        if (!state.imageDataUrl) return;
+        let next = Math.round(value / ZOOM_STEP) * ZOOM_STEP;
+        next = Math.max(ZOOM_MIN, next);
+        if (clampMax) {
+          next = Math.min(ZOOM_MAX, next);
+        }
+        setPaneZoomValue(pane, next);
+        updateAllZoomControls();
+        syncPreviewLayout();
+      }
+
+      function resetPaneZoom(pane) {
+        const wasPanMode = state.panMode;
+        setPaneZoomValue(pane, 1);
+        const stage = getPaneScrollStage(pane);
+        if (stage) {
+          stage.scrollLeft = 0;
+          stage.scrollTop = 0;
+        }
+        updateAllZoomControls();
+        syncPreviewLayout();
+        if (wasPanMode) {
+          setPanMode(false);
+        }
+      }
+
+      function setPaneNativeZoom(pane) {
+        if (!state.imageDataUrl) return;
+        setPanMode(true);
+        setPaneZoom(pane, getNativeZoomForPane(pane), { clampMax: false });
+      }
+
+      const PREVIEW_MIN_HEIGHT = 560;
+
+      function updateUploadButtonLabel() {
+        const hasImage = Boolean(state.imageDataUrl);
+        $('uploadButtonText').textContent = hasImage ? '重新上传' : '上传图片';
+        $('uploadButton').title = hasImage
+          ? '重新选择图片并载入编辑区'
+          : '选择本地图片并载入编辑区';
+      }
+
+      function getImageSizeForLayout() {
+        return { width: imageCanvas.width, height: imageCanvas.height };
+      }
+
+      function getShellColumnWidth(shell) {
+        if (shell && shell.clientWidth > 0) {
+          return shell.clientWidth;
+        }
+        const grid = $('stageRoot');
+        if (grid && grid.clientWidth > 0) {
+          return Math.max(220, (grid.clientWidth - 12) / 2);
+        }
+        return 400;
+      }
+
+      function getSharedMaxHeight() {
+        const stagePanel = $('editStage');
+        const paneHead = stagePanel?.querySelector('.pane-head');
+        const headHeight = paneHead?.offsetHeight ?? 24;
+        const gap = 10;
+
+        if (stagePanel && stagePanel.clientHeight > 0) {
+          const styles = window.getComputedStyle(stagePanel);
+          const paddingY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+          return Math.max(240, stagePanel.clientHeight - headHeight - gap - paddingY);
+        }
+
+        const rect = stagePanel?.getBoundingClientRect();
+        if (!rect) {
+          return PREVIEW_MIN_HEIGHT;
+        }
+        const layout = document.querySelector('.layout');
+        const layoutStyles = layout ? window.getComputedStyle(layout) : null;
+        const layoutPadBottom = layoutStyles ? parseFloat(layoutStyles.paddingBottom) || 18 : 18;
+        return Math.max(
+          PREVIEW_MIN_HEIGHT,
+          window.innerHeight - rect.top - headHeight - gap - layoutPadBottom - 14 - 12
+        );
+      }
+
+      function layoutImageShell({ shell, stage, wrap, columnWidth, maxH, zoom, extraNodes = [] }) {
+        if (!shell || !stage || !wrap) return;
+        const imageSize = getImageSizeForLayout();
+        if (!imageSize.width || !imageSize.height) return;
+
+        const fitScale = Math.min(columnWidth / imageSize.width, maxH / imageSize.height);
+        const displayW = Math.round(imageSize.width * fitScale * zoom);
+        const displayH = Math.round(imageSize.height * fitScale * zoom);
+        const shellH = Math.max(PREVIEW_MIN_HEIGHT, maxH);
+
+        shell.style.height = `${shellH}px`;
+        shell.style.minHeight = `${shellH}px`;
+
+        const needsScroll = displayW > columnWidth || displayH > shellH;
+        stage.classList.toggle('can-scroll', needsScroll);
+        stage.style.overflow = needsScroll ? 'auto' : 'hidden';
+
+        wrap.style.width = `${displayW}px`;
+        wrap.style.height = `${displayH}px`;
+        const topMargin = !needsScroll && displayH < shellH
+          ? Math.floor((shellH - displayH) / 2)
+          : 0;
+        wrap.style.margin = displayW >= columnWidth
+          ? `${topMargin}px 0 0`
+          : `${topMargin}px auto 0`;
+
+        for (const node of extraNodes) {
+          node.style.width = `${displayW}px`;
+          node.style.height = `${displayH}px`;
+        }
+      }
+
+      function syncPreviewLayout() {
+        const dropZone = $('dropZone');
+        const resultBox = document.querySelector('#resultStage .result-box');
+        const canvasStage = dropZone.querySelector('.canvas-stage');
+        const canvasWrap = dropZone.querySelector('.canvas-wrap');
+        const resultViewport = $('resultViewport');
+        const resultZoomWrap = $('resultZoomWrap');
+        const imageSize = getImageSizeForLayout();
+        const hasImage = Boolean(imageSize.width && imageSize.height);
+        const maxH = getSharedMaxHeight();
+
+        updateUploadButtonLabel();
+
+        if (!hasImage) {
+          dropZone.style.height = '';
+          dropZone.style.minHeight = '';
+          if (resultBox) {
+            resultBox.style.height = '';
+            resultBox.style.minHeight = '';
+          }
+          if (canvasStage) {
+            canvasStage.style.overflow = 'hidden';
+            canvasStage.classList.remove('can-scroll');
+          }
+          if (canvasWrap) {
+            canvasWrap.style.width = '';
+            canvasWrap.style.height = '';
+            canvasWrap.style.margin = '';
+          }
+          for (const canvas of [imageCanvas, maskCanvas]) {
+            canvas.style.width = '';
+            canvas.style.height = '';
+          }
+          updateAllZoomControls();
+          updateInteractionCursors();
+          return;
+        }
+
+        const editColumnWidth = getShellColumnWidth(dropZone);
+        const resultColumnWidth = getShellColumnWidth(resultBox);
+        state.editFitScale = computePaneFitScale(editColumnWidth, maxH);
+        state.resultFitScale = computePaneFitScale(resultColumnWidth, maxH);
+        updateAllZoomControls();
+
+        layoutImageShell({
+          shell: dropZone,
+          stage: canvasStage,
+          wrap: canvasWrap,
+          columnWidth: editColumnWidth,
+          maxH,
+          zoom: state.editZoom,
+          extraNodes: [imageCanvas, maskCanvas]
+        });
+
+        layoutImageShell({
+          shell: resultBox,
+          stage: resultViewport,
+          wrap: resultZoomWrap,
+          columnWidth: resultColumnWidth,
+          maxH,
+          zoom: state.resultZoom,
+          extraNodes: []
+        });
+
+        updateInteractionCursors();
+      }
+
+      function setCanvasSize(width, height) {
+        for (const canvas of [imageCanvas, maskCanvas]) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        syncPreviewLayout();
+      }
+
+      function loadImageDataUrl(dataUrl, name = 'image.png') {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            state.imageDataUrl = dataUrl;
+            state.imageName = name;
+            state.imageSize = { width: image.naturalWidth, height: image.naturalHeight };
+            state.editZoom = 1;
+            state.resultZoom = 1;
+            setPanMode(false);
+            resetResult();
+            setCanvasSize(image.naturalWidth, image.naturalHeight);
+            imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            imageCtx.drawImage(image, 0, 0);
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+            state.maskHistory = [];
+            $('emptyState').hidden = true;
+            updateMaskMeta();
+            updateRunButtonState();
+            window.setTimeout(syncPreviewLayout, 50);
+            resolve();
+          };
+          image.onerror = () => reject(new Error('图片加载失败，请换一张图片重试。'));
+          image.src = dataUrl;
+        });
+      }
+
+      function showImageOnCanvas(dataUrl, name = state.imageName) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            state.imageDataUrl = dataUrl;
+            state.imageName = name;
+            state.imageSize = { width: image.naturalWidth, height: image.naturalHeight };
+            setCanvasSize(image.naturalWidth, image.naturalHeight);
+            imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            imageCtx.drawImage(image, 0, 0);
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+            state.maskHistory = [];
+            $('emptyState').hidden = true;
+            updateMaskMeta();
+            updateRunButtonState();
+            window.setTimeout(syncPreviewLayout, 50);
+            resolve();
+          };
+          image.onerror = () => reject(new Error('图片加载失败，请换一张图片重试。'));
+          image.src = dataUrl;
+        });
+      }
+
+      async function readFile(file) {
+        if (!file) return;
+        setError('');
+        const reader = new FileReader();
+        reader.onload = () => {
+          void loadImageDataUrl(String(reader.result || ''), file.name).then(() => undefined)
+            .catch((error) => {
+              setError(error instanceof Error ? error.message : '图片加载失败，请换一张图片重试。');
+            });
+        };
+        reader.onerror = () => {
+          setError('图片读取失败，请重新选择图片。');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function drawLine(from, to, erase = false) {
+        const size = Math.max(4, erase ? Number($('eraserSize').value) || 48 : Number($('brushSize').value) || 32);
+        maskCtx.save();
+        maskCtx.globalCompositeOperation = erase ? 'destination-out' : 'source-over';
+        maskCtx.strokeStyle = 'rgba(239, 68, 68, 0.62)';
+        maskCtx.lineWidth = size;
+        maskCtx.lineCap = 'round';
+        maskCtx.lineJoin = 'round';
+        maskCtx.beginPath();
+        maskCtx.moveTo(from.x, from.y);
+        maskCtx.lineTo(to.x, to.y);
+        maskCtx.stroke();
+        maskCtx.restore();
+      }
+
+      function drawRect(from, to) {
+        maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+        const snapshot = state.maskHistory[state.maskHistory.length - 1];
+        if (snapshot) maskCtx.putImageData(snapshot, 0, 0);
+        maskCtx.fillStyle = 'rgba(239, 68, 68, 0.62)';
+        maskCtx.fillRect(from.x, from.y, to.x - from.x, to.y - from.y);
+      }
+
+      function undoMask() {
+        const previous = state.maskHistory.pop();
+        if (!previous) return;
+        maskCtx.putImageData(previous, 0, 0);
+        updateMaskMeta();
+      }
+
+      function clearMask() {
+        pushMaskHistory();
+        maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+        updateMaskMeta();
+      }
+
+      function buildMaskDataUrl() {
+        const canvas = document.createElement('canvas');
+        canvas.width = maskCanvas.width;
+        canvas.height = maskCanvas.height;
+        const ctx = canvas.getContext('2d');
+        const source = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+        const output = ctx.createImageData(maskCanvas.width, maskCanvas.height);
+        for (let index = 0; index < source.data.length; index += 4) {
+          const marked = source.data[index + 3] > 10 ? 255 : 0;
+          output.data[index] = marked;
+          output.data[index + 1] = marked;
+          output.data[index + 2] = marked;
+          output.data[index + 3] = 255;
+        }
+        ctx.putImageData(output, 0, 0);
+        return canvas.toDataURL('image/png');
+      }
+
+      async function adjustMask(operate) {
+        if (!state.imageDataUrl) return;
+        setError('');
+        try {
+          const result = await hostRequest(apiUrl('/api/v1/adjust_mask'), {
+            body: JSON.stringify({
+              kernel_size: 7,
+              mask: dataUrlToBase64(buildMaskDataUrl()),
+              operate
+            }),
+            headers: { 'Content-Type': 'application/json' },
+            method: 'POST'
+          });
+          const output = readHostImageResult(result);
+          if (!output) throw new Error('服务未返回蒙版图片');
+          pushMaskHistory();
+          await loadMaskFromDataUrl(output);
+        } catch (error) {
+          setError(`蒙版调整失败：${error instanceof Error ? error.message : '请求失败'}`);
+        }
+      }
+
+      function loadMaskFromDataUrl(dataUrl) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+            const temp = document.createElement('canvas');
+            temp.width = maskCanvas.width;
+            temp.height = maskCanvas.height;
+            const tempCtx = temp.getContext('2d');
+            tempCtx.drawImage(image, 0, 0, temp.width, temp.height);
+            const source = tempCtx.getImageData(0, 0, temp.width, temp.height);
+            const output = maskCtx.createImageData(maskCanvas.width, maskCanvas.height);
+            for (let index = 0; index < source.data.length; index += 4) {
+              const marked = source.data[index] > 10 || source.data[index + 3] > 10;
+              output.data[index] = 239;
+              output.data[index + 1] = 68;
+              output.data[index + 2] = 68;
+              output.data[index + 3] = marked ? 158 : 0;
+            }
+            maskCtx.putImageData(output, 0, 0);
+            updateMaskMeta();
+            resolve();
+          };
+          image.onerror = reject;
+          image.src = dataUrl;
+        });
+      }
+
+      function normalizeImageResponse(value, contentType = '') {
+        if (!value) return '';
+        if (typeof value === 'string') {
+          if (value.startsWith('data:image/')) return value;
+          if (/^[A-Za-z0-9+/=]+$/.test(value.slice(0, 80))) return `data:image/png;base64,${value}`;
+          return '';
+        }
+        for (const key of ['image', 'result', 'data', 'mask']) {
+          if (typeof value[key] === 'string') return normalizeImageResponse(value[key]);
+        }
+        return '';
+      }
+
+      async function runInpaint() {
+        if (!state.imageDataUrl) {
+          setError('请先上传图片。');
+          return;
+        }
+        if (!state.connected) {
+          setError('请先连接 IOPaint 服务。');
+          return;
+        }
+        setError('');
+        $('runButton').disabled = true;
+        $('runButton').textContent = '修复中...';
+        $('resultMeta').textContent = '生成中';
+        try {
+          const payload = {
+            image: dataUrlToBase64(state.imageDataUrl),
+            mask: dataUrlToBase64(buildMaskDataUrl()),
+            hd_strategy: $('hdStrategy').value,
+            hd_strategy_crop_margin: Number($('cropMargin').value) || 128,
+            hd_strategy_resize_limit: Number($('resizeLimit').value) || 1280,
+            prompt: $('promptInput').value,
+            negative_prompt: $('negativePromptInput').value,
+            cv2_flag: $('cv2Flag').value,
+            cv2_radius: Number($('cv2Radius').value) || 4
+          };
+          const result = await hostRequest(apiUrl('/api/v1/inpaint'), {
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'application/json' },
+            method: 'POST'
+          });
+          const imageResult = readHostImageResult(result);
+          if (!imageResult) throw new Error('服务未返回图片结果');
+          state.resultDataUrl = imageResult;
+          $('compareSourceImage').src = state.imageDataUrl;
+          $('compareSourceImage').hidden = false;
+          $('resultImage').src = imageResult;
+          $('resultLayer').hidden = false;
+          $('resultAfterLabel').hidden = false;
+          $('resultBeforeLabel').hidden = false;
+          $('resultHandle').hidden = false;
+          $('resultEmpty').hidden = true;
+          $('resultZoomWrap').classList.add('has-result');
+          $('resultZoomWrap').style.setProperty('--split', '50%');
+          $('downloadButton').disabled = false;
+          $('useResultButton').disabled = false;
+          $('resultMeta').textContent = '已生成 · 拖拽中线对比';
+          await waitForCompareImages();
+          syncPreviewLayout();
+        } catch (error) {
+          $('resultMeta').textContent = '生成失败';
+          setError(error instanceof Error ? error.message : '修复失败');
+        } finally {
+          updateRunButtonState();
+          $('runButton').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M5 3l14 9-14 9V3z" /></svg>开始修复';
+        }
+      }
+
+      async function downloadResult() {
+        if (!state.resultDataUrl) return;
+        const fileName = state.imageName.replace(/\.[^.]+$/, '') + '-iopaint.png';
+        const link = document.createElement('a');
+        link.href = state.resultDataUrl;
+        link.download = fileName;
+        link.click();
+      }
+
+      async function useResult() {
+        if (!state.resultDataUrl) return;
+        await loadImageDataUrl(state.resultDataUrl, state.imageName.replace(/\.[^.]+$/, '') + '-iopaint.png');
+      }
+
+      function bindEvents() {
+        $('connectButton').addEventListener('click', connectServer);
+        $('toggleSettingsButton').addEventListener('click', () => {
+          setSettingsPanelOpen(!$('layoutRoot').classList.contains('settings-open'));
+        });
+        $('fileInput').addEventListener('change', (event) => {
+          const file = event.target.files?.[0];
+          if (file) readFile(file);
+          event.target.value = '';
+        });
+        $('dropZone').addEventListener('dragover', (event) => {
+          event.preventDefault();
+        });
+        $('dropZone').addEventListener('drop', (event) => {
+          event.preventDefault();
+          const file = event.dataTransfer.files?.[0];
+          if (file) readFile(file);
+        });
+        for (const pane of ZOOM_PANES) {
+          const prefix = pane;
+          $(`${prefix}ZoomInButton`).addEventListener('click', () => {
+            if (state.imageDataUrl) setPanMode(true);
+            setPaneZoom(pane, getPaneZoom(pane) + ZOOM_STEP);
+          });
+          $(`${prefix}ZoomOutButton`).addEventListener('click', () => {
+            if (state.imageDataUrl) setPanMode(true);
+            setPaneZoom(pane, getPaneZoom(pane) - ZOOM_STEP);
+          });
+          $(`${prefix}ZoomResetButton`).addEventListener('click', () => resetPaneZoom(pane));
+          $(`${prefix}ZoomNativeButton`).addEventListener('click', () => setPaneNativeZoom(pane));
+        }
+        const handleEditZoomWheel = (event) => {
+          if (!state.imageDataUrl) return;
+          if (!event.ctrlKey && !event.metaKey) return;
+          event.preventDefault();
+          setPaneZoom('edit', getPaneZoom('edit') + (event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP));
+        };
+        const handleResultZoomWheel = (event) => {
+          if (!state.imageDataUrl) return;
+          if (!event.ctrlKey && !event.metaKey) return;
+          event.preventDefault();
+          setPaneZoom('result', getPaneZoom('result') + (event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP));
+        };
+        $('dropZone').addEventListener('wheel', handleEditZoomWheel, { passive: false });
+        $('resultViewport').addEventListener('wheel', handleResultZoomWheel, { passive: false });
+        $('togglePanButton').addEventListener('click', () => setPanMode(!state.panMode));
+        $('dropZone').addEventListener('pointerdown', (event) => {
+          if (event.target.closest('#emptyState')) return;
+          const editCanvasStage = $('dropZone').querySelector('.canvas-stage');
+          if (state.panMode && beginPanDrag(event, editCanvasStage)) return;
+        });
+        $('dropZone').addEventListener('pointermove', movePanDrag);
+        $('dropZone').addEventListener('pointerup', endPanDrag);
+        $('dropZone').addEventListener('pointercancel', endPanDrag);
+        document.querySelectorAll('[data-tool]').forEach((button) => {
+          button.addEventListener('click', () => {
+            state.tool = button.dataset.tool;
+            updateToolTabs();
+            if (state.panMode) {
+              setPanMode(false);
+            } else {
+              updateCanvasCursor();
+            }
+          });
+        });
+        $('brushSize').addEventListener('input', () => {
+          if (state.tool) updateCanvasCursor();
+        });
+        $('eraserSize').addEventListener('input', () => {
+          if (state.tool) updateCanvasCursor();
+        });
+        maskCanvas.addEventListener('pointerdown', (event) => {
+          if (!state.imageDataUrl || state.panMode || !state.tool) return;
+          event.preventDefault();
+          maskCanvas.setPointerCapture(event.pointerId);
+          pushMaskHistory();
+          state.isDrawing = true;
+          state.lastPoint = getCanvasPoint(event);
+        });
+        maskCanvas.addEventListener('pointermove', (event) => {
+          if (!state.isDrawing || !state.lastPoint) return;
+          event.preventDefault();
+          const point = getCanvasPoint(event);
+          if (state.tool === 'rect') {
+            drawRect(state.lastPoint, point);
+          } else {
+            drawLine(state.lastPoint, point, state.tool === 'eraser');
+            state.lastPoint = point;
+          }
+          updateMaskMeta();
+        });
+        maskCanvas.addEventListener('pointerup', (event) => {
+          state.isDrawing = false;
+          state.lastPoint = null;
+          updateMaskMeta();
+        });
+        maskCanvas.addEventListener('pointercancel', (event) => {
+          state.isDrawing = false;
+          state.lastPoint = null;
+          updateMaskMeta();
+        });
+        $('undoButton').addEventListener('click', undoMask);
+        $('clearMaskButton').addEventListener('click', clearMask);
+        $('expandMaskButton').addEventListener('click', () => adjustMask('expand'));
+        $('shrinkMaskButton').addEventListener('click', () => adjustMask('shrink'));
+        $('reverseMaskButton').addEventListener('click', () => adjustMask('reverse'));
+        $('runButton').addEventListener('click', runInpaint);
+        $('downloadButton').addEventListener('click', downloadResult);
+        $('useResultButton').addEventListener('click', useResult);
+        $('resultViewport').addEventListener('pointerdown', (event) => {
+          if (beginPanDrag(event, $('resultViewport'))) return;
+          if (!state.resultDataUrl || state.panMode || event.button !== 0) return;
+          state.resultCompareDragging = true;
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+          setResultCompareSplit(event.clientX);
+          event.preventDefault();
+        });
+        $('resultViewport').addEventListener('pointermove', (event) => {
+          if (state.isPanDragging) {
+            movePanDrag(event);
+            return;
+          }
+          if (!state.resultCompareDragging) return;
+          setResultCompareSplit(event.clientX);
+        });
+        $('resultViewport').addEventListener('pointerup', (event) => {
+          endPanDrag(event);
+          state.resultCompareDragging = false;
+          event.currentTarget.releasePointerCapture?.(event.pointerId);
+        });
+        $('resultViewport').addEventListener('pointercancel', (event) => {
+          endPanDrag(event);
+          state.resultCompareDragging = false;
+        });
+        updateCanvasCursor();
+        updateToolTabs();
+        updateInteractionCursors();
+      }
+
+      loadSettings();
+      bindEvents();
+      updateRunButtonState();
+      updateUploadButtonLabel();
+      updateAllZoomControls();
+      syncPreviewLayout();
+      window.addEventListener('resize', syncPreviewLayout);
+      if ('ResizeObserver' in window) {
+        const previewResizeObserver = new ResizeObserver(syncPreviewLayout);
+        previewResizeObserver.observe($('stageRoot'));
+        previewResizeObserver.observe($('editStage'));
+        previewResizeObserver.observe($('resultStage'));
+      }
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          window.clearTimeout(pluginBootRetryTimer);
+          pluginBootRetryTimer = window.setTimeout(bootPluginHost, 120);
+          return;
+        }
+        window.clearTimeout(pluginBootRetryTimer);
+        const pluginCreateOptions = { id: 'tooldesk-iopaint', capabilities: ['sendHttpRequest'] };
+        const pluginOnReady = function () { void connectServer(); };
+        const pluginOfflineReady = function () {
+          state.connected = false;
+          updateRunButtonState();
+          setConnectionControlsVisible(true);
+          setBadge('未就绪', 'warn');
+          setError('插件宿主连接未就绪，请稍后重试。');
+        };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

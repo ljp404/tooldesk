@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片压缩</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: transparent;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  padding: 18px;
+  --panel-soft: #f8fafc;
+  --text-main: #111827;
+  --text-muted: #64748b;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+[hidden] { display: none !important; }
+img:not([src]) { display: none; }
+.tool-panel {
+  background: #ffffff;
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.tool-panel-fill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.tool-content { flex: 1; height: 100%; min-height: 0; padding: 18px; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #2563eb; color: #fff; }
+.tool-inline-error { color: #dc2626; font-size: 12px; font-weight: 400; margin: 0; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+.app-icon svg { display: block; height: 100%; width: 100%; }
+
+
+
+.image-compress-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+  height: 100%;
+  min-height: 520px;
+}
+
+.image-compress-sidebar {
+  display: grid;
+  gap: 16px;
+  grid-template-rows: minmax(220px, 1fr) auto auto auto;
+  min-width: 0;
+}
+
+.image-compress-dropzone {
+  align-items: center;
+  background: var(--panel-soft);
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  min-height: 220px;
+  overflow: hidden;
+  position: relative;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.image-compress-dropzone.active,
+.image-compress-dropzone:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.image-compress-dropzone.filled {
+  border-style: solid;
+}
+
+.image-compress-file-input {
+  display: none;
+}
+
+.image-compress-dropzone-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+
+.image-compress-dropzone-empty .app-icon {
+  height: 42px;
+  width: 42px;
+}
+
+.image-compress-dropzone-empty strong {
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.image-compress-dropzone-empty span,
+.image-compress-source-meta span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.image-compress-dropzone-preview {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  max-height: 280px;
+  padding: 16px;
+  width: 100%;
+}
+
+.image-compress-dropzone-preview img {
+  display: block;
+  max-height: 248px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.image-compress-settings {
+  display: grid;
+  gap: 14px;
+}
+
+.image-compress-settings .field span {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.image-compress-settings .field span em {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.image-compress-segmented {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 3px;
+}
+
+.tool-panel .image-compress-segmented button,
+.image-compress-segmented button {
+  background: transparent;
+  border-radius: 5px;
+  color: #64748b;
+  min-height: 32px;
+  padding: 0 8px;
+}
+
+.tool-panel .image-compress-segmented button.active,
+.image-compress-segmented button.active {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  color: #2563eb;
+}
+
+.image-compress-range {
+  accent-color: #2563eb;
+  padding: 0;
+  width: 100%;
+}
+
+.image-compress-size-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.image-compress-size-field {
+  min-width: 0;
+}
+
+.image-compress-select-wrap {
+  position: relative;
+}
+
+.image-compress-select {
+  appearance: none;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  height: 38px;
+  outline: none;
+  padding: 0 34px 0 12px;
+  width: 100%;
+}
+
+:root[data-theme='dark'] .image-compress-select {
+  background: rgba(7, 16, 29, 0.38);
+  border-color: var(--panel-border);
+  color: var(--text-main);
+}
+
+.image-compress-select:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.image-compress-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.image-compress-select-icon {
+  color: #64748b;
+  height: 14px;
+  pointer-events: none;
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+}
+
+.image-compress-source-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.image-compress-source-meta strong {
+  color: var(--text-main);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.image-compress-result {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.image-compress-result-head {
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.image-compress-result-title {
+  align-items: center;
+  color: #111827;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 8px;
+}
+
+.image-compress-result-title .app-icon {
+  color: #2563eb;
+  height: 17px;
+  width: 17px;
+}
+
+.image-compress-result-status {
+  background: #eef2f7;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 8px;
+}
+
+.image-compress-result-status.active {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.28);
+  color: #15803d;
+}
+
+.image-compress-result-status.loading {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.22);
+  color: #2563eb;
+}
+
+.image-compress-result-stage {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  padding: 18px;
+}
+
+.image-compress-preview-frame,
+.image-compress-empty-state {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  width: min(100%, 300px);
+}
+
+.image-compress-preview-frame {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  color: inherit;
+  cursor: pointer;
+  max-height: 360px;
+  min-height: 220px;
+  padding: 12px;
+}
+
+.image-compress-preview-frame:hover {
+  border-color: #bfdbfe;
+}
+
+.image-compress-preview-frame img {
+  display: block;
+  max-height: 320px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.image-compress-lightbox {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.72);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 48px 24px 24px;
+  position: fixed;
+  z-index: 1200;
+}
+
+.image-compress-lightbox-image {
+  display: block;
+  max-height: calc(100vh - 96px);
+  max-width: min(92vw, 1200px);
+  object-fit: contain;
+}
+
+.image-compress-lightbox-close {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 36px;
+}
+
+.image-compress-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.image-compress-lightbox-close .app-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.image-compress-empty-state {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #94a3b8;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 220px;
+}
+
+.image-compress-empty-state .app-icon {
+  height: 42px;
+  width: 42px;
+}
+
+.image-compress-result-footer {
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px 14px;
+}
+
+.image-compress-result-meta {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.image-compress-result-dimension {
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.image-compress-result-size {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  line-height: 1.3;
+}
+
+.image-compress-result-size em {
+  background: #f1f5f9;
+  border-radius: 999px;
+  color: #475569;
+  font-style: normal;
+  font-weight: 800;
+  padding: 2px 8px;
+}
+
+.image-compress-result-meta > span:only-child {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.image-compress-result-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tool-panel .image-compress-action-button,
+.image-compress-action-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  border-radius: 7px;
+  color: #2563eb;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 6px;
+  height: 36px;
+  justify-content: center;
+  min-height: 36px;
+  min-width: 0;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.tool-panel .image-compress-action-button.primary,
+.image-compress-action-button.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.tool-panel .image-compress-action-button:hover:not(:disabled),
+.image-compress-action-button:hover:not(:disabled) {
+  background: #f8fbff;
+  border-color: #c8daf8;
+}
+
+.tool-panel .image-compress-action-button.primary:hover:not(:disabled),
+.image-compress-action-button.primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+.tool-panel .image-compress-action-button:disabled,
+.image-compress-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.tool-panel .image-compress-action-button .app-icon,
+.image-compress-action-button .app-icon {
+  flex-shrink: 0;
+  height: 15px;
+  width: 15px;
+}
+
+.tool-panel .image-compress-action-button span,
+.image-compress-action-button span {
+  line-height: 1;
+}
+
+.image-compress-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  left: 50%;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  top: 58px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+
+
+</style>
+  </head>
+  <body>
+    <main class="tool-panel tool-panel-fill image-compress-panel">
+      <div class="tool-content image-compress-tool">
+      <div class="image-compress-layout">
+        <section class="image-compress-sidebar">
+          <label id="dropzone" class="image-compress-dropzone">
+            <input
+              id="fileInput"
+              class="image-compress-file-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,.jpg,.jpeg,.png,.webp,.gif,.bmp"
+            />
+            <div id="dropzonePreview" class="image-compress-dropzone-preview" hidden>
+              <img id="sourcePreview" alt="原图预览" />
+            </div>
+            <div id="dropzoneEmpty" class="image-compress-dropzone-empty">
+              <span class="app-icon" data-icon="image" aria-hidden="true"></span>
+              <strong>点击或拖拽图片到此处</strong>
+              <span>支持 JPG / PNG / WebP / GIF / BMP</span>
+            </div>
+          </label>
+
+          <div class="image-compress-settings">
+            <label class="field">
+              <span>输出格式</span>
+              <div id="formatButtons" class="image-compress-segmented">
+                <button type="button" data-format="jpeg">JPEG</button>
+                <button type="button" data-format="png">PNG</button>
+                <button type="button" data-format="webp">WebP</button>
+              </div>
+            </label>
+
+            <label class="field">
+              <span>
+                压缩质量
+                <em id="qualityLabel">80%</em>
+              </span>
+              <input id="qualityInput" class="image-compress-range" type="range" min="10" max="100" step="1" value="80" disabled />
+            </label>
+
+            <div class="image-compress-size-grid">
+              <label class="field small image-compress-size-field">
+                <span>最大宽度</span>
+                <div class="image-compress-select-wrap">
+                  <select id="maxWidthSelect" class="image-compress-select" disabled></select>
+                  <span class="app-icon image-compress-select-icon" data-icon="chevronDown" aria-hidden="true"></span>
+                </div>
+              </label>
+
+              <label class="field small image-compress-size-field">
+                <span>最大高度</span>
+                <div class="image-compress-select-wrap">
+                  <select id="maxHeightSelect" class="image-compress-select" disabled></select>
+                  <span class="app-icon image-compress-select-icon" data-icon="chevronDown" aria-hidden="true"></span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div id="sourceMeta" class="image-compress-source-meta" hidden></div>
+          <p id="errorMessage" class="tool-inline-error" hidden></p>
+        </section>
+
+        <aside class="image-compress-result">
+          <div class="image-compress-result-head">
+            <span class="image-compress-result-title">
+              <span class="app-icon" data-icon="image" aria-hidden="true"></span>
+              处理结果
+            </span>
+            <span id="resultStatus" class="image-compress-result-status">待处理</span>
+          </div>
+
+          <div class="image-compress-result-stage">
+            <button
+              id="previewFrame"
+              class="image-compress-preview-frame"
+              type="button"
+              title="点击预览大图"
+              aria-label="点击预览大图"
+              hidden
+            >
+              <img id="outputPreview" alt="压缩后预览" />
+            </button>
+            <div id="emptyState" class="image-compress-empty-state">
+              <span class="app-icon" data-icon="image" aria-hidden="true"></span>
+              <span id="emptyText">请先上传图片</span>
+            </div>
+          </div>
+
+          <div class="image-compress-result-footer">
+            <div id="resultMeta" class="image-compress-result-meta">
+              <span id="statusMessage"></span>
+            </div>
+
+            <div class="image-compress-result-actions">
+              <button id="copyButton" class="image-compress-action-button" type="button" disabled title="复制图片">
+                <span class="app-icon" data-icon="copy" aria-hidden="true"></span>
+                <span>复制</span>
+              </button>
+              <button id="downloadButton" class="image-compress-action-button primary" type="button" disabled title="下载图片">
+                <span class="app-icon" data-icon="download" aria-hidden="true"></span>
+                <span>下载</span>
+              </button>
+            </div>
+          </div>
+
+          <span id="copyToast" class="image-compress-copy-toast" role="status" hidden></span>
+        </aside>
+      </div>
+      </div>
+    </main>
+
+    <div id="lightbox" class="image-compress-lightbox" role="dialog" aria-modal="true" aria-label="图片预览" hidden>
+      <button id="lightboxClose" class="image-compress-lightbox-close" type="button" aria-label="关闭预览">
+        <span class="app-icon" data-icon="close" aria-hidden="true"></span>
+      </button>
+      <img id="lightboxImage" class="image-compress-lightbox-image" alt="大图预览" />
+    </div>
+<script>
+const MAX_SIZE_PRESETS = [
+        { label: '不限制', value: 0 },
+        { label: '3840', value: 3840 },
+        { label: '2560', value: 2560 },
+        { label: '1920', value: 1920 },
+        { label: '1280', value: 1280 },
+        { label: '1024', value: 1024 },
+        { label: '800', value: 800 }
+      ];
+      const ACCEPTED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp']);
+      const OUTPUT_MIME = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+      const OUTPUT_EXT = { jpeg: 'jpg', png: 'png', webp: 'webp' };
+      const ICONS = {
+        chevronDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>',
+        close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>',
+        copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>',
+        download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></svg>',
+        image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10.5" r="1.5" /><path d="m21 15-4.5-4.5L8 19" /></svg>'
+      };
+      const state = {
+        copyTimer: undefined,
+        outputBlob: null,
+        outputHeight: 0,
+        outputUrl: '',
+        outputWidth: 0,
+        previewOpen: false,
+        processTimer: undefined,
+        processing: false,
+        statusMessage: '',
+        sourceFile: null,
+        sourceUrl: ''
+      };
+      const $ = (id) => document.getElementById(id);
+
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function renderStaticIcons() {
+        document.querySelectorAll('[data-icon]').forEach((element) => {
+          element.innerHTML = ICONS[element.dataset.icon] || '';
+        });
+      }
+
+      function formatBytes(size) {
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / 1024 / 1024).toFixed(1)} MB`;
+      }
+
+      function formatCompressionRatio(originalSize, outputSize) {
+        if (originalSize <= 0 || outputSize <= 0) return '0%';
+        const saved = ((originalSize - outputSize) / originalSize) * 100;
+        if (saved <= 0) return `+${Math.abs(saved).toFixed(1)}%`;
+        return `${saved.toFixed(1)}%`;
+      }
+
+      function isAcceptedImageFile(file) {
+        return ACCEPTED_MIME_TYPES.has(file.type) || /\.(jpe?g|png|webp|gif|bmp)$/i.test(file.name);
+      }
+
+      function detectOutputFormat(file) {
+        if (file.type === 'image/png') return 'png';
+        if (file.type === 'image/webp') return 'webp';
+        return 'jpeg';
+      }
+
+      function getOutputFormat() {
+        return document.querySelector('#formatButtons button.active')?.dataset.format || 'jpeg';
+      }
+
+      function setOutputFormat(format) {
+        document.querySelectorAll('#formatButtons button').forEach((button) => {
+          button.classList.toggle('active', button.dataset.format === format);
+        });
+        updateQualityState();
+      }
+
+      function updateQualityState() {
+        const png = getOutputFormat() === 'png';
+        $('qualityInput').disabled = png || !state.sourceFile;
+        $('qualityLabel').textContent = png ? 'PNG 为无损格式' : `${$('qualityInput').value}%`;
+      }
+
+      function buildOutputFileName() {
+        const sourceName = state.sourceFile?.name || 'image';
+        const baseName = sourceName.replace(/\.[^.]+$/, '') || 'image';
+        return `${baseName}.${OUTPUT_EXT[getOutputFormat()]}`;
+      }
+
+      function showError(message) {
+        $('errorMessage').textContent = message || '';
+        $('errorMessage').hidden = !message;
+      }
+
+      function showCopyStatus(message) {
+        clearTimeout(state.copyTimer);
+        $('copyToast').textContent = message;
+        $('copyToast').hidden = false;
+        state.copyTimer = setTimeout(() => {
+          $('copyToast').hidden = true;
+          state.copyTimer = undefined;
+        }, 1600);
+      }
+
+      function revokeUrls() {
+        if (state.sourceUrl) URL.revokeObjectURL(state.sourceUrl);
+        if (state.outputUrl) URL.revokeObjectURL(state.outputUrl);
+        state.sourceUrl = '';
+        state.outputUrl = '';
+      }
+
+      function resetOutput() {
+        if (state.outputUrl) URL.revokeObjectURL(state.outputUrl);
+        state.outputUrl = '';
+        state.outputBlob = null;
+        state.outputWidth = 0;
+        state.outputHeight = 0;
+        closeLightbox();
+      }
+
+      function loadImageFromFile(file) {
+        return new Promise((resolve, reject) => {
+          const objectUrl = URL.createObjectURL(file);
+          const image = new Image();
+          image.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(image);
+          };
+          image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('无法读取图片，请确认文件格式是否正确'));
+          };
+          image.src = objectUrl;
+        });
+      }
+
+      function calculateOutputDimensions(sourceWidth, sourceHeight, maxWidth, maxHeight) {
+        if (!maxWidth && !maxHeight) return { width: sourceWidth, height: sourceHeight };
+        const limitWidth = maxWidth || Number.POSITIVE_INFINITY;
+        const limitHeight = maxHeight || Number.POSITIVE_INFINITY;
+        const ratio = Math.min(1, limitWidth / sourceWidth, limitHeight / sourceHeight);
+        return {
+          width: Math.max(1, Math.round(sourceWidth * ratio)),
+          height: Math.max(1, Math.round(sourceHeight * ratio))
+        };
+      }
+
+      function canvasToBlob(canvas, mimeType, quality) {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('图片压缩失败，请调整参数后重试'));
+              return;
+            }
+            resolve(blob);
+          }, mimeType, quality);
+        });
+      }
+
+      async function compressImage(image) {
+        const format = getOutputFormat();
+        const { width, height } = calculateOutputDimensions(
+          image.naturalWidth,
+          image.naturalHeight,
+          Number($('maxWidthSelect').value) || null,
+          Number($('maxHeightSelect').value) || null
+        );
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Canvas 图片处理 API 不可用');
+        context.clearRect(0, 0, width, height);
+        if (format === 'jpeg') {
+          context.fillStyle = '#ffffff';
+          context.fillRect(0, 0, width, height);
+        }
+        context.drawImage(image, 0, 0, width, height);
+        const quality = Math.min(1, Math.max(0.05, Number($('qualityInput').value) / 100));
+        const blob = await canvasToBlob(canvas, OUTPUT_MIME[format], quality);
+        return { blob, width, height };
+      }
+
+      function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+          reader.onerror = () => reject(new Error('无法预览处理结果'));
+          reader.readAsDataURL(blob);
+        });
+      }
+
+      function render() {
+        const hasSource = Boolean(state.sourceFile);
+        const hasOutput = Boolean(state.outputBlob);
+        $('dropzone').classList.toggle('filled', hasSource);
+        $('dropzonePreview').hidden = !hasSource;
+        $('dropzoneEmpty').hidden = hasSource;
+        $('maxWidthSelect').disabled = !hasSource;
+        $('maxHeightSelect').disabled = !hasSource;
+        updateQualityState();
+
+        if (hasSource) {
+          $('sourceMeta').hidden = false;
+          $('sourceMeta').innerHTML = `<strong>${escapeHtml(state.sourceFile.name)}</strong><span>${escapeHtml(state.sourceFile.type || '未知格式')} · ${formatBytes(state.sourceFile.size)}</span>`;
+        } else {
+          $('sourceMeta').hidden = true;
+          $('sourceMeta').replaceChildren();
+        }
+
+        $('resultStatus').textContent = state.processing ? '处理中...' : hasOutput ? '已生成' : '待处理';
+        $('resultStatus').classList.toggle('active', hasOutput);
+        $('resultStatus').classList.toggle('loading', state.processing);
+        $('previewFrame').hidden = !hasOutput;
+        $('emptyState').hidden = hasOutput;
+        $('emptyText').textContent = hasSource ? '调整参数后将自动处理' : '请先上传图片';
+        $('copyButton').disabled = !hasOutput;
+        $('downloadButton').disabled = !hasOutput;
+
+        if (hasOutput) {
+          $('resultMeta').innerHTML = `
+            <span class="image-compress-result-dimension">${state.outputWidth} × ${state.outputHeight}</span>
+            <span class="image-compress-result-size">
+              ${formatBytes(state.outputBlob.size)}
+              <em>体积变化 ${formatCompressionRatio(state.sourceFile.size, state.outputBlob.size)}</em>
+            </span>
+          `;
+        } else {
+          $('resultMeta').innerHTML = `<span>${escapeHtml(state.statusMessage)}</span>`;
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[char]);
+      }
+
+      function scheduleProcess(immediate = false) {
+        clearTimeout(state.processTimer);
+        if (!state.sourceFile) return;
+        if (immediate) {
+          processCurrentImage();
+          return;
+        }
+        state.processTimer = setTimeout(() => {
+          state.processTimer = undefined;
+          processCurrentImage();
+        }, 180);
+      }
+
+      async function processCurrentImage() {
+        if (!state.sourceFile || state.processing) return;
+        state.processing = true;
+        showError('');
+        render();
+        try {
+          const image = await loadImageFromFile(state.sourceFile);
+          const result = await compressImage(image);
+          resetOutput();
+          state.outputBlob = result.blob;
+          state.outputWidth = result.width;
+          state.outputHeight = result.height;
+          state.outputUrl = URL.createObjectURL(result.blob);
+          $('outputPreview').src = state.outputUrl;
+          $('lightboxImage').src = state.outputUrl;
+          state.statusMessage = '处理完成';
+        } catch (error) {
+          resetOutput();
+          showError(error instanceof Error ? error.message : '图片处理失败');
+          state.statusMessage = '';
+        } finally {
+          state.processing = false;
+          render();
+        }
+      }
+
+      function resetAll() {
+        clearTimeout(state.processTimer);
+        revokeUrls();
+        state.sourceFile = null;
+        state.outputBlob = null;
+        state.outputWidth = 0;
+        state.outputHeight = 0;
+        $('sourcePreview').removeAttribute('src');
+        $('outputPreview').removeAttribute('src');
+        $('lightboxImage').removeAttribute('src');
+        state.statusMessage = '';
+        showError('');
+        closeLightbox();
+      }
+
+      async function applySourceFile(file) {
+        if (!file || !isAcceptedImageFile(file)) {
+          showError('仅支持 JPG、PNG、WebP、GIF、BMP 图片');
+          return;
+        }
+        resetAll();
+        state.sourceFile = file;
+        setOutputFormat(detectOutputFormat(file));
+        state.sourceUrl = URL.createObjectURL(file);
+        $('sourcePreview').src = state.sourceUrl;
+        render();
+        scheduleProcess(true);
+      }
+
+      function downloadOutput() {
+        if (!state.outputBlob || !state.sourceFile) return;
+        const link = document.createElement('a');
+        link.href = state.outputUrl;
+        link.download = buildOutputFileName();
+        link.click();
+        state.statusMessage = '已开始下载';
+        render();
+      }
+
+      async function copyOutputImage() {
+        if (!state.outputBlob) return;
+        try {
+          const dataUrl = await blobToDataUrl(state.outputBlob);
+          const copied = await api.copyImage(dataUrl);
+          showCopyStatus(copied ? '图片已复制' : '复制失败');
+        } catch {
+          showCopyStatus('复制失败');
+        }
+      }
+
+      function openLightbox() {
+        if (!state.outputUrl) return;
+        $('lightbox').hidden = false;
+        state.previewOpen = true;
+      }
+
+      function closeLightbox() {
+        $('lightbox').hidden = true;
+        state.previewOpen = false;
+      }
+
+      function init() {
+        renderStaticIcons();
+        for (const select of [$('maxWidthSelect'), $('maxHeightSelect')]) {
+          select.replaceChildren(...MAX_SIZE_PRESETS.map((preset) => {
+            const option = document.createElement('option');
+            option.value = String(preset.value);
+            option.textContent = preset.label;
+            return option;
+          }));
+        }
+        setOutputFormat('jpeg');
+        render();
+      }
+
+      $('dropzone').addEventListener('dragover', (event) => {
+        event.preventDefault();
+        $('dropzone').classList.add('active');
+      });
+      $('dropzone').addEventListener('dragleave', () => $('dropzone').classList.remove('active'));
+      $('dropzone').addEventListener('drop', (event) => {
+        event.preventDefault();
+        $('dropzone').classList.remove('active');
+        applySourceFile(event.dataTransfer?.files?.[0]);
+      });
+      $('fileInput').addEventListener('change', (event) => {
+        applySourceFile(event.target.files?.[0]);
+        event.target.value = '';
+      });
+      document.querySelectorAll('#formatButtons button').forEach((button) => {
+        button.addEventListener('click', () => {
+          setOutputFormat(button.dataset.format);
+          scheduleProcess();
+          render();
+        });
+      });
+      $('qualityInput').addEventListener('input', () => {
+        updateQualityState();
+        scheduleProcess();
+      });
+      $('maxWidthSelect').addEventListener('change', () => scheduleProcess());
+      $('maxHeightSelect').addEventListener('change', () => scheduleProcess());
+      $('downloadButton').addEventListener('click', downloadOutput);
+      $('copyButton').addEventListener('click', copyOutputImage);
+      $('previewFrame').addEventListener('click', openLightbox);
+      $('lightbox').addEventListener('click', (event) => {
+        if (event.target === $('lightbox')) closeLightbox();
+      });
+      $('lightboxClose').addEventListener('click', closeLightbox);
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && state.previewOpen) closeLightbox();
+      });
+      window.addEventListener('beforeunload', revokeUrls);
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-image-compress', capabilities: ['copyImage'] };
+        const pluginOnReady = function () { init(); };
+        const pluginOfflineReady = function () { init(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

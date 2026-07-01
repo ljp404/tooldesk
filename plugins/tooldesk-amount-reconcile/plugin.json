@@ -1,0 +1,37 @@
+{
+  "accent": "green",
+  "caption": "批量粘贴金额自动加总，并与目标总额核对尾差。",
+  "category": "finance",
+  "clipboardMatch": {
+    "type": "amount-lines",
+    "priority": 79
+  },
+  "defaultAlias": "pljehd",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-amount-reconcile",
+  "keywords": [
+    "jehd",
+    "sum",
+    "jinehedui",
+    "total",
+    "reconcile",
+    "加总",
+    "核对",
+    "尾差",
+    "对账"
+  ],
+  "name": "批量金额核对",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

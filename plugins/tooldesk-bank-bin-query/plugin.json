@@ -1,0 +1,37 @@
+{
+  "accent": "orange",
+  "caption": "输入银行卡号，识别发卡行与卡类型，结果仅供参考。",
+  "category": "life",
+  "clipboardMatch": {
+    "type": "bank-card",
+    "priority": 95
+  },
+  "defaultAlias": "yhkcx",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-bank-bin-query",
+  "keywords": [
+    "yhkbincx",
+    "bin",
+    "yinhangkachaxun",
+    "bank",
+    "card",
+    "银行卡",
+    "信用卡",
+    "储蓄卡",
+    "发卡行"
+  ],
+  "name": "银行卡号查询",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

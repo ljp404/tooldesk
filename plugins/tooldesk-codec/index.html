@@ -1,0 +1,480 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>编解码</title><style>*{box-sizing:border-box}html,body{height:100%;margin:0}body{--brand:#2563eb;--panel-bg:#fff;--panel-border:#dbe4ef;--tool-surface-border:#dbe4ef;--tool-secondary-btn-bg:#f8fafc;--tool-hover-bg:#eef4ff;--tool-active-border:#bfdbfe;--text-main:#111827;--text-muted:#64748b;--shadow:none;background:#eef3f8;color:#111827;font-family:"Microsoft YaHei","Segoe UI",Arial,sans-serif;font-size:13px}button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}.tool-panel{background:var(--panel-bg);border: 0;border-radius:0;min-height:100%;overflow:hidden;padding:0}.tool-content{padding:18px}.tool-primary-button,.secondary-action{background:var(--brand);border-radius:7px;color:#fff;font-weight:800;min-height:34px;padding:0 14px}.secondary-action{align-items:center;display:inline-flex}.tool-primary-button:hover,.secondary-action:hover{background:#1d4ed8}.tool-inline-error{color:#dc2626;font-size:12px;margin:8px 0 0}.app-icon{align-items:center;display:inline-flex;height:18px;justify-content:center;width:18px}.copy-toast{background:rgba(15,23,42,.88);border-radius:6px;color:#fff;font-size:12px;font-weight:700;line-height:1;padding:7px 10px;position:absolute;right:14px;top:56px;z-index:5}[hidden]{display:none!important}
+textarea,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+  color: var(--text-main);
+  outline: none;
+  padding: 12px;
+}
+
+textarea:focus,
+textarea:focus-visible,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus-visible {
+  border-color: rgba(96, 165, 250, 0.68);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  outline: none;
+}
+
+.field.small input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  min-height: 40px;
+}
+
+.tool-inline-error:empty {
+  display: none;
+}
+
+.codec-panel {
+  position: relative;
+}
+
+.codec-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  pointer-events: none;
+  position: absolute;
+  right: 18px;
+  top: 10px;
+  z-index: 2;
+}
+
+.codec-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.codec-controlbar,
+.codec-tools,
+.codec-inline-actions {
+  align-items: center;
+  display: flex;
+}
+
+.codec-controlbar {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.codec-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.codec-tab {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 6px;
+  color: #334155;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 0 16px;
+}
+
+.codec-tab.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.codec-tools {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.codec-subtabs {
+  align-items: center;
+  background: #eef4fb;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  display: inline-grid;
+  gap: 3px;
+  grid-template-columns: repeat(2, minmax(64px, 1fr));
+  padding: 3px;
+  width: fit-content;
+}
+
+.codec-subtab {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  height: 26px;
+  padding: 0 10px;
+}
+
+.codec-subtab.active {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  color: #1d4ed8;
+}
+
+.codec-grid {
+  align-items: stretch;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  min-height: 0;
+}
+
+.codec-grid-url {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  grid-template-columns: 1fr;
+  padding: 0;
+}
+
+.codec-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 360px;
+  padding: 0;
+  position: relative;
+}
+
+.codec-grid-url .codec-card {
+  background: #ffffff;
+  border: 1px solid #dfe9f6;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.codec-grid-url .codec-card::before {
+  background: #2563eb;
+  content: '';
+  inset: 0 auto 0 0;
+  position: absolute;
+  width: 3px;
+}
+
+.codec-grid-url .codec-card:nth-child(2)::before {
+  background: #14b8a6;
+}
+
+.codec-card-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.codec-card-title {
+  align-items: center;
+  color: #111827;
+  display: inline-flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.codec-card-title strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.codec-card textarea {
+  background: #fbfdff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  box-sizing: border-box;
+  color: #111827;
+  font:
+    500 14px/1.65 'Segoe UI',
+    system-ui,
+    sans-serif;
+  height: 100%;
+  min-height: 280px;
+  outline: none;
+  padding: 12px;
+  resize: none;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease;
+  width: 100%;
+}
+
+.codec-card textarea:focus {
+  background: #ffffff;
+  border-color: rgba(37, 99, 235, 0.48);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.codec-grid-url .codec-card textarea {
+  background: #f8fafc;
+  border-color: #d9e5f3;
+  border-radius: 0;
+  border-width: 1px 0 0;
+  height: 132px;
+  min-height: 132px;
+}
+
+.codec-grid-url .codec-card:first-child textarea {
+  background: #ffffff;
+}
+
+.codec-grid-url .codec-card-head {
+  margin-left: -1px;
+  padding: 10px 12px 9px 13px;
+}
+
+.codec-grid-url .codec-card-title strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.codec-grid-url .codec-mode-label {
+  background: #eef6ff;
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  border-radius: 999px;
+  color: #1d4ed8;
+  padding: 2px 8px;
+}
+
+.codec-grid-url .codec-card:nth-child(2) .codec-mode-label {
+  background: #ecfdf5;
+  border-color: rgba(20, 184, 166, 0.2);
+  color: #0f766e;
+}
+
+.codec-card textarea[readonly] {
+  background: #fcfdff;
+}
+
+.codec-image-picker,
+.codec-image-output {
+  display: grid;
+  gap: 12px;
+  min-height: 280px;
+}
+
+.codec-file-drop {
+  background: #fbfdff;
+  border: 1px dashed #b7c7dc;
+  border-radius: 8px;
+  color: #334155;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  min-height: 136px;
+  padding: 20px;
+  place-items: center;
+  text-align: center;
+}
+
+.codec-file-drop:hover {
+  border-color: #2563eb;
+  background: #f8fbff;
+}
+
+.codec-file-drop input {
+  display: none;
+}
+
+.codec-file-visual {
+  align-items: center;
+  background: #eff6ff;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 8px;
+  color: #2563eb;
+  display: inline-flex;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.codec-file-visual .app-icon {
+  height: 20px;
+  width: 20px;
+}
+
+.codec-file-title {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.codec-file-note,
+.codec-file-meta {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.codec-image-preview {
+  align-items: center;
+  background:
+    linear-gradient(45deg, #eef2f7 25%, transparent 25%),
+    linear-gradient(-45deg, #eef2f7 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eef2f7 75%),
+    linear-gradient(-45deg, transparent 75%, #eef2f7 75%),
+    #ffffff;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+  background-size: 16px 16px;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  min-height: 186px;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.codec-image-preview.large {
+  min-height: 280px;
+}
+
+.codec-image-preview img {
+  max-height: 280px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.codec-image-preview.large img {
+  max-height: 360px;
+}
+
+.codec-image-empty {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  color: #94a3b8;
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.codec-inline-actions {
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.codec-inline-option {
+  align-items: center;
+  color: #334155;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 6px;
+  min-height: 34px;
+}
+
+.codec-mode-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.codec-jwt-section {
+  display: grid;
+  gap: 8px;
+}
+
+.codec-jwt-section pre,
+.codec-jwt-section code {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #111827;
+  font:
+    500 12px/1.6 'Cascadia Code',
+    Consolas,
+    monospace;
+  margin: 0;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.codec-jwt-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.codec-claim-list {
+  display: grid;
+  gap: 8px;
+}
+
+.codec-claim-row {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.codec-claim-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.codec-claim-row strong {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (width <= 760px) {
+  .codec-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style></head><body>
+<main class="tool-panel codec-panel"><span class="codec-copy-toast" role="status" hidden></span><div class="tool-content codec-layout" id="codecRoot"><div class="codec-controlbar"><div class="codec-tabs"><button class="codec-tab active" data-tab="base64">Base64</button><button class="codec-tab" data-tab="url">URL</button><button class="codec-tab" data-tab="jwt">JWT</button></div><div id="base64Tools" class="codec-tools"><div class="codec-subtabs"><button class="codec-subtab active" data-content="text">文本</button><button class="codec-subtab" data-content="image">图片</button></div><div class="codec-subtabs"><button class="codec-subtab active" data-b64-mode="decode">解码</button><button class="codec-subtab" data-b64-mode="encode">编码</button></div><label id="urlSafeWrap" class="codec-inline-option"><input id="urlSafe" type="checkbox"/> URL Safe</label></div><div id="urlTools" class="codec-tools" hidden><div class="codec-subtabs"><button class="codec-subtab active" data-url-mode="decode">解码</button><button class="codec-subtab" data-url-mode="encode">编码</button></div></div></div><div id="codecGrid" class="codec-grid"><section class="codec-card"><div class="codec-card-head"><div class="codec-card-title"><strong id="inputTitle">输入</strong><span id="inputMode" class="codec-mode-label" hidden></span></div></div><div id="imagePicker" class="codec-image-picker" hidden><label class="codec-file-drop"><input id="imageFile" type="file" accept="image/*"/><span class="codec-file-visual"><span class="app-icon">⇧</span></span><span id="fileTitle" class="codec-file-title">上传、拖入或粘贴图片</span><span class="codec-file-note">PNG / JPG / WebP / GIF</span></label><div id="imagePreviewSmall" class="codec-image-preview" hidden><img alt="图片预览"/></div><div id="fileMeta" class="codec-file-meta"></div></div><textarea id="codecInput" spellcheck="false" placeholder="输入文本"></textarea></section><section class="codec-card"><div class="codec-card-head"><div class="codec-card-title"><strong id="outputTitle">输出</strong></div><span id="outputMode" class="codec-mode-label">解码</span></div><p id="codecError" class="tool-inline-error" role="alert"></p><div id="jwtResult" hidden></div><div id="imageOutput" class="codec-image-output" hidden><div id="imagePreviewLarge" class="codec-image-preview large" hidden><img alt="Base64 图片预览"/></div><div id="imageEmpty" class="codec-image-empty">图片预览将显示在这里</div><div class="codec-inline-actions"><button id="downloadImage" class="secondary-action" type="button" disabled>下载图片</button></div></div><textarea id="codecOutput" spellcheck="false" readonly placeholder="结果将显示在这里"></textarea><div id="encodeImageActions" class="codec-inline-actions" hidden><button id="copyDataUrl" class="secondary-action" type="button">复制 Data URL</button><button id="copyPureBase64" class="secondary-action" type="button">复制纯 Base64</button></div></section></div></div></main>
+<script>
+const plugin=TooldeskPlugin.create({id:'tooldesk-codec',capabilities:['copyText']});const api=plugin.api;
+
+function byId(id){return document.getElementById(id)}
+function escapeHtml(value){return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function showToast(selector,text){const el=document.querySelector(selector);if(!el)return;el.textContent=text;el.hidden=false;clearTimeout(el._timer);el._timer=setTimeout(()=>{el.hidden=true},1600)}
+function applyLaunchContent(_plugin,_api,fn){window.addEventListener('message',event=>{const context=event.data||{};if(context.source==='tooldesk-host'&&context.type==='launch-context'){const content=typeof context.content==='string'?context.content:'';if(content)fn(content)}})}
+async function copyWithApi(api,text,msg,selector){if(!text)return;try{await api.copyText(String(text))}catch{return}showToast(selector,msg||'已复制')}
+
+let activeTab='base64',base64ContentType='text',base64Mode='decode',urlMode='decode',imagePreviewUrl='',outputText='';
+function encUtf8(s){return btoa(String.fromCharCode(...new TextEncoder().encode(s)))}function normB64(v,urlSafe){let n=v.trim().replace(/\s+/g,'');if(urlSafe)n=n.replace(/-/g,'+').replace(/_/g,'/');while(n.length%4)n+='=';return n}function decUtf8(s,urlSafe=false){return new TextDecoder().decode(Uint8Array.from(atob(normB64(s,urlSafe)),c=>c.charCodeAt(0)))}function b64Url(v){return v.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}function decodeUrl(v){return decodeURIComponent(v.replace(/\+/g,' '))}function encodeUrl(v){return encodeURIComponent(v)}function decodeJwt(t){const parts=t.trim().split('.');if(parts.length<2)throw new Error('JWT 格式不完整');return{header:JSON.parse(decUtf8(parts[0],true)),payload:JSON.parse(decUtf8(parts[1],true)),signature:parts[2]||''}}function pretty(v){try{return JSON.stringify(v,null,2)}catch{return String(v)}}function claims(payload){if(!payload||Array.isArray(payload))return'';const labels={aud:'受众 aud',exp:'过期时间 exp',iat:'签发时间 iat',iss:'签发者 iss',jti:'ID jti',nbf:'生效时间 nbf',sub:'主题 sub'};return Object.entries(labels).filter(([key])=>key in payload).map(([key,label])=>'<div class="codec-claim-row"><span>'+label+'</span><strong>'+escapeHtml(String(payload[key]))+'</strong></div>').join('')}function imageDataUrl(value){const source=value.trim().replace(/\s+/g,'');if(!source)return'';return /^data:image\/[a-z0-9.+-]+;base64,/i.test(source)?source:'data:image/png;base64,'+source}
+function resetImage(){imagePreviewUrl='';byId('fileTitle').textContent='上传、拖入或粘贴图片';byId('fileMeta').textContent='';byId('imagePreviewSmall').hidden=true;byId('imagePreviewLarge').hidden=true;byId('imageEmpty').hidden=false;byId('downloadImage').disabled=true}
+function syncUi(){const imageMode=activeTab==='base64'&&base64ContentType==='image';byId('base64Tools').hidden=activeTab!=='base64';byId('urlTools').hidden=activeTab!=='url';byId('codecGrid').classList.toggle('codec-grid-url',activeTab==='url');byId('urlSafeWrap').hidden=!(activeTab==='base64'&&base64ContentType==='text');byId('imagePicker').hidden=!(imageMode&&base64Mode==='encode');byId('codecInput').hidden=imageMode&&base64Mode==='encode';byId('imageOutput').hidden=!(imageMode&&base64Mode==='decode');byId('codecOutput').hidden=activeTab==='jwt'||(imageMode&&base64Mode==='decode');byId('jwtResult').hidden=activeTab!=='jwt';byId('encodeImageActions').hidden=!(imageMode&&base64Mode==='encode');byId('inputTitle').textContent=activeTab==='jwt'?'JWT Token':imageMode?(base64Mode==='encode'?(byId('fileTitle').textContent||'上传、拖入或粘贴图片'):'粘贴 Base64'):'输入';byId('inputMode').hidden=!imageMode;byId('inputMode').textContent=base64Mode==='encode'?'图片转 Base64':'Base64 转图片';byId('outputTitle').textContent=activeTab==='jwt'?'Payload':imageMode&&base64Mode==='decode'?'图片预览':'输出';byId('outputMode').hidden=activeTab==='jwt';byId('outputMode').textContent=activeTab==='base64'?(base64Mode==='decode'?'解码':'编码'):(urlMode==='decode'?'解码':'编码');byId('codecInput').placeholder=activeTab==='jwt'?'粘贴 JWT Token':imageMode?'粘贴图片 Base64 或 data:image/...;base64,...':'输入文本';byId('codecOutput').placeholder=imageMode?'图片 Base64 将显示在这里':'结果将显示在这里'}
+function transform(){syncUi();byId('codecError').textContent='';const source=byId('codecInput').value;outputText='';byId('codecOutput').value='';try{if(activeTab==='base64'){if(base64ContentType==='image'){if(base64Mode==='decode'){const url=imageDataUrl(source);outputText=url;imagePreviewUrl=url;byId('imagePreviewLarge').hidden=!url;byId('imageEmpty').hidden=!!url;if(url)byId('imagePreviewLarge').querySelector('img').src=url;byId('downloadImage').disabled=!url}return}if(!source.trim())return;outputText=base64Mode==='decode'?decUtf8(source,byId('urlSafe').checked):(byId('urlSafe').checked?b64Url(encUtf8(source)):encUtf8(source));byId('codecOutput').value=outputText;return}if(activeTab==='url'){if(!source.trim())return;outputText=urlMode==='decode'?decodeUrl(source):encodeUrl(source);byId('codecOutput').value=outputText;return}if(activeTab==='jwt'){if(!source.trim()){byId('jwtResult').innerHTML='';return}const decoded=decodeJwt(source);outputText=pretty(decoded.payload);byId('jwtResult').innerHTML='<div class="codec-jwt-section"><span class="codec-jwt-label">Header</span><pre>'+escapeHtml(pretty(decoded.header))+'</pre></div><div class="codec-jwt-section"><span class="codec-jwt-label">Payload</span><pre>'+escapeHtml(pretty(decoded.payload))+'</pre></div>'+(claims(decoded.payload)?'<div class="codec-claim-list">'+claims(decoded.payload)+'</div>':'')+'<div class="codec-jwt-section"><span class="codec-jwt-label">Signature</span><code>'+escapeHtml(decoded.signature||'-')+'</code></div>'}}catch(e){byId('codecOutput').value='';byId('codecError').textContent=e.message||'转换失败'}}
+async function readImageFile(file){if(!file||!file.type.startsWith('image/')){byId('codecError').textContent='请选择图片文件';return}const reader=new FileReader();byId('fileTitle').textContent=file.name;byId('fileMeta').textContent=(file.type||'image')+' · '+(file.size/1024).toFixed(1)+' KB';reader.onload=()=>{outputText=String(reader.result||'');byId('codecOutput').value=outputText;imagePreviewUrl=outputText;byId('imagePreviewSmall').hidden=false;byId('imagePreviewSmall').querySelector('img').src=outputText};reader.onerror=()=>{byId('codecError').textContent='图片读取失败'};reader.readAsDataURL(file)}function downloadDecoded(){const url=imagePreviewUrl||imageDataUrl(byId('codecInput').value);if(!url)return;const mime=(url.match(/^data:(image\/[a-z0-9.+-]+);base64,/i)||[])[1]||'image/png';const a=document.createElement('a');a.href=url;a.download='base64-image.'+(mime.split('/')[1]||'png').replace('jpeg','jpg');a.click()}
+document.querySelectorAll('.codec-tab').forEach(button=>button.addEventListener('click',()=>{activeTab=button.dataset.tab;document.querySelectorAll('.codec-tab').forEach(item=>item.classList.toggle('active',item===button));transform()}));document.querySelectorAll('[data-content]').forEach(button=>button.addEventListener('click',()=>{base64ContentType=button.dataset.content;document.querySelectorAll('[data-content]').forEach(item=>item.classList.toggle('active',item===button));resetImage();transform()}));document.querySelectorAll('[data-b64-mode]').forEach(button=>button.addEventListener('click',()=>{base64Mode=button.dataset.b64Mode;document.querySelectorAll('[data-b64-mode]').forEach(item=>item.classList.toggle('active',item===button));resetImage();transform()}));document.querySelectorAll('[data-url-mode]').forEach(button=>button.addEventListener('click',()=>{urlMode=button.dataset.urlMode;document.querySelectorAll('[data-url-mode]').forEach(item=>item.classList.toggle('active',item===button));transform()}));byId('codecInput').addEventListener('input',transform);byId('urlSafe').addEventListener('change',transform);byId('imageFile').addEventListener('change',event=>{const file=event.target.files&&event.target.files[0];if(file)void readImageFile(file);event.target.value=''});byId('codecRoot').addEventListener('paste',event=>{const file=[...(event.clipboardData?.files||[])].find(item=>item.type.startsWith('image/'));if(file){event.preventDefault();activeTab='base64';base64ContentType='image';base64Mode='encode';document.querySelector('[data-tab="base64"]').click();document.querySelector('[data-content="image"]').click();document.querySelector('[data-b64-mode="encode"]').click();void readImageFile(file)}});byId('copyDataUrl').addEventListener('click',()=>copyWithApi(api,outputText,'结果已复制','.codec-copy-toast'));byId('copyPureBase64').addEventListener('click',()=>copyWithApi(api,outputText.replace(/^data:[^;,]+;base64,/i,''),'Base64 已复制','.codec-copy-toast'));byId('downloadImage').addEventListener('click',downloadDecoded);byId('codecOutput').addEventListener('dblclick',()=>copyWithApi(api,outputText,'结果已复制','.codec-copy-toast'));applyLaunchContent(plugin,api,content=>{byId('codecInput').value=content;if(/^eyJ[A-Za-z0-9_-]+\.eyJ/.test(content))activeTab='jwt';else if(/%[0-9A-Fa-f]{2}/.test(content)){activeTab='url';urlMode='decode'}else activeTab='base64';document.querySelectorAll('.codec-tab').forEach(button=>button.classList.toggle('active',button.dataset.tab===activeTab));transform()});syncUi();void plugin.connect().then(() => {});
+</script></body></html>

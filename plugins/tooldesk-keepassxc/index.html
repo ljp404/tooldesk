@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KeePassXC</title>
+    <style>
+      :root {
+        color-scheme: light;
+        color: #111827;
+        background: #f8fafc;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .app {
+        display: flex;
+        min-height: 0;
+        height: 100vh;
+        flex-direction: column;
+        padding: 20px;
+        overflow: hidden;
+        background: #f8fafc;
+      }
+
+      .panel {
+        width: min(560px, 100%);
+        margin: auto;
+        border: 1px solid #e6e8ef;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 16px;
+      }
+
+      .restore-panel {
+        display: flex;
+        min-height: 160px;
+        align-items: center;
+        justify-content: center;
+        color: #334155;
+        font-size: 13px;
+      }
+
+      .title {
+        margin: 0 0 6px;
+        font-size: 18px;
+        font-weight: 650;
+      }
+
+      .description {
+        margin: 0 0 14px;
+        color: #64748b;
+        font-size: 12px;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 8px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 82px;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .row-action {
+        height: 36px;
+        width: 82px;
+        padding: 0;
+      }
+
+      input {
+        width: 100%;
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 0 12px;
+        outline: none;
+        color: #111827;
+        font-size: 13px;
+      }
+
+      input:focus {
+        border-color: #2563eb;
+      }
+
+      input::-webkit-search-cancel-button {
+        display: none;
+      }
+
+      .password-input-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .password-input-wrap input {
+        padding-right: 42px;
+      }
+
+      .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transform: translateY(-50%);
+      }
+
+      button {
+        height: 36px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #111827;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 0 14px;
+        white-space: nowrap;
+      }
+
+      button.primary {
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      .search {
+        flex: 1;
+      }
+
+      .status {
+        color: #111827;
+        font-size: 11px;
+      }
+
+      .search-shell {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 16px;
+      }
+
+      .search-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 0 16px;
+        background: #ffffff;
+      }
+
+      .search-input-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .search-icon {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        color: #6b7280;
+        font-size: 14px;
+        pointer-events: none;
+        transform: translateY(-50%);
+      }
+
+      .search-input {
+        width: 100%;
+        height: 36px;
+        padding: 0 12px 0 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: transparent;
+        color: #111827;
+        outline: 0;
+        font-size: 13px;
+      }
+
+      .lock-button {
+        height: 36px;
+        padding: 0 16px;
+      }
+
+      .results-area {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      .result-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+
+      .result-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f8f9fa;
+      }
+
+      .result-table th {
+        height: 34px;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 500;
+        text-align: left;
+      }
+
+      .sortable-head {
+        display: inline-flex;
+        height: 24px;
+        align-items: center;
+        gap: 4px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font: inherit;
+        padding: 0;
+      }
+
+      .sortable-head:hover {
+        color: #2563eb;
+      }
+
+      .sort-mark {
+        color: #64748b;
+        font-size: 10px;
+      }
+
+      .result-table th,
+      .result-table td {
+        padding: 0 14px;
+        border-bottom: 1px solid #f3f4f6;
+      }
+
+      .result-table th:first-child,
+      .result-table td:first-child {
+        padding-left: 14px;
+      }
+
+      .result-row {
+        min-height: 40px;
+        cursor: pointer;
+        transition: background 0.12s ease;
+      }
+
+      .result-row:hover {
+        background: #f3f4f6;
+      }
+
+      .result-row.active,
+      .result-row.active td {
+        background: #edf3ff;
+      }
+
+      .result-row.active td {
+        box-shadow:
+          inset 0 1px 0 #bfdbfe,
+          inset 0 -1px 0 #bfdbfe;
+      }
+
+      .result-row.active td:first-child {
+        box-shadow:
+          inset 1px 0 0 #bfdbfe,
+          inset 0 1px 0 #bfdbfe,
+          inset 0 -1px 0 #bfdbfe;
+      }
+
+      .result-row.active td:last-child {
+        box-shadow:
+          inset -1px 0 0 #bfdbfe,
+          inset 0 1px 0 #bfdbfe,
+          inset 0 -1px 0 #bfdbfe;
+      }
+
+      .cell,
+      .title-cell {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .title-cell {
+        color: #111827;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .muted {
+        color: #334155;
+        font-size: 12px;
+      }
+
+      .url-link {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        color: #2563eb;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-decoration: none;
+      }
+
+      .url-link:hover {
+        text-decoration: underline;
+      }
+
+      .password-cell {
+        display: flex;
+        min-width: 0;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .password-text {
+        min-width: 0;
+        overflow: hidden;
+        color: #334155;
+        font-size: 12px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .password-text.visible {
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .copyable-cell {
+        cursor: copy;
+      }
+
+      .copyable-cell:hover {
+        color: #1d4ed8;
+      }
+
+      .icon-button {
+        display: inline-flex;
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: #64748b;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .icon-button svg {
+        display: block;
+        width: 15px;
+        height: 15px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2;
+      }
+
+      .icon-button:hover {
+        background: #f3f4f6;
+        color: #2563eb;
+      }
+
+      .copy-tip {
+        color: #16a34a;
+      }
+
+      .search-foot {
+        display: flex;
+        flex-shrink: 0;
+        height: 28px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0 0;
+        color: #111827;
+        font-size: 11px;
+      }
+
+      .hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #111827;
+      }
+
+      .hint kbd {
+        display: inline-flex;
+        min-width: 18px;
+        height: 18px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 1px solid #e5e7eb;
+        border-radius: 3px;
+        background: #f3f4f6;
+        color: #111827;
+        font-size: 10px;
+        font-weight: 500;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .empty {
+        display: flex;
+        height: 100%;
+        min-height: 260px;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        font-size: 13px;
+        padding: 16px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section id="restore" class="panel restore-panel hidden">
+        正在恢复 KeePassXC 会话...
+      </section>
+
+      <section id="unlock" class="panel hidden">
+        <h1 class="title">解锁 KeePassXC 数据库</h1>
+        <p class="description">选择您的 .kdbx 文件并输入主密码</p>
+        <div class="row">
+          <input id="dbPath" type="text" placeholder="选择 .kdbx 数据库文件" readonly />
+          <button id="choose" class="row-action" type="button">选择文件</button>
+        </div>
+        <div class="row">
+          <span class="password-input-wrap">
+            <input id="password" type="password" placeholder="主密码" />
+            <button id="toggleMasterPassword" class="icon-button password-toggle" type="button" aria-label="显示主密码"></button>
+          </span>
+          <button id="unlockBtn" class="primary row-action" type="button">解锁</button>
+        </div>
+        <div id="unlockStatus" class="status"></div>
+      </section>
+
+      <section id="searchPanel" class="search-shell hidden">
+        <header class="search-head">
+          <label class="search-input-wrap">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input
+              id="search"
+              class="search-input"
+              type="text"
+              placeholder="搜索标题、用户名、URL、备注..."
+              autocomplete="off"
+            />
+          </label>
+          <button id="lock" class="lock-button" type="button">锁定</button>
+        </header>
+        <div id="results" class="results-area"></div>
+        <footer class="search-foot">
+          <span id="status" class="status"></span>
+          <span class="hint">
+            <kbd>↑</kbd> <kbd>↓</kbd> 选择
+          </span>
+        </footer>
+      </section>
+    </main>
+<script>
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const restoreEl = document.getElementById('restore');
+      const unlockEl = document.getElementById('unlock');
+      const searchPanelEl = document.getElementById('searchPanel');
+      const dbPathEl = document.getElementById('dbPath');
+      const passwordEl = document.getElementById('password');
+      const toggleMasterPasswordEl = document.getElementById('toggleMasterPassword');
+      const unlockStatusEl = document.getElementById('unlockStatus');
+      const searchEl = document.getElementById('search');
+      const statusEl = document.getElementById('status');
+      const resultsEl = document.getElementById('results');
+
+      let entries = [];
+      let activeIndex = 0;
+      let showPassword = {};
+      let masterPasswordVisible = false;
+      let modifiedTimeSort = 'desc';
+      let restoreHintTimer = 0;
+
+      function setUnlockStatus(text) {
+        unlockStatusEl.textContent = text || '';
+      }
+
+      function setStatus(text) {
+        statusEl.textContent = text || '';
+        statusEl.classList.remove('copy-tip');
+      }
+
+      function getFilteredEntries() {
+        const keyword = searchEl.value.trim().toLowerCase();
+        const sourceEntries = keyword
+          ? entries.filter((entry) =>
+              [entry.title, entry.username, entry.url, entry.notes, entry.group].some((value) =>
+                String(value || '').toLowerCase().includes(keyword)
+              )
+            )
+          : entries;
+
+        return [...sourceEntries].sort((current, next) => {
+          const currentTime = getModifiedTimeValue(current.modifiedTime);
+          const nextTime = getModifiedTimeValue(next.modifiedTime);
+          const result = currentTime - nextTime;
+          return modifiedTimeSort === 'asc' ? result : -result;
+        });
+      }
+
+      function renderResults() {
+        const list = getFilteredEntries();
+        resultsEl.innerHTML = '';
+        setStatus(`${list.length} 个条目`);
+
+        if (!list.length) {
+          resultsEl.innerHTML = '<div class="empty">暂无匹配条目。</div>';
+          return;
+        }
+
+        if (activeIndex >= list.length) {
+          activeIndex = Math.max(0, list.length - 1);
+        }
+
+        const tableWrap = document.createElement('div');
+        tableWrap.style.height = '100%';
+        tableWrap.style.overflow = 'auto';
+
+        const table = document.createElement('table');
+        table.className = 'result-table';
+        table.innerHTML = `
+          <colgroup>
+            <col style="width: 25%" />
+            <col style="width: 18%" />
+            <col style="width: 18%" />
+            <col style="width: 27%" />
+            <col style="width: 12%" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th>用户名</th>
+              <th>密码</th>
+              <th>地址</th>
+              <th>
+                <button id="sortModifiedTime" class="sortable-head" type="button" title="按修改时间排序">
+                  修改时间 <span class="sort-mark">${modifiedTimeSort === 'asc' ? '↑' : '↓'}</span>
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const body = table.querySelector('tbody');
+        table.querySelector('#sortModifiedTime')?.addEventListener('click', () => {
+          modifiedTimeSort = modifiedTimeSort === 'asc' ? 'desc' : 'asc';
+          activeIndex = 0;
+          renderResults();
+        });
+
+        for (const [index, entry] of list.entries()) {
+          const row = document.createElement('tr');
+          row.className = `result-row${index === activeIndex ? ' active' : ''}`;
+          const entryKey = getEntryKey(entry, index);
+          const passwordVisible = Boolean(showPassword[entryKey]);
+          row.innerHTML = `
+            <td><div class="title-cell">${escapeHtml(entry.title || '(无标题)')}</div></td>
+            <td><div class="cell copyable-cell" data-action="copy-username" title="双击复制用户名">${escapeHtml(entry.username || '-')}</div></td>
+            <td>
+              <div class="password-cell copyable-cell" data-action="copy-password" title="双击复制密码">
+                <span class="password-text${passwordVisible ? ' visible' : ''}">${escapeHtml(passwordVisible ? entry.password || '' : '••••••••')}</span>
+                <button class="icon-button" type="button" data-action="toggle-password" aria-label="${passwordVisible ? '隐藏密码' : '显示密码'}">
+                  ${createEyeIcon(passwordVisible)}
+                </button>
+              </div>
+            </td>
+            <td><div class="cell muted">${renderUrl(entry.url)}</div></td>
+            <td><div class="cell muted">${escapeHtml(formatModifiedTime(entry.modifiedTime))}</div></td>
+          `;
+          row.addEventListener('mouseenter', () => setActiveEntry(index));
+          row.addEventListener('click', () => setActiveEntry(index));
+          row.querySelector('[data-action="copy-username"]')?.addEventListener('dblclick', (event) => {
+            event.stopPropagation();
+            void copyEntryField(entry, 'username', '用户名');
+          });
+          row.querySelector('[data-action="copy-password"]')?.addEventListener('dblclick', (event) => {
+            event.stopPropagation();
+            void copyEntryField(entry, 'password', '密码');
+          });
+          row.querySelector('[data-action="toggle-password"]')?.addEventListener('click', (event) => {
+            event.stopPropagation();
+            showPassword[entryKey] = !showPassword[entryKey];
+            renderResults();
+          });
+          row.querySelector('[data-action="open-url"]')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            void openUrl(entry.url);
+          });
+          body.appendChild(row);
+        }
+
+        tableWrap.appendChild(table);
+        resultsEl.appendChild(tableWrap);
+      }
+
+      function setActiveEntry(index) {
+        activeIndex = index;
+        resultsEl.querySelectorAll('.result-row').forEach((row, rowIndex) => {
+          row.classList.toggle('active', rowIndex === activeIndex);
+        });
+      }
+
+      function scrollActiveIntoView() {
+        resultsEl.querySelector('.result-row.active')?.scrollIntoView({ block: 'nearest' });
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function getEntryKey(entry, index) {
+        return String(entry.uuid || entry.id || `${entry.title || ''}:${entry.username || ''}:${index}`);
+      }
+
+      function renderUrl(url) {
+        if (!url) return '-';
+        const safeUrl = escapeHtml(url);
+        return `<a class="url-link" href="#" data-action="open-url" title="${safeUrl}">${safeUrl}</a>`;
+      }
+
+      function createEyeIcon(visible) {
+        if (visible) {
+          return `
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          `;
+        }
+
+        return `
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 3l18 18"></path>
+            <path d="M10.6 10.6a3 3 0 0 0 3.8 3.8"></path>
+            <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-3.2 4.1"></path>
+            <path d="M6.6 6.6C3.8 8.5 2 12 2 12s3.5 7 10 7a10.7 10.7 0 0 0 4.1-.8"></path>
+          </svg>
+        `;
+      }
+
+      function updateMasterPasswordVisibility() {
+        passwordEl.type = masterPasswordVisible ? 'text' : 'password';
+        toggleMasterPasswordEl.innerHTML = createEyeIcon(masterPasswordVisible);
+        toggleMasterPasswordEl.setAttribute('aria-label', masterPasswordVisible ? '隐藏主密码' : '显示主密码');
+        toggleMasterPasswordEl.title = masterPasswordVisible ? '隐藏主密码' : '显示主密码';
+      }
+
+      function getModifiedTimeValue(value) {
+        if (!value) return 0;
+        const time = new Date(value).getTime();
+        return Number.isFinite(time) ? time : 0;
+      }
+
+      function formatModifiedTime(value) {
+        if (!value) return '-';
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '-';
+
+        const today = new Date();
+        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayDiff = Math.floor((startOfToday.getTime() - startOfDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (dayDiff === 0) return '今天';
+        if (dayDiff === 1) return '昨天';
+        if (dayDiff > 1 && dayDiff < 7) return `${dayDiff} 天前`;
+
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        if (date.getFullYear() === today.getFullYear()) {
+          return `${month}-${day}`;
+        }
+
+        return `${date.getFullYear()}-${month}-${day}`;
+      }
+
+      async function openUrl(url) {
+        if (!url) return;
+
+        try {
+          await api.openPath(url);
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '打开链接失败');
+        }
+      }
+
+      async function copyEntryField(entry, field, label) {
+        const text = entry[field] || '';
+        if (!text) {
+          setStatus(`当前条目没有${label}`);
+          return;
+        }
+
+        try {
+          await api.copyText(text);
+          statusEl.textContent = `已复制${label}`;
+          statusEl.classList.add('copy-tip');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '复制失败');
+        }
+      }
+
+      async function copyEntrySecret(entry) {
+        const text = entry.password || entry.username || entry.url || '';
+        if (!text) {
+          setStatus('当前条目没有可复制内容');
+          return;
+        }
+
+        try {
+          await api.copyText(text);
+          statusEl.textContent = entry.password ? '已复制密码' : '已复制内容';
+          statusEl.classList.add('copy-tip');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '复制失败');
+        }
+      }
+
+      async function chooseDatabase() {
+        try {
+          const result = await api.showOpenDialog({
+            filters: [{ name: 'KeePassXC Database', extensions: ['kdbx'] }],
+            properties: ['openFile']
+          });
+
+          if (!result.canceled && result.filePaths[0]) {
+            dbPathEl.value = result.filePaths[0];
+          }
+        } catch (error) {
+          setUnlockStatus(error instanceof Error ? error.message : '选择文件失败');
+        }
+      }
+
+      async function unlock() {
+        if (!dbPathEl.value || !passwordEl.value) {
+          setUnlockStatus('请选择数据库并输入主密码。');
+          return;
+        }
+
+        setUnlockStatus('解锁中...');
+
+        try {
+          const result = await api.unlockKeePassDatabase(dbPathEl.value, passwordEl.value);
+          if (!result?.success) {
+            setUnlockStatus(result?.error || '解锁失败');
+            return;
+          }
+
+          entries = result.entries || [];
+          passwordEl.value = '';
+          masterPasswordVisible = false;
+          updateMasterPasswordVisibility();
+
+          const settings = await api.getAppSettings();
+          await api.setAppSettings({
+            keepass: {
+              ...settings.keepass,
+              dbPath: dbPathEl.value
+            }
+          });
+
+          unlockEl.classList.add('hidden');
+          searchPanelEl.classList.remove('hidden');
+          searchEl.focus();
+          renderResults();
+        } catch (error) {
+          setUnlockStatus(error instanceof Error ? error.message : '解锁失败');
+        }
+      }
+
+      async function lock() {
+        await api.lockKeePassDatabase();
+        entries = [];
+        showPassword = {};
+        activeIndex = 0;
+        searchEl.value = '';
+        unlockEl.classList.remove('hidden');
+        searchPanelEl.classList.add('hidden');
+      }
+
+      async function restoreSession() {
+        window.clearTimeout(restoreHintTimer);
+        restoreHintTimer = window.setTimeout(() => {
+          restoreEl.classList.remove('hidden');
+        }, 180);
+
+        try {
+          const settings = await api.getAppSettings();
+          if (settings?.keepass?.dbPath) {
+            dbPathEl.value = settings.keepass.dbPath;
+          }
+
+          const session = await api.getKeePassSession(dbPathEl.value || undefined);
+          if (session?.success && session.entries) {
+            entries = session.entries;
+            unlockEl.classList.add('hidden');
+            searchPanelEl.classList.remove('hidden');
+            renderResults();
+          }
+        } catch {
+          // Keep unlock form visible.
+        } finally {
+          window.clearTimeout(restoreHintTimer);
+          restoreEl.classList.add('hidden');
+          if (searchPanelEl.classList.contains('hidden')) {
+            unlockEl.classList.remove('hidden');
+          }
+        }
+      }
+
+      document.getElementById('choose').addEventListener('click', () => void chooseDatabase());
+      document.getElementById('unlockBtn').addEventListener('click', () => void unlock());
+      document.getElementById('lock').addEventListener('click', () => void lock());
+      toggleMasterPasswordEl.addEventListener('click', () => {
+        masterPasswordVisible = !masterPasswordVisible;
+        updateMasterPasswordVisibility();
+        passwordEl.focus();
+      });
+      updateMasterPasswordVisibility();
+      passwordEl.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') void unlock();
+      });
+      searchEl.addEventListener('input', () => {
+        activeIndex = 0;
+        renderResults();
+      });
+
+      window.addEventListener('keydown', (event) => {
+        const list = getFilteredEntries();
+        if (!list.length || searchPanelEl.classList.contains('hidden')) return;
+
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          setActiveEntry(Math.min(activeIndex + 1, list.length - 1));
+          scrollActiveIntoView();
+        }
+
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          setActiveEntry(Math.max(activeIndex - 1, 0));
+          scrollActiveIntoView();
+        }
+
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-keepassxc', capabilities: ['getAppSettings',
+                'getKeePassSession',
+                'lockKeePassDatabase',
+                'openPath',
+                'copyText',
+                'setAppSettings',
+                'showOpenDialog',
+                'unlockKeePassDatabase'] };
+        const pluginOnReady = function () { void restoreSession(); };
+        const pluginOfflineReady = function () { void restoreSession(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

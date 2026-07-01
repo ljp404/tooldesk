@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>代码格式化</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: #eef3f8;
+        color: #111827;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
+      }
+      button, select, textarea { font: inherit; }
+      button {
+        align-items: center;
+        background: #2563eb;
+        border: 1px solid #2563eb;
+        border-radius: 7px;
+        color: #fff;
+        cursor: pointer;
+        display: inline-flex;
+        height: 34px;
+        justify-content: center;
+        padding: 0 14px;
+      }
+      button.secondary {
+        background: #fff;
+        border-color: #dbe4ef;
+        color: #334155;
+      }
+      button.tab {
+        background: #f8fafc;
+        border-color: #dbe4ef;
+        color: #475569;
+      }
+      button.tab.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
+      button:disabled { cursor: not-allowed; opacity: .62; }
+      select {
+        background: #fff;
+        border: 1px solid #d7e0ea;
+        border-radius: 7px;
+        color: #0f172a;
+        height: 34px;
+        padding: 0 10px;
+      }
+      textarea {
+        background: #fff;
+        border: 0;
+        color: #0f172a;
+        flex: 1;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        min-height: 0;
+        outline: none;
+        padding: 12px;
+        resize: none;
+        tab-size: 2;
+        white-space: pre;
+        width: 100%;
+      }
+      textarea[readonly] {
+        background: #fbfdff;
+      }
+      [hidden] { display: none !important; }
+      .panel {
+        display: grid;
+        gap: 12px;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        height: 100%;
+        padding: 14px;
+      }
+      .toolbar,
+      .footer {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
+      }
+      .toolbar-spacer { flex: 1; }
+      .option {
+        align-items: center;
+        color: #64748b;
+        display: inline-flex;
+        gap: 6px;
+      }
+      .editor-card {
+        background: #fff;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .editor-head {
+        align-items: center;
+        background: #f8fafc;
+        border-bottom: 1px solid #e8eef6;
+        color: #334155;
+        display: flex;
+        font-size: 12px;
+        font-weight: 700;
+        height: 36px;
+        justify-content: space-between;
+        padding: 0 12px;
+      }
+      .meta {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 400;
+      }
+      .error {
+        color: #dc2626;
+        flex: 1;
+        font-size: 12px;
+        margin: 0;
+        min-width: 180px;
+      }
+      .toast {
+        background: rgba(15, 23, 42, .88);
+        border-radius: 6px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 7px 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="panel">
+      <section class="toolbar" aria-label="格式化选项">
+        <button class="tab active" type="button" data-lang="html">HTML</button>
+        <button class="tab" type="button" data-lang="css">CSS</button>
+        <button class="tab" type="button" data-lang="javascript">JavaScript</button>
+        <button class="tab" type="button" data-lang="vue">Vue</button>
+        <span id="activeLanguageLabel" class="meta">当前：HTML</span>
+        <span class="toolbar-spacer"></span>
+        <label class="option">缩进
+          <select id="tabWidth">
+            <option value="2">2 空格</option>
+            <option value="4">4 空格</option>
+          </select>
+        </label>
+        <button id="formatButton" type="button">格式化</button>
+        <button id="compactButton" type="button" class="secondary">紧凑格式</button>
+      </section>
+
+      <section class="editor-card">
+        <div class="editor-head"><span>代码</span><span id="inputMeta" class="meta">0 字符</span></div>
+        <textarea id="sourceInput" spellcheck="false" placeholder="粘贴代码"></textarea>
+      </section>
+
+      <section class="footer">
+        <p id="errorText" class="error"></p>
+        <button id="copyButton" type="button" class="secondary">复制</button>
+        <button id="clearButton" type="button" class="secondary">清空</button>
+        <span id="toast" class="toast" hidden></span>
+      </section>
+    </main>
+
+    <!-- TOOLDESK_PRETTIER_VENDOR -->
+    <script>
+      const LANGUAGE_LABELS = {
+        css: 'CSS',
+        html: 'HTML',
+        javascript: 'JavaScript',
+        vue: 'Vue'
+      };
+
+      const sourceInput = document.getElementById('sourceInput');
+      const inputMeta = document.getElementById('inputMeta');
+      const errorText = document.getElementById('errorText');
+      const toast = document.getElementById('toast');
+      const tabWidth = document.getElementById('tabWidth');
+      const activeLanguageLabel = document.getElementById('activeLanguageLabel');
+
+      let activeLanguage = 'html';
+      let toastTimer = 0;
+      let languageOptions = null;
+      let api = null;
+
+      function showToast(message) {
+        window.clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.hidden = false;
+        toastTimer = window.setTimeout(() => {
+          toast.hidden = true;
+        }, 1300);
+      }
+
+      function setError(message) {
+        errorText.textContent = message || '';
+      }
+
+      function updateMeta() {
+        inputMeta.textContent = `${sourceInput.value.length} 字符`;
+      }
+
+      function buildLanguageOptions() {
+        if (typeof prettier === 'undefined' || typeof prettierPlugins === 'undefined') {
+          throw new Error('Prettier 未加载，请执行 npm run plugin:sync 后重新打开插件');
+        }
+
+        return {
+          html: {
+            parser: 'html',
+            plugins: [prettierPlugins.html, prettierPlugins.babel, prettierPlugins.estree, prettierPlugins.postcss]
+          },
+          css: {
+            parser: 'css',
+            plugins: [prettierPlugins.postcss]
+          },
+          javascript: {
+            parser: 'babel',
+            plugins: [prettierPlugins.babel, prettierPlugins.estree]
+          },
+          vue: {
+            parser: 'vue',
+            plugins: [prettierPlugins.html, prettierPlugins.babel, prettierPlugins.estree, prettierPlugins.postcss]
+          }
+        };
+      }
+
+      function getLanguageOptions() {
+        if (!languageOptions) {
+          languageOptions = buildLanguageOptions();
+        }
+        return languageOptions;
+      }
+
+      function setActiveLanguage(language) {
+        activeLanguage = language;
+
+        for (const button of document.querySelectorAll('[data-lang]')) {
+          button.classList.toggle('active', button.dataset.lang === language);
+        }
+
+        activeLanguageLabel.textContent = `当前：${LANGUAGE_LABELS[language] || language}`;
+
+        try {
+          getLanguageOptions()[language];
+          setError('');
+        } catch (error) {
+          setError(error instanceof Error ? error.message : '语言切换失败');
+        }
+      }
+
+      async function formatCode(options = {}) {
+        const text = sourceInput.value.trim();
+        if (!text) {
+          updateMeta();
+          setError('');
+          return;
+        }
+
+        let language;
+        try {
+          language = getLanguageOptions()[activeLanguage];
+        } catch (error) {
+          setError(error instanceof Error ? error.message : '格式化引擎未就绪');
+          return;
+        }
+
+        try {
+          const formatted = await prettier.format(text, {
+            parser: language.parser,
+            plugins: language.plugins,
+            printWidth: options.printWidth ?? 100,
+            semi: true,
+            singleQuote: false,
+            tabWidth: Number(tabWidth.value) || 2,
+            vueIndentScriptAndStyle: true
+          });
+          sourceInput.value = formatted;
+          setError('');
+          showToast('已格式化');
+        } catch (error) {
+          setError(error instanceof Error ? error.message : '格式化失败');
+        } finally {
+          updateMeta();
+        }
+      }
+
+      document.querySelectorAll('[data-lang]').forEach((button) => {
+        button.addEventListener('click', () => {
+          setActiveLanguage(button.dataset.lang);
+        });
+      });
+      document.getElementById('formatButton').addEventListener('click', () => void formatCode());
+      document.getElementById('compactButton').addEventListener('click', () => void formatCode({ printWidth: 100000 }));
+      document.getElementById('copyButton').addEventListener('click', async () => {
+        if (!sourceInput.value) {
+          setError('没有可复制的内容');
+          return;
+        }
+        try {
+          await api.copyText(sourceInput.value);
+          showToast('已复制');
+        } catch (error) {
+          setError(error instanceof Error ? error.message : '复制失败');
+        }
+      });
+      document.getElementById('clearButton').addEventListener('click', () => {
+        sourceInput.value = '';
+        setError('');
+        updateMeta();
+        sourceInput.focus();
+      });
+      sourceInput.addEventListener('input', updateMeta);
+      tabWidth.addEventListener('change', () => {
+        if (sourceInput.value.trim()) {
+          void formatCode();
+        }
+      });
+
+      const plugin = TooldeskPlugin.create({
+        id: 'tooldesk-code-formatter',
+        capabilities: ['copyText'],
+        onLaunchContext(context) {
+          const content = String(context.content || '');
+
+          if (!content.trim()) {
+            return;
+          }
+
+          sourceInput.value = content;
+          if (/^<!doctype\s+html\b/i.test(content.trim()) || /<\/?html\b/i.test(content)) {
+            setActiveLanguage('html');
+          }
+          updateMeta();
+        }
+      });
+
+      setActiveLanguage(activeLanguage);
+      updateMeta();
+
+      void plugin.connect().then(() => {
+        api = plugin.api;
+      });
+    </script>
+  </body>
+</html>

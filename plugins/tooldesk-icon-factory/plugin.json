@@ -1,0 +1,35 @@
+{
+  "accent": "indigo",
+  "caption": "生成透明 SVG / PNG 图标，适配插件、窗口和应用图标",
+  "category": "image",
+  "defaultAlias": "tb",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-icon-factory",
+  "keywords": [
+    "icon",
+    "logo",
+    "svg",
+    "png",
+    "ico",
+    "图标",
+    "tbgc",
+    "tubiao",
+    "tubiaogongchang"
+  ],
+  "name": "图标工厂",
+  "permissions": [
+    "clipboard",
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText",
+    "sendHttpRequest"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

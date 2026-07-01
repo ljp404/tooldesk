@@ -1,0 +1,31 @@
+{
+  "accent": "green",
+  "caption": "校验 Cron 并预览下次执行时间",
+  "category": "dev",
+  "defaultAlias": "ds",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-cron-parser",
+  "keywords": [
+    "cron",
+    "schedule",
+    "??",
+    "计划任务",
+    "jhrw",
+    "dingshi",
+    "jihuarenwu"
+  ],
+  "name": "Cron 解析",
+  "permissions": [],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [],
+  "windowIcon": "assets/window-icon.png",
+  "clipboardMatch": {
+    "type": "cron",
+    "priority": 86
+  }
+}

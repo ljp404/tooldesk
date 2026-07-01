@@ -1,0 +1,54 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "tooldesk",
+  "version": "0.1.0",
+  "identifier": "tooldesk",
+  "build": {
+    "beforeDevCommand": "node scripts/bundle-web-plugins.mjs --target=public && vite --host 127.0.0.1",
+    "beforeBuildCommand": "node scripts/prepare-tauri-resources.mjs && npm run build:web",
+    "devUrl": "http://127.0.0.1:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [],
+    "withGlobalTauri": true,
+    "security": {
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "**"
+        ]
+      },
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "resources": {
+      "../config/cosSharedConfig.json": "config/cosSharedConfig.json",
+      "../config/generated/cosUpdate.json": "config/cosUpdate.json",
+      "../config/generated/pluginMarketConfig.json": "config/pluginMarketConfig.json",
+      "../config/tooldesk.config.json": "tooldesk.config.json",
+      "icons/32x32.png": "icons/32x32.png",
+      "resources/ffmpeg": "ffmpeg",
+      "resources/ffmpeg.exe": "ffmpeg.exe",
+      "resources/plugin-icons": "plugin-icons",
+      "resources/system-tool-icons": "system-tool-icons"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico"
+      }
+    }
+  }
+}

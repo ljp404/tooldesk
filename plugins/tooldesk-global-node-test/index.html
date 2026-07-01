@@ -1,0 +1,1720 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>国内多点检测</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        background: #eef3f9;
+        color: #111827;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #eef3f9;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .app {
+        height: 100vh;
+        padding: 12px;
+      }
+
+      .page {
+        display: grid;
+        height: 100%;
+        grid-template-rows: auto minmax(0, 1fr);
+        border: 1px solid #d9e4f2;
+        border-radius: 8px;
+        background: #ffffff;
+        overflow: hidden;
+      }
+
+      .header {
+        display: grid;
+        gap: 12px;
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid #e5edf7;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      }
+
+      .header-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .title {
+        color: #0f172a;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .caption {
+        margin-top: 5px;
+        color: #52637a;
+        font-size: 12px;
+      }
+
+      .source {
+        display: inline-flex;
+        height: 30px;
+        align-items: center;
+        border: 1px solid #cbd9eb;
+        border-radius: 16px;
+        padding: 0 12px;
+        color: #52637a;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .search-line {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 240px 112px;
+        gap: 10px;
+      }
+
+      .input-box {
+        display: flex;
+        height: 42px;
+        min-width: 0;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #cfdced;
+        border-radius: 7px;
+        background: #ffffff;
+        padding: 0 12px;
+      }
+
+      .input-label {
+        display: inline-flex;
+        height: 24px;
+        align-items: center;
+        border-radius: 12px;
+        background: #edf4ff;
+        padding: 0 10px;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: none;
+        color: #0f172a;
+        background: transparent;
+        font-size: 14px;
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        height: 42px;
+        border: 1px solid #cfdced;
+        border-radius: 7px;
+        background: #ffffff;
+        overflow: hidden;
+      }
+
+      .segmented button {
+        border: 0;
+        border-right: 1px solid #e2eaf5;
+        background: transparent;
+        color: #334155;
+        cursor: pointer;
+      }
+
+      .segmented button:last-child {
+        border-right: 0;
+      }
+
+      .segmented button.active {
+        background: #2563eb;
+        color: #ffffff;
+        font-weight: 600;
+      }
+
+      .primary {
+        height: 42px;
+        border: 1px solid #2563eb;
+        border-radius: 7px;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .primary:hover {
+        border-color: #1d4ed8;
+        background: #1d4ed8;
+      }
+
+      .primary[disabled],
+      .segmented button[disabled] {
+        opacity: 0.55;
+        cursor: default;
+      }
+
+      .quick-line {
+        display: flex;
+        min-height: 28px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: #52637a;
+        font-size: 12px;
+      }
+
+      .examples {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .chip-button {
+        height: 26px;
+        border: 1px solid #cfdced;
+        border-radius: 14px;
+        background: #ffffff;
+        padding: 0 11px;
+        color: #334155;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .chip-button:hover {
+        border-color: #93b7ec;
+        color: #1d4ed8;
+      }
+
+      .chip-button:disabled {
+        cursor: default;
+        opacity: 0.55;
+      }
+
+      .status {
+        color: #52637a;
+        white-space: nowrap;
+      }
+
+      .status.success {
+        color: #04786d;
+      }
+
+      .status.error {
+        color: #b91c1c;
+      }
+
+      .status.running {
+        color: #1d4ed8;
+      }
+
+      .content {
+        min-height: 0;
+        overflow: auto;
+        padding: 12px;
+        background: #f5f8fc;
+      }
+
+      .section {
+        border: 1px solid #dbe6f4;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .probe {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 286px;
+        min-height: 356px;
+        overflow: hidden;
+      }
+
+      .map-panel {
+        display: grid;
+        min-width: 0;
+        grid-template-rows: auto minmax(0, 1fr);
+        border-right: 1px solid #e5edf7;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px 0;
+      }
+
+      .panel-title {
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .panel-note {
+        color: #66758b;
+        font-size: 12px;
+      }
+
+      .map {
+        position: relative;
+        min-height: 0;
+        margin: 12px 16px 16px;
+        border: 1px solid #e2eaf5;
+        border-radius: 8px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px),
+          linear-gradient(180deg, #f9fbff 0%, #eef5ff 100%);
+        background-size: 44px 44px, 44px 44px, auto;
+      }
+
+      .china-map {
+        position: absolute;
+        inset: 12px 16px 12px;
+        z-index: 0;
+        width: calc(100% - 32px);
+        height: calc(100% - 24px);
+      }
+
+      .province {
+        fill: #ffffff;
+        stroke: #c9d2df;
+        stroke-width: 1;
+        transition: fill 0.15s ease, stroke 0.15s ease;
+      }
+
+      .province.level-fast {
+        fill: #178b2f;
+      }
+
+      .province.level-good {
+        fill: #45b95e;
+      }
+
+      .province.level-normal {
+        fill: #74d37e;
+      }
+
+      .province.level-slow {
+        fill: #ffc247;
+      }
+
+      .province.level-poor {
+        fill: #ff8845;
+      }
+
+      .province.level-timeout {
+        fill: #ef4444;
+      }
+
+      .province:hover {
+        stroke: #2563eb;
+        stroke-width: 1.8;
+      }
+
+      .map-tooltip {
+        position: absolute;
+        z-index: 4;
+        display: none;
+        min-width: 112px;
+        border: 1px solid #9ca3af;
+        background: rgba(255, 255, 255, 0.96);
+        padding: 8px 10px;
+        color: #111827;
+        font-size: 12px;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+        pointer-events: none;
+      }
+
+      .map-tooltip strong {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 700;
+      }
+
+      .map-tooltip span {
+        color: #dc2626;
+      }
+
+      .legend {
+        position: absolute;
+        left: 18px;
+        bottom: 16px;
+        z-index: 3;
+        display: grid;
+        gap: 6px;
+        color: #111827;
+        font-size: 12px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      .legend-color {
+        width: 15px;
+        height: 15px;
+      }
+
+      .map-empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #66758b;
+        font-size: 13px;
+        z-index: 1;
+      }
+
+      .map-node {
+        position: absolute;
+        z-index: 2;
+        width: 12px;
+        height: 12px;
+        margin: -6px 0 0 -6px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        background: #2563eb;
+        box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.14), 0 4px 12px rgba(37, 99, 235, 0.3);
+      }
+
+      .map-node.warn {
+        background: #f59e0b;
+        box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.16), 0 4px 12px rgba(245, 158, 11, 0.28);
+      }
+
+      .map-node.bad {
+        background: #ef4444;
+        box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.14), 0 4px 12px rgba(239, 68, 68, 0.22);
+      }
+
+      .map-node::after {
+        position: absolute;
+        left: 11px;
+        top: -5px;
+        min-width: 36px;
+        content: attr(data-label);
+        color: #334155;
+        font-size: 11px;
+        white-space: nowrap;
+        text-shadow: 0 1px 0 #ffffff;
+      }
+
+      .side {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-width: 0;
+        background: #fbfdff;
+      }
+
+      .target-card {
+        padding: 16px;
+        border-bottom: 1px solid #e5edf7;
+      }
+
+      .target-label {
+        color: #66758b;
+        font-size: 12px;
+      }
+
+      .target {
+        margin-top: 8px;
+        color: #0f172a;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.18;
+        word-break: break-all;
+      }
+
+      .badges {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        height: 24px;
+        align-items: center;
+        border-radius: 13px;
+        padding: 0 10px;
+        background: #edf4ff;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .badge.ready {
+        background: #eef2ff;
+        color: #4f46e5;
+      }
+
+      .metric-list {
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        padding: 12px;
+        overflow: auto;
+      }
+
+      .metric {
+        border: 1px solid #dbe6f4;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 10px 12px;
+      }
+
+      .metric-label {
+        color: #66758b;
+        font-size: 12px;
+      }
+
+      .metric-value {
+        margin-top: 6px;
+        color: #111827;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1;
+        word-break: break-word;
+      }
+
+      .metric-note {
+        margin-top: 6px;
+        color: #66758b;
+        font-size: 12px;
+      }
+
+      .ip-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .copy {
+        height: 30px;
+        border: 1px solid #cfdced;
+        border-radius: 6px;
+        background: #ffffff;
+        padding: 0 10px;
+        color: #334155;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .copy:hover {
+        border-color: #93b7ec;
+        color: #1d4ed8;
+      }
+
+      .copy[disabled] {
+        opacity: 0.55;
+        cursor: default;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 6px;
+        padding: 12px 0 0;
+      }
+
+      .tab {
+        height: 30px;
+        border: 1px solid #dbe6f4;
+        border-radius: 15px;
+        background: #ffffff;
+        padding: 0 12px;
+        color: #52637a;
+        font-size: 12px;
+      }
+
+      .tab.active {
+        border-color: #93b7ec;
+        background: #edf4ff;
+        color: #1d4ed8;
+        font-weight: 700;
+      }
+
+      .subgrid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .card {
+        border: 1px solid #dbe6f4;
+        border-radius: 8px;
+        background: #ffffff;
+        overflow: hidden;
+      }
+
+      .card-head {
+        display: flex;
+        min-height: 44px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 0 14px;
+        border-bottom: 1px solid #e8eff8;
+      }
+
+      .node-list {
+        min-height: 260px;
+        max-height: 360px;
+        overflow: auto;
+      }
+
+      .node-row {
+        display: grid;
+        grid-template-columns: minmax(150px, 1fr) 150px minmax(150px, 0.9fr);
+        gap: 14px;
+        padding: 12px 14px;
+        border-bottom: 1px solid #eef3f9;
+        align-items: center;
+      }
+
+      .node-row:last-child {
+        border-bottom: 0;
+      }
+
+      .node-name {
+        color: #0f172a;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .node-loc,
+      .node-detail {
+        margin-top: 5px;
+        color: #52637a;
+        font-size: 12px;
+      }
+
+      .pill {
+        display: inline-flex;
+        height: 28px;
+        align-items: center;
+        border-radius: 14px;
+        background: #edf4ff;
+        padding: 0 11px;
+        color: #1d4ed8;
+        font-size: 12px;
+      }
+
+      .pill.failed {
+        background: #fff1f2;
+        color: #dc2626;
+      }
+
+      .ip-cell {
+        color: #334155;
+        font-size: 12px;
+        line-height: 1.6;
+        word-break: break-all;
+      }
+
+      .ip-panel {
+        padding: 14px;
+      }
+
+      .ip-cloud {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        min-height: 160px;
+        margin-top: 14px;
+      }
+
+      .ip-chip {
+        display: inline-flex;
+        height: 30px;
+        max-width: 100%;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid #cfdced;
+        border-radius: 15px;
+        background: #ffffff;
+        padding: 0 11px;
+        color: #0f172a;
+        font-size: 12px;
+      }
+
+      .ip-chip strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ip-chip span {
+        color: #66758b;
+      }
+
+      .empty {
+        display: flex;
+        min-height: 260px;
+        align-items: center;
+        justify-content: center;
+        color: #66758b;
+        font-size: 13px;
+        text-align: center;
+      }
+
+      @media (max-width: 760px) {
+        body {
+          overflow: auto;
+        }
+
+        .app,
+        .page {
+          height: auto;
+          min-height: 100vh;
+        }
+
+        .search-line,
+        .probe,
+        .subgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .map-panel {
+          border-right: 0;
+          border-bottom: 1px solid #e5edf7;
+        }
+
+        .node-row {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="page">
+        <header class="header">
+          <div class="header-top">
+            <div>
+              <div class="title">国内多点检测</div>
+              <div class="caption">面向国内访问场景检测域名的 Ping、HTTP 和 DNS 结果，快速判断哪个区域、哪个 IP 更稳定。</div>
+            </div>
+            <div class="source">数据来源：Globalping CN</div>
+          </div>
+
+          <div class="search-line">
+            <label class="input-box">
+              <span class="input-label">目标域名</span>
+              <input id="targetInput" class="input" type="text" placeholder="例如 dl.google.com" />
+            </label>
+            <div class="segmented">
+              <button type="button" data-mode="ping" class="active">Ping</button>
+              <button type="button" data-mode="http">HTTP</button>
+              <button type="button" data-mode="dns">DNS</button>
+            </div>
+            <button id="runButton" class="primary" type="button">开始测试</button>
+          </div>
+
+          <div class="quick-line">
+            <div class="examples" id="exampleTargets">
+              <span>常用：</span>
+              <button class="chip-button" type="button" data-example-target="dl.google.com">dl.google.com</button>
+              <button class="chip-button" type="button" data-example-target="github.com">github.com</button>
+              <button class="chip-button" type="button" data-example-target="npmjs.com">npmjs.com</button>
+              <button class="chip-button" type="button" data-example-target="registry.npmmirror.com">registry.npmmirror.com</button>
+            </div>
+            <div id="statusText" class="status"></div>
+          </div>
+        </header>
+
+        <section class="content">
+          <section class="section probe">
+            <div class="map-panel">
+              <div class="panel-head">
+                <div>
+                  <div id="mapTitle" class="panel-title">国内Ping查询结果：-</div>
+                  <div id="mapNote" class="panel-note">查询时间：-</div>
+                </div>
+                <div class="tabs">
+                  <button class="tab active" type="button">全部</button>
+                  <button class="tab" type="button">可用</button>
+                  <button class="tab" type="button">异常</button>
+                </div>
+              </div>
+              <div id="map" class="map">
+                <svg id="chinaMap" class="china-map" viewBox="0 0 720 520" aria-label="中国地图"></svg>
+                <div class="legend" aria-hidden="true">
+                  <div class="legend-item"><i class="legend-color" style="background:#178b2f"></i><span>&lt;=10ms</span></div>
+                  <div class="legend-item"><i class="legend-color" style="background:#45b95e"></i><span>11~80ms</span></div>
+                  <div class="legend-item"><i class="legend-color" style="background:#74d37e"></i><span>81~150ms</span></div>
+                  <div class="legend-item"><i class="legend-color" style="background:#ffc247"></i><span>151~250ms</span></div>
+                  <div class="legend-item"><i class="legend-color" style="background:#ff8845"></i><span>&gt;250ms</span></div>
+                  <div class="legend-item"><i class="legend-color" style="background:#ef4444"></i><span>超时</span></div>
+                </div>
+                <div id="mapTooltip" class="map-tooltip"></div>
+                <div id="mapEmpty" class="map-empty">输入域名后开始测试</div>
+              </div>
+            </div>
+
+            <aside class="side">
+              <div class="target-card">
+                <div class="target-label">当前目标</div>
+                <div id="targetName" class="target">等待输入域名</div>
+                <div class="badges">
+                  <span id="modeBadge" class="badge">PING</span>
+                  <span id="stateBadge" class="badge ready">未开始</span>
+                </div>
+              </div>
+
+              <div class="metric-list">
+                <div class="metric">
+                  <div class="metric-label">可用节点</div>
+                  <div id="availableValue" class="metric-value">0</div>
+                  <div id="availableNote" class="metric-note">返回有效结果的节点数</div>
+                </div>
+                <div class="metric">
+                  <div id="avgLabel" class="metric-label">平均延迟</div>
+                  <div id="avgValue" class="metric-value">-</div>
+                  <div id="avgNote" class="metric-note">仅统计成功节点</div>
+                </div>
+                <div class="metric">
+                  <div id="bestLabel" class="metric-label">最快结果</div>
+                  <div id="bestValue" class="metric-value">-</div>
+                  <div id="bestNote" class="metric-note">优先作为候选</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-label">推荐 IP</div>
+                  <div id="bestIp" class="metric-value">-</div>
+                  <div id="bestIpNote" class="metric-note">出现频次更高的地址优先验证</div>
+                  <div class="ip-actions">
+                    <button id="copyIpButton" class="copy" type="button" disabled>复制 IP</button>
+                    <button id="updateHostsButton" class="copy" type="button" disabled>更新 hosts</button>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </section>
+
+          <section class="subgrid">
+            <section class="card">
+              <div class="card-head">
+                <div class="panel-title">节点明细</div>
+                <div id="resultMeta" class="panel-note">暂无结果</div>
+              </div>
+              <div id="emptyState" class="empty">检测完成后会展示各节点的状态、延迟和解析 IP。</div>
+              <div id="nodeList" class="node-list" hidden></div>
+            </section>
+
+            <section class="card ip-panel">
+              <div class="panel-head" style="padding:0">
+                <div class="panel-title">IP 占比</div>
+                <div id="ipMeta" class="panel-note">尚无结果</div>
+              </div>
+              <div id="ipCloud" class="ip-cloud"></div>
+            </section>
+          </section>
+        </section>
+      </section>
+    </main>
+<script>
+      let api = null;
+      let pluginBoot = null;
+      let pluginConnect = Promise.resolve();
+
+      function syncPluginApi() {
+        if (pluginBoot) {
+          api = pluginBoot.api;
+        }
+        return { api };
+      }
+
+      async function ensurePluginApi() {
+        if (!pluginBoot) {
+          throw new Error('插件 SDK 未就绪，请重启 Tooldesk');
+        }
+        await pluginConnect;
+        syncPluginApi();
+        if (!api) {
+          throw new Error('插件 SDK 未就绪，请重启 Tooldesk');
+        }
+        return { api };
+      }
+
+      const targetInput = document.getElementById('targetInput');
+      const runButton = document.getElementById('runButton');
+      const statusText = document.getElementById('statusText');
+      const modeButtons = [...document.querySelectorAll('[data-mode]')];
+      const exampleTargets = document.getElementById('exampleTargets');
+      const targetName = document.getElementById('targetName');
+      const modeBadge = document.getElementById('modeBadge');
+      const stateBadge = document.getElementById('stateBadge');
+      const map = document.getElementById('map');
+      const chinaMap = document.getElementById('chinaMap');
+      const mapEmpty = document.getElementById('mapEmpty');
+      const mapTooltip = document.getElementById('mapTooltip');
+      const mapTitle = document.getElementById('mapTitle');
+      const mapNote = document.getElementById('mapNote');
+      const availableValue = document.getElementById('availableValue');
+      const availableNote = document.getElementById('availableNote');
+      const avgLabel = document.getElementById('avgLabel');
+      const avgValue = document.getElementById('avgValue');
+      const avgNote = document.getElementById('avgNote');
+      const bestLabel = document.getElementById('bestLabel');
+      const bestValue = document.getElementById('bestValue');
+      const bestNote = document.getElementById('bestNote');
+      const bestIp = document.getElementById('bestIp');
+      const bestIpNote = document.getElementById('bestIpNote');
+      const copyIpButton = document.getElementById('copyIpButton');
+      const updateHostsButton = document.getElementById('updateHostsButton');
+      const emptyState = document.getElementById('emptyState');
+      const nodeList = document.getElementById('nodeList');
+      const resultMeta = document.getElementById('resultMeta');
+      const ipCloud = document.getElementById('ipCloud');
+      const ipMeta = document.getElementById('ipMeta');
+
+      const state = {
+        bestIp: '',
+        chinaFeatures: [],
+        chinaMapReady: false,
+        lastLaunchTrigger: 0,
+        mode: 'ping',
+        running: false
+      };
+
+      const CHINA_MAP_URL = 'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json';
+      const GLOBALPING_API = 'https://api.globalping.io/v1/measurements';
+      const GLOBALPING_CN_LIMIT = 16;
+      const PROVINCE_ALIASES = [
+        { name: '北京市', keys: ['beijing', '北京'] },
+        { name: '天津市', keys: ['tianjin', '天津'] },
+        { name: '上海市', keys: ['shanghai', '上海'] },
+        { name: '重庆市', keys: ['chongqing', '重庆'] },
+        { name: '河北省', keys: ['hebei', '河北', 'shijiazhuang', 'tangshan', 'baoding', 'langfang'] },
+        { name: '山西省', keys: ['shanxi', '山西', 'taiyuan', 'datong'] },
+        { name: '辽宁省', keys: ['liaoning', '辽宁', 'shenyang', 'dalian', 'anshan'] },
+        { name: '吉林省', keys: ['jilin', '吉林', 'changchun', 'yanji'] },
+        { name: '黑龙江省', keys: ['heilongjiang', '黑龙江', 'harbin', 'daqing'] },
+        { name: '江苏省', keys: ['jiangsu', '江苏', 'nanjing', 'suzhou', 'wuxi', 'changzhou', 'xuzhou', 'nantong'] },
+        { name: '浙江省', keys: ['zhejiang', '浙江', 'hangzhou', 'ningbo', 'wenzhou', 'jinhua', 'shaoxing'] },
+        { name: '安徽省', keys: ['anhui', '安徽', 'hefei', 'wuhu'] },
+        { name: '福建省', keys: ['fujian', '福建', 'fuzhou', 'xiamen', 'quanzhou'] },
+        { name: '江西省', keys: ['jiangxi', '江西', 'nanchang', 'ganzhou'] },
+        { name: '山东省', keys: ['shandong', '山东', 'jinan', 'qingdao', 'yantai', 'weifang', 'linyi'] },
+        { name: '河南省', keys: ['henan', '河南', 'zhengzhou', 'luoyang'] },
+        { name: '湖北省', keys: ['hubei', '湖北', 'wuhan', 'yichang', 'xiangyang'] },
+        { name: '湖南省', keys: ['hunan', '湖南', 'changsha'] },
+        { name: '广东省', keys: ['guangdong', '广东', 'guangzhou', 'shenzhen', 'dongguan', 'foshan', 'zhuhai'] },
+        { name: '海南省', keys: ['hainan', '海南', 'haikou'] },
+        { name: '四川省', keys: ['sichuan', '四川', 'chengdu', 'mianyang'] },
+        { name: '贵州省', keys: ['guizhou', '贵州', 'guiyang'] },
+        { name: '云南省', keys: ['yunnan', '云南', 'kunming'] },
+        { name: '陕西省', keys: ['shaanxi', '陕西', 'xian'] },
+        { name: '甘肃省', keys: ['gansu', '甘肃', 'lanzhou'] },
+        { name: '青海省', keys: ['qinghai', '青海', 'xining'] },
+        { name: '台湾省', keys: ['taiwan', '台湾', 'taipei', 'tw/'] },
+        { name: '内蒙古自治区', keys: ['inner mongolia', '内蒙古', 'hohhot'] },
+        { name: '广西壮族自治区', keys: ['guangxi', '广西', 'nanning'] },
+        { name: '西藏自治区', keys: ['tibet', '西藏', 'lhasa'] },
+        { name: '宁夏回族自治区', keys: ['ningxia', '宁夏', 'yinchuan'] },
+        { name: '新疆维吾尔自治区', keys: ['xinjiang', '新疆', 'urumqi'] },
+        { name: '香港特别行政区', keys: ['hong kong', '香港', 'hk/'] },
+        { name: '澳门特别行政区', keys: ['macau', 'macao', '澳门', 'mo/'] }
+      ];
+
+      const REGION_POSITIONS = [
+        { keys: ['cyprus', 'larnaca', ' cy ', 'cy/'], x: 54, y: 42 },
+        { keys: ['singapore', ' sg ', 'sg/'], x: 76, y: 58 },
+        { keys: ['usa', 'miami', 'new york', 'los angeles', 'chicago', ' us ', 'us/'], x: 24, y: 44 },
+        { keys: ['iran', 'tehran', ' ir ', 'ir/'], x: 59, y: 47 },
+        { keys: ['spain', 'madrid', ' es ', 'es/'], x: 47, y: 42 },
+        { keys: ['romania', 'bucharest', ' ro ', 'ro/'], x: 52, y: 39 },
+        { keys: ['sweden', 'stockholm', ' se ', 'se/'], x: 50, y: 30 },
+        { keys: ['serbia', 'belgrade', ' rs ', 'rs/'], x: 52, y: 42 },
+        { keys: ['ukraine', 'kyiv', 'kiev', ' ua ', 'ua/'], x: 55, y: 37 },
+        { keys: ['uk', 'london', 'gb', 'united kingdom'], x: 46, y: 36 },
+        { keys: ['france', 'paris'], x: 48, y: 39 },
+        { keys: ['germany', 'frankfurt', 'berlin', 'de/'], x: 50, y: 37 },
+        { keys: ['netherlands', 'amsterdam', 'nl/'], x: 49, y: 36 },
+        { keys: ['poland', 'warsaw', 'pl/'], x: 53, y: 36 },
+        { keys: ['russia', 'moscow', ' ru ', 'ru/'], x: 61, y: 31 },
+        { keys: ['turkey', 'istanbul', 'tr/'], x: 55, y: 43 },
+        { keys: ['israel', 'tel aviv', 'il/'], x: 56, y: 47 },
+        { keys: ['uae', 'dubai', 'ae/'], x: 61, y: 52 },
+        { keys: ['india', 'mumbai', 'delhi', 'in/'], x: 67, y: 55 },
+        { keys: ['japan', 'tokyo', 'jp/'], x: 83, y: 45 },
+        { keys: ['korea', 'seoul', 'kr/'], x: 80, y: 45 },
+        { keys: ['china', 'hong kong', 'taiwan', 'beijing', 'shanghai', 'cn/', 'hk/', 'tw/'], x: 76, y: 48 },
+        { keys: ['australia', 'sydney', 'au/'], x: 82, y: 72 },
+        { keys: ['brazil', 'sao paulo', 'br/'], x: 34, y: 68 },
+        { keys: ['argentina', 'chile', 'ar/', 'cl/'], x: 31, y: 78 },
+        { keys: ['canada', 'toronto', 'ca/'], x: 22, y: 32 },
+        { keys: ['mexico', 'mx/'], x: 21, y: 51 }
+      ];
+
+      function setStatus(message, type) {
+        statusText.textContent = message || '';
+        statusText.className = `status${type ? ` ${type}` : ''}`;
+      }
+
+      function setRunning(nextRunning) {
+        state.running = nextRunning;
+        runButton.disabled = nextRunning;
+        targetInput.disabled = nextRunning;
+        copyIpButton.disabled = nextRunning || !state.bestIp;
+        updateHostsButton.disabled = nextRunning || !state.bestIp || !normalizeTarget(targetInput.value);
+        for (const button of modeButtons) {
+          button.disabled = nextRunning;
+        }
+        exampleTargets?.querySelectorAll('[data-example-target]').forEach((button) => {
+          button.disabled = nextRunning;
+        });
+        stateBadge.textContent = nextRunning ? '测试中' : '已就绪';
+      }
+
+      function applyExampleTarget(value) {
+        const target = normalizeTarget(value);
+        if (!target || !isValidTarget(target)) {
+          setStatus('请输入有效域名或 IP，例如 plugins.jetbrains.com', 'error');
+          return;
+        }
+
+        targetInput.value = target;
+        targetName.textContent = target;
+        updateHostsButton.disabled = state.running || !state.bestIp || !normalizeTarget(targetInput.value);
+        void runCheck();
+      }
+
+      function setMode(nextMode) {
+        state.mode = nextMode;
+        modeBadge.textContent = nextMode.toUpperCase();
+        mapNote.textContent = '查询时间：-';
+        avgLabel.textContent = nextMode === 'dns' ? '有效解析' : '平均延迟';
+        avgNote.textContent = nextMode === 'dns' ? '成功返回 A 记录的节点数' : '仅统计成功节点';
+        bestLabel.textContent = nextMode === 'dns' ? '最多记录' : '最快结果';
+        bestNote.textContent = nextMode === 'dns' ? '优先看解析更完整的节点' : '优先作为候选';
+        for (const button of modeButtons) {
+          button.classList.toggle('active', button.dataset.mode === nextMode);
+        }
+      }
+
+      function normalizeTarget(value) {
+        return String(value || '')
+          .trim()
+          .replace(/^https?:\/\//i, '')
+          .replace(/\/.*$/, '')
+          .replace(/\s+/g, '');
+      }
+
+      function isValidTarget(value) {
+        const target = normalizeTarget(value).toLowerCase();
+        if (!target || target.length > 253 || target.includes('_')) {
+          return false;
+        }
+        if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(target)) {
+          return target.split('.').every((part) => {
+            const value = Number(part);
+            return Number.isInteger(value) && value >= 0 && value <= 255;
+          });
+        }
+        return /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(target);
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function formatMs(value) {
+        return Number.isFinite(value) ? `${Math.round(value)} ms` : '-';
+      }
+
+      function getIpList(row) {
+        if (!row.ip || row.ip === '-') {
+          return [];
+        }
+        return String(row.ip)
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function getPosition(row, index, total) {
+        const text = ` ${row.node} ${row.location} `.toLowerCase();
+        const match = REGION_POSITIONS.find((item) => item.keys.some((key) => text.includes(key)));
+        if (match) {
+          const shift = (index % 5) - 2;
+          return {
+            x: Math.min(92, Math.max(8, match.x + shift * 1.2)),
+            y: Math.min(86, Math.max(14, match.y + (index % 3 - 1) * 1.8))
+          };
+        }
+        return {
+          x: 16 + ((index * 17) % 68),
+          y: 25 + ((index * 23) % 46) + (total > 8 ? index % 3 : 0)
+        };
+      }
+
+      function getFeatureCoordinates(feature) {
+        const geometry = feature && feature.geometry;
+        if (!geometry || !Array.isArray(geometry.coordinates)) {
+          return [];
+        }
+        return geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.type === 'MultiPolygon' ? geometry.coordinates : [];
+      }
+
+      function getChinaBounds(features) {
+        const bounds = {
+          maxLat: -90,
+          maxLng: -180,
+          minLat: 90,
+          minLng: 180
+        };
+
+        features.forEach((feature) => {
+          getFeatureCoordinates(feature).forEach((polygon) => {
+            polygon.forEach((ring) => {
+              ring.forEach(([lng, lat]) => {
+                bounds.minLng = Math.min(bounds.minLng, lng);
+                bounds.maxLng = Math.max(bounds.maxLng, lng);
+                bounds.minLat = Math.min(bounds.minLat, lat);
+                bounds.maxLat = Math.max(bounds.maxLat, lat);
+              });
+            });
+          });
+        });
+
+        return bounds;
+      }
+
+      function projectChinaPoint(point, bounds) {
+        const width = 720;
+        const height = 520;
+        const paddingX = 34;
+        const paddingY = 28;
+        const [lng, lat] = point;
+        const x = paddingX + ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * (width - paddingX * 2);
+        const y = paddingY + ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * (height - paddingY * 2);
+        return [Number.isFinite(x) ? x : 0, Number.isFinite(y) ? y : 0];
+      }
+
+      function featureToPath(feature, bounds) {
+        return getFeatureCoordinates(feature)
+          .map((polygon) =>
+            polygon
+              .map((ring) =>
+                ring
+                  .map((point, index) => {
+                    const [x, y] = projectChinaPoint(point, bounds);
+                    return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
+                  })
+                  .join(' ') + ' Z'
+              )
+              .join(' ')
+          )
+          .join(' ');
+      }
+
+      function getLatencyLevel(value, failed) {
+        if (failed || !Number.isFinite(value)) {
+          return 'level-timeout';
+        }
+        if (value <= 10) {
+          return 'level-fast';
+        }
+        if (value <= 80) {
+          return 'level-good';
+        }
+        if (value <= 150) {
+          return 'level-normal';
+        }
+        if (value <= 250) {
+          return 'level-slow';
+        }
+        return 'level-poor';
+      }
+
+      function matchProvince(row) {
+        const lng = Number(row.longitude);
+        const lat = Number(row.latitude);
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          const province = findProvinceByPoint(lng, lat);
+          if (province) {
+            return province;
+          }
+        }
+
+        const text = ` ${row.node} ${row.location} `.toLowerCase();
+        const match = PROVINCE_ALIASES.find((province) => province.keys.some((key) => text.includes(key.toLowerCase())));
+        return match ? match.name : '';
+      }
+
+      function buildProvinceResults(rows) {
+        const result = new Map();
+
+        rows.forEach((row) => {
+          const provinceName = matchProvince(row);
+          if (!provinceName) {
+            return;
+          }
+          const current = result.get(provinceName);
+          if (!current || (!row.failed && current.failed) || row.numericValue < current.numericValue) {
+            result.set(provinceName, row);
+          }
+        });
+
+        return result;
+      }
+
+      function setProvinceClasses(results) {
+        chinaMap.querySelectorAll('.province').forEach((province) => {
+          const row = results.get(province.dataset.name || '');
+          province.classList.remove('level-fast', 'level-good', 'level-normal', 'level-slow', 'level-poor', 'level-timeout');
+          if (row) {
+            province.classList.add(getLatencyLevel(row.numericValue, row.failed));
+          }
+          province.dataset.result = row ? row.result : '暂无检测结果';
+          province.dataset.detail = row ? row.detail : '';
+        });
+      }
+
+      function showMapTooltip(event) {
+        const target = event.currentTarget;
+        mapTooltip.innerHTML = `<strong>${escapeHtml(target.dataset.name || '')}</strong><span>${escapeHtml(target.dataset.result || '暂无检测结果')}</span>`;
+        mapTooltip.style.display = 'block';
+        mapTooltip.style.left = `${event.offsetX + 12}px`;
+        mapTooltip.style.top = `${event.offsetY + 12}px`;
+      }
+
+      function hideMapTooltip() {
+        mapTooltip.style.display = 'none';
+      }
+
+      function renderChinaMap(features) {
+        const bounds = getChinaBounds(features);
+        chinaMap.innerHTML = features
+          .map((feature) => {
+            const name = feature.properties && feature.properties.name ? feature.properties.name : '';
+            return `<path class="province" data-name="${escapeHtml(name)}" data-result="暂无检测结果" d="${featureToPath(feature, bounds)}"></path>`;
+          })
+          .join('');
+
+        chinaMap.querySelectorAll('.province').forEach((province) => {
+          province.addEventListener('mousemove', showMapTooltip);
+          province.addEventListener('mouseleave', hideMapTooltip);
+        });
+      }
+
+      async function loadChinaMap() {
+        try {
+          const geoJson = await fetchJson(CHINA_MAP_URL);
+          state.chinaFeatures = Array.isArray(geoJson.features) ? geoJson.features : [];
+          renderChinaMap(state.chinaFeatures);
+          state.chinaMapReady = state.chinaFeatures.length > 0;
+        } catch (error) {
+          mapNote.textContent = '中国地图加载失败，仍可查看节点明细';
+        }
+      }
+
+      function resetView() {
+        targetName.textContent = normalizeTarget(targetInput.value) || '等待输入域名';
+        mapTitle.textContent = `国内Ping查询结果：${normalizeTarget(targetInput.value) || '-'}`;
+        mapNote.textContent = '查询时间：-';
+        availableValue.textContent = '0';
+        availableNote.textContent = '返回有效结果的节点数';
+        avgValue.textContent = '-';
+        bestValue.textContent = '-';
+        bestIp.textContent = '-';
+        bestIpNote.textContent = '出现频次更高的地址优先验证';
+        state.bestIp = '';
+        copyIpButton.disabled = true;
+        updateHostsButton.disabled = true;
+        resultMeta.textContent = '暂无结果';
+        ipMeta.textContent = '尚无结果';
+        ipCloud.innerHTML = '';
+        nodeList.innerHTML = '';
+        nodeList.hidden = true;
+        emptyState.hidden = false;
+        setProvinceClasses(new Map());
+        mapEmpty.hidden = false;
+      }
+
+      function isPointInRing(lng, lat, ring) {
+        let inside = false;
+        for (let index = 0, prev = ring.length - 1; index < ring.length; prev = index++) {
+          const [lngA, latA] = ring[index];
+          const [lngB, latB] = ring[prev];
+          const intersects = latA > lat !== latB > lat && lng < ((lngB - lngA) * (lat - latA)) / (latB - latA || Number.EPSILON) + lngA;
+          if (intersects) {
+            inside = !inside;
+          }
+        }
+        return inside;
+      }
+
+      function isPointInPolygon(lng, lat, polygon) {
+        if (!polygon.length || !isPointInRing(lng, lat, polygon[0])) {
+          return false;
+        }
+        return !polygon.slice(1).some((ring) => isPointInRing(lng, lat, ring));
+      }
+
+      function findProvinceByPoint(lng, lat) {
+        for (const feature of state.chinaFeatures) {
+          const name = feature.properties && feature.properties.name ? feature.properties.name : '';
+          const polygons = getFeatureCoordinates(feature);
+          if (polygons.some((polygon) => isPointInPolygon(lng, lat, polygon))) {
+            return name;
+          }
+        }
+        return '';
+      }
+
+      async function fetchJson(url, options = {}) {
+        const { api: activeApi } = await ensurePluginApi();
+        const method = String(options.method || 'GET').toUpperCase();
+        const body = options.body;
+        const headers = {
+          accept: 'application/json',
+          ...(body ? { 'content-type': 'application/json' } : {}),
+          ...(options.headers || {})
+        };
+
+        if (typeof activeApi.sendHttpRequest !== 'function') {
+          throw new Error('sendHttpRequest unavailable');
+        }
+
+        const result = await activeApi.sendHttpRequest({
+          body,
+          headers,
+          method,
+          timeoutMs: options.timeoutMs ?? 30_000,
+          url
+        });
+
+        if (!result || !result.ok) {
+          throw new Error(result?.error || `请求失败 HTTP ${result?.status || 0}`);
+        }
+
+        return result.body ? JSON.parse(result.body) : null;
+      }
+
+      function getMeasurementOptions(mode) {
+        if (mode === 'ping') {
+          return { packets: 1 };
+        }
+        if (mode === 'dns') {
+          return { query: { type: 'A' } };
+        }
+        return {};
+      }
+
+      async function createMeasurement(target, mode) {
+        return fetchJson(GLOBALPING_API, {
+          body: JSON.stringify({
+            locations: [{ country: 'CN', limit: GLOBALPING_CN_LIMIT }],
+            measurementOptions: getMeasurementOptions(mode),
+            target,
+            type: mode
+          }),
+          method: 'POST'
+        });
+      }
+
+      async function pollMeasurement(measurementId, onProgress) {
+        const deadline = Date.now() + 12_000;
+        let latest = null;
+        while (Date.now() < deadline) {
+          const result = await fetchJson(`${GLOBALPING_API}/${encodeURIComponent(measurementId)}`);
+          latest = result;
+          if (result && Array.isArray(result.results)) {
+            onProgress(result);
+          }
+          if (result && result.status === 'finished') {
+            return result;
+          }
+          await new Promise((resolve) => window.setTimeout(resolve, 600));
+        }
+        if (latest && Array.isArray(latest.results)) {
+          return latest;
+        }
+        throw new Error('等待结果超时，请稍后再试');
+      }
+
+      function getProbeLocation(probe) {
+        return ['中国', probe.city, probe.network].filter(Boolean).join(' / ');
+      }
+
+      function getProbeName(probe, index) {
+        return probe.city || probe.network || `CN-${index + 1}`;
+      }
+
+      function parsePingRows(measurement) {
+        return (measurement.results || [])
+          .map((item, index) => {
+            const probe = item.probe || {};
+            const result = item.result || {};
+            const avg = result.status === 'finished' && result.stats ? Number(result.stats.avg) : Number.POSITIVE_INFINITY;
+            const ip = result.resolvedAddress ? String(result.resolvedAddress) : '-';
+            const received = result.stats && Number.isFinite(Number(result.stats.rcv)) ? Number(result.stats.rcv) : 0;
+            const loss = result.stats && Number.isFinite(Number(result.stats.loss)) ? Number(result.stats.loss) : 100;
+            return {
+              city: probe.city || '',
+              detail: Number.isFinite(avg) ? `成功 ${received} 次，丢包 ${loss}%` : '节点没有返回成功结果',
+              failed: !Number.isFinite(avg),
+              ip,
+              ipCount: ip !== '-' ? 1 : 0,
+              latitude: probe.latitude,
+              location: getProbeLocation(probe),
+              longitude: probe.longitude,
+              node: getProbeName(probe, index),
+              numericValue: avg,
+              result: Number.isFinite(avg) ? `平均 ${formatMs(avg)}` : 'Ping 失败'
+            };
+          })
+          .sort((a, b) => a.numericValue - b.numericValue);
+      }
+
+      function parseHttpRows(measurement) {
+        return (measurement.results || [])
+          .map((item, index) => {
+            const probe = item.probe || {};
+            const result = item.result || {};
+            const time = result.status === 'finished' && result.timings ? Number(result.timings.total) : Number.POSITIVE_INFINITY;
+            const statusCode = result.statusCode || '-';
+            const ip = result.resolvedAddress ? String(result.resolvedAddress) : '-';
+            const ok = Number.isFinite(time);
+            return {
+              city: probe.city || '',
+              detail: ok ? `状态码 ${statusCode}` : '请求未成功返回',
+              failed: !ok,
+              ip,
+              ipCount: ip !== '-' ? 1 : 0,
+              latitude: probe.latitude,
+              location: getProbeLocation(probe),
+              longitude: probe.longitude,
+              node: getProbeName(probe, index),
+              numericValue: time,
+              result: ok ? `HTTP ${statusCode} · ${formatMs(time)}` : 'HTTP 失败'
+            };
+          })
+          .sort((a, b) => a.numericValue - b.numericValue);
+      }
+
+      function parseDnsRows(measurement) {
+        return (measurement.results || [])
+          .map((item, index) => {
+            const probe = item.probe || {};
+            const result = item.result || {};
+            const addresses = Array.isArray(result.answers)
+              ? result.answers.filter((answer) => answer && answer.type === 'A' && answer.value).map((answer) => String(answer.value))
+              : [];
+            const time = result.timings && Number.isFinite(Number(result.timings.total)) ? Number(result.timings.total) : 0;
+            return {
+              city: probe.city || '',
+              detail: addresses.length ? `返回 ${addresses.length} 个 A 记录` : '没有返回 A 记录',
+              failed: addresses.length === 0,
+              ip: addresses.length ? addresses.join(', ') : '-',
+              ipCount: addresses.length,
+              latitude: probe.latitude,
+              location: getProbeLocation(probe),
+              longitude: probe.longitude,
+              node: getProbeName(probe, index),
+              numericValue: addresses.length ? time : Number.POSITIVE_INFINITY,
+              result: addresses.length ? `A 记录 ${addresses.length} 个` : '无 A 记录'
+            };
+          })
+          .sort((a, b) => a.numericValue - b.numericValue);
+      }
+
+      function renderMap(rows) {
+        const provinceResults = buildProvinceResults(rows);
+        setProvinceClasses(provinceResults);
+        mapEmpty.hidden = rows.length > 0;
+        mapNote.textContent = provinceResults.size > 0 ? `已匹配 ${provinceResults.size} 个省级区域` : '当前节点未匹配到中国省份，结果见节点明细';
+        return provinceResults.size;
+      }
+
+      function renderIps(rows) {
+        const counter = new Map();
+        rows.forEach((row) => {
+          getIpList(row).forEach((ip) => counter.set(ip, (counter.get(ip) || 0) + 1));
+        });
+        const items = [...counter.entries()].map(([ip, count]) => ({ count, ip })).sort((a, b) => b.count - a.count);
+        ipMeta.textContent = items.length ? `共 ${items.length} 组候选` : '尚无结果';
+        ipCloud.innerHTML = items.length
+          ? items.slice(0, 12).map((item) => `<div class="ip-chip"><strong>${escapeHtml(item.ip)}</strong><span>${item.count} 节点</span></div>`).join('')
+          : '<div class="panel-note">当前模式没有可用 IP 数据</div>';
+        return items[0] ? items[0].ip : '';
+      }
+
+      function renderRows(rows) {
+        if (!rows.length) {
+          resetView();
+          return;
+        }
+        emptyState.hidden = true;
+        nodeList.hidden = false;
+        nodeList.innerHTML = rows
+          .map(
+            (row) => `
+              <div class="node-row">
+                <div>
+                  <div class="node-name">${escapeHtml(row.node)}</div>
+                  <div class="node-loc">${escapeHtml(row.location || '未知地区')}</div>
+                </div>
+                <div>
+                  <span class="pill ${row.failed ? 'failed' : ''}">${escapeHtml(row.result)}</span>
+                  <div class="node-detail">${escapeHtml(row.detail)}</div>
+                </div>
+                <div class="ip-cell">${escapeHtml(row.ip)}</div>
+              </div>
+            `
+          )
+          .join('');
+      }
+
+      function updateSummary(rows) {
+        const successRows = rows.filter((row) => Number.isFinite(row.numericValue));
+        const best = successRows[0] || null;
+        const average = successRows.length ? successRows.reduce((sum, row) => sum + row.numericValue, 0) / successRows.length : Number.NaN;
+        const topIp = renderIps(rows);
+
+        availableValue.textContent = `${successRows.length}`;
+        availableNote.textContent = state.mode === 'dns' ? '成功返回解析结果的节点数' : '返回有效结果的节点数';
+        avgValue.textContent = state.mode === 'dns' ? `${successRows.length}` : formatMs(average);
+        bestValue.textContent = best ? (state.mode === 'dns' ? `${best.ipCount} 记录` : formatMs(best.numericValue)) : '-';
+        bestIp.textContent = topIp || '-';
+        bestIpNote.textContent = topIp ? '已选出现频次最高的候选地址' : '出现频次更高的地址优先验证';
+        state.bestIp = topIp || '';
+        copyIpButton.disabled = state.running || !state.bestIp;
+        updateHostsButton.disabled = state.running || !state.bestIp || !normalizeTarget(targetInput.value);
+        resultMeta.textContent = `共 ${rows.length} 个节点，已返回 ${successRows.length} 个有效结果`;
+      }
+
+      function parseMeasurementRows(measurement) {
+        if (state.mode === 'http') {
+          return parseHttpRows(measurement);
+        }
+        if (state.mode === 'dns') {
+          return parseDnsRows(measurement);
+        }
+        return parsePingRows(measurement);
+      }
+
+      function renderMeasurement(measurement, target, partial) {
+        const rows = parseMeasurementRows(measurement);
+        renderRows(rows);
+        const provinceCount = renderMap(rows);
+        updateSummary(rows);
+        mapTitle.textContent = `${state.mode.toUpperCase()}查询结果：${target}`;
+        mapNote.textContent = `查询时间：${new Date().toLocaleString('zh-CN', { hour12: false })} · 已匹配 ${provinceCount} 个省级区域`;
+        if (partial) {
+          const successRows = rows.filter((row) => Number.isFinite(row.numericValue));
+          setStatus(`已返回 ${successRows.length}/${rows.length} 个节点，继续等待完整结果…`, 'running');
+        }
+        return rows;
+      }
+
+      async function runCheck() {
+        const target = normalizeTarget(targetInput.value);
+        if (!target) {
+          setStatus('请先输入域名，例如 dl.google.com', 'error');
+          return;
+        }
+        if (!isValidTarget(target)) {
+          setStatus('请输入有效域名或 IP，例如 plugins.jetbrains.com', 'error');
+          return;
+        }
+
+        targetName.textContent = target;
+        setRunning(true);
+        setStatus('正在创建测试任务…', 'running');
+        resetView();
+        targetName.textContent = target;
+
+        try {
+          const created = await createMeasurement(target, state.mode);
+          if (!created || !created.id) {
+            throw new Error('测试任务创建失败');
+          }
+
+          setStatus('正在等待国内节点返回结果…', 'running');
+          let latestRenderedAt = 0;
+          const measurement = await pollMeasurement(created.id, (progress) => {
+            const now = Date.now();
+            const rows = parseMeasurementRows(progress);
+            const successCount = rows.filter((row) => Number.isFinite(row.numericValue)).length;
+            if (successCount === 0 || now - latestRenderedAt < 700) {
+              return;
+            }
+            latestRenderedAt = now;
+            renderMeasurement(progress, target, true);
+          });
+          const rows = renderMeasurement(measurement, target, false);
+          stateBadge.textContent = '已完成';
+          setStatus(`已完成 ${rows.length} 个节点的 ${state.mode.toUpperCase()} 测试。`, 'success');
+        } catch (error) {
+          stateBadge.textContent = '失败';
+          setStatus(error instanceof Error ? error.message : '测试失败', 'error');
+        } finally {
+          setRunning(false);
+        }
+      }
+
+      function applyLaunchContext(payload) {
+        const content = String(payload && payload.content ? payload.content : '').trim();
+        const triggeredAt = Number(payload && payload.triggeredAt) || 0;
+        if (!content || (triggeredAt && triggeredAt === state.lastLaunchTrigger)) {
+          return;
+        }
+        if (!isValidTarget(content)) {
+          return;
+        }
+        state.lastLaunchTrigger = triggeredAt || state.lastLaunchTrigger;
+        applyExampleTarget(content);
+      }
+
+      modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          setMode(button.dataset.mode || 'ping');
+          resetView();
+        });
+      });
+
+      exampleTargets?.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-example-target]');
+        if (!button || button.disabled) {
+          return;
+        }
+
+        applyExampleTarget(button.getAttribute('data-example-target') || '');
+      });
+
+      runButton.addEventListener('click', () => {
+        void runCheck();
+      });
+
+      copyIpButton.addEventListener('click', async () => {
+        if (!state.bestIp) {
+          return;
+        }
+        try {
+          await api.copyText(state.bestIp);
+          setStatus(`已复制 IP：${state.bestIp}`, 'success');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '复制失败', 'error');
+        }
+      });
+
+      updateHostsButton.addEventListener('click', async () => {
+        const domain = normalizeTarget(targetInput.value);
+        if (!state.bestIp || !domain) {
+          return;
+        }
+        updateHostsButton.disabled = true;
+        try {
+          const result = await api.updateHostsEntry({ domain, ip: state.bestIp });
+          const action = result && result.updated ? '已更新 hosts' : '已追加 hosts';
+          setStatus(`${action}：${state.bestIp} ${domain}，已备份原文件`, 'success');
+        } catch (error) {
+          setStatus(error instanceof Error ? error.message : '更新 hosts 失败', 'error');
+        } finally {
+          updateHostsButton.disabled = state.running || !state.bestIp || !normalizeTarget(targetInput.value);
+        }
+      });
+
+      targetInput.addEventListener('input', () => {
+        targetName.textContent = normalizeTarget(targetInput.value) || '等待输入域名';
+        updateHostsButton.disabled = state.running || !state.bestIp || !normalizeTarget(targetInput.value);
+      });
+
+      targetInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          void runCheck();
+        }
+      });
+
+      setMode('ping');
+      resetView();
+
+      (function bootPluginHost(attempt) {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (attempt < 120) {
+            setTimeout(() => bootPluginHost(attempt + 1), 25);
+          } else {
+            setStatus('插件 SDK 未就绪，请重启 Tooldesk', 'error');
+          }
+          return;
+        }
+
+        const pluginCreateOptions = {
+          id: 'tooldesk-global-node-test',
+          capabilities: ['copyText', 'sendHttpRequest', 'updateHostsEntry'],
+          onLaunchContext(context) {
+            applyLaunchContext(context);
+          }
+        };
+        const pluginOnReady = function () {
+          syncPluginApi();
+          loadChinaMap();
+        };
+        const pluginOfflineReady = function () {
+          syncPluginApi();
+          setStatus('插件 SDK 未就绪，请重启 Tooldesk', 'error');
+        };
+
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        pluginBoot = { api: plugin.api };
+        syncPluginApi();
+        pluginConnect = plugin.connect().then((result) => {
+          syncPluginApi();
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })(0);
+    </script>
+</html>

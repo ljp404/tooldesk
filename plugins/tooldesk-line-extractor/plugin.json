@@ -1,0 +1,43 @@
+{
+  "accent": "blue",
+  "caption": "按关键词或正则从大文本、日志文件中提取匹配行。",
+  "category": "text",
+  "defaultAlias": "hcx",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-line-extractor",
+  "keywords": [
+    "wbhtq",
+    "line",
+    "hangchouqu",
+    "wenbenhangtiqu",
+    "extract",
+    "filter",
+    "grep",
+    "log",
+    "text",
+    "keyword",
+    "行提取",
+    "文本",
+    "日志",
+    "关键词",
+    "筛选"
+  ],
+  "name": "文本行提取",
+  "permissions": [
+    "clipboard",
+    "filesystem"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "appendTextExport",
+    "copyText",
+    "createTextExport",
+    "finishTextExport"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>浏览器书签</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #2563eb; color: #fff; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+
+.browser-bookmarks {
+  display: grid;
+  gap: 12px;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  padding: 14px;
+}
+
+.bookmark-searchbar {
+  align-items: center;
+  background: #f8fafc;
+  border: 0;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0;
+}
+
+.bookmark-searchbox {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  min-height: 36px;
+  padding: 0 10px;
+}
+
+.bookmark-searchbox:focus-within {
+  border-color: rgba(37, 99, 235, 0.48);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.bookmark-searchbox .app-icon {
+  color: #64748b;
+  height: 17px;
+  width: 17px;
+}
+
+.bookmark-searchbox input {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+  padding: 0;
+  width: 100%;
+}
+
+.bookmark-searchbox input:focus,
+.bookmark-searchbox input:focus-visible {
+  border: 0;
+  box-shadow: none;
+  outline: none;
+}
+
+.bookmark-searchbox input::-webkit-search-cancel-button,
+.bookmark-searchbox input::-webkit-search-decoration,
+.bookmark-searchbox input::-webkit-search-results-button,
+.bookmark-searchbox input::-webkit-search-results-decoration {
+  appearance: none;
+  display: none;
+}
+
+.bookmark-refresh,
+.bookmark-open {
+  align-items: center;
+  border-radius: 7px;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.bookmark-refresh {
+  background: #2563eb;
+  border: 1px solid #2563eb;
+  color: #ffffff;
+  height: 36px;
+  padding: 0 14px;
+}
+
+.bookmark-refresh:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.bookmark-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bookmark-tab {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+}
+
+.bookmark-browser-icon {
+  flex: 0 0 auto;
+  height: 18px;
+  width: 18px;
+}
+
+.bookmark-browser-icon img {
+  display: block;
+  height: 18px;
+  object-fit: contain;
+  width: 18px;
+}
+
+.bookmark-tab span,
+.bookmark-tab strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bookmark-tab strong {
+  color: #94a3b8;
+}
+
+.bookmark-tab.active {
+  background: #eff6ff;
+  border-color: rgba(37, 99, 235, 0.24);
+  color: #1d4ed8;
+}
+
+.bookmark-tab.active strong {
+  color: #2563eb;
+}
+
+.bookmark-main {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bookmark-summary {
+  align-items: center;
+  background: #fbfdff;
+  border-bottom: 1px solid #edf2f8;
+  color: #64748b;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.bookmark-list {
+  align-content: start;
+  display: grid;
+  gap: 0;
+  grid-auto-rows: max-content;
+  min-height: 0;
+  overflow: auto;
+}
+
+.bookmark-row {
+  align-items: center;
+  border-bottom: 1px solid #edf2f8;
+  cursor: default;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  min-height: 58px;
+  padding: 8px 12px;
+}
+
+.bookmark-row:hover {
+  background: #f8fbff;
+}
+
+.bookmark-favicon {
+  align-items: center;
+  background: linear-gradient(180deg, #eff6ff, #eef2ff);
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 8px;
+  color: #1d4ed8;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 900;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.bookmark-favicon.image {
+  background: #ffffff;
+  border-color: #dbe4ef;
+}
+
+.bookmark-favicon img {
+  display: block;
+  height: 22px;
+  object-fit: contain;
+  width: 22px;
+}
+
+.bookmark-info {
+  display: grid;
+  min-width: 0;
+}
+
+.bookmark-title-line {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bookmark-title-line strong {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-title-line span {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #64748b;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  max-width: 180px;
+  overflow: hidden;
+  padding: 2px 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-open {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  color: #2563eb;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+}
+
+.bookmark-open:hover {
+  background: #eff6ff;
+  border-color: rgba(37, 99, 235, 0.24);
+}
+
+.bookmark-open .app-icon {
+  height: 14px;
+  width: 14px;
+}
+
+.bookmark-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 10px;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.bookmark-empty .app-icon {
+  height: 32px;
+  width: 32px;
+}
+
+@media (width <= 760px) {
+  .bookmark-searchbar,
+  .bookmark-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bookmark-favicon {
+    display: none;
+  }
+
+  .bookmark-open {
+    width: 100%;
+  }
+}
+
+
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content browser-bookmarks">
+      <section class="bookmark-searchbar">
+        <div class="bookmark-searchbox">
+          <span class="app-icon" aria-hidden="true">⌕</span>
+          <input id="query" type="search" placeholder="搜索标题、网址、文件夹" autofocus />
+        </div>
+        <button id="refresh" class="bookmark-refresh" type="button">刷新</button>
+      </section>
+
+      <section id="tabs" class="bookmark-tabs" aria-label="浏览器筛选"></section>
+
+      <section class="bookmark-main">
+        <div class="bookmark-summary">
+          <span id="summary">正在读取书签</span>
+          <span id="scannedAt"></span>
+        </div>
+        <div id="list" class="bookmark-list"></div>
+      </section>
+    </main>
+    <!-- TOOLDESK_INLINE_PLUGIN_DATA -->
+<script>
+const state = {
+        activeBrowser: 'all',
+        bookmarks: [],
+        browsers: [],
+        errorMessage: '',
+        failedFaviconHosts: new Set(),
+        isLoading: false,
+        query: '',
+        scannedAt: ''
+      };
+      const $ = (id) => document.getElementById(id);
+
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[char]);
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value).replace(/`/g, '&#96;');
+      }
+
+      function normalizeText(value) {
+        return String(value || '').trim().toLowerCase();
+      }
+
+      function getSearchText(item) {
+        return normalizeText([item.title, item.url, item.domain, item.browser, item.profile, ...(item.path || [])].join(' '));
+      }
+
+      function getPathMatchScore(pathParts, term) {
+        const normalizedParts = (pathParts || []).map(normalizeText).filter(Boolean);
+        if (normalizedParts.some((part) => part === term)) return 72;
+        if (normalizedParts.some((part) => part.startsWith(term))) return 56;
+        if (normalizedParts.some((part) => part.includes(term))) return 44;
+        return 0;
+      }
+
+      function getMatchScore(item, terms) {
+        const title = normalizeText(item.title);
+        const domain = normalizeText(item.domain);
+        const url = normalizeText(item.url);
+        const pathText = normalizeText((item.path || []).join(' '));
+        const fullText = getSearchText(item);
+        let score = 0;
+
+        for (const term of terms) {
+          const pathScore = getPathMatchScore(item.path || [], term);
+          if (!fullText.includes(term) && pathScore === 0) return 0;
+          if (title === term || domain === term) score += 80;
+          else if (pathScore > 0) score += pathScore;
+          else if (title.startsWith(term) || domain.startsWith(term)) score += 48;
+          else if (title.includes(term)) score += 32;
+          else if (domain.includes(term)) score += 24;
+          else if (url.includes(term)) score += 14;
+          else if (pathText.includes(term)) score += 8;
+        }
+
+        return score;
+      }
+
+      function filteredBookmarks() {
+        const terms = normalizeText(state.query).split(/\s+/).filter(Boolean);
+        const scopedItems = state.activeBrowser === 'all'
+          ? state.bookmarks
+          : state.bookmarks.filter((item) => item.browser === state.activeBrowser);
+
+        if (terms.length === 0) {
+          return scopedItems.slice(0, 80);
+        }
+
+        return scopedItems
+          .map((item) => ({ item, score: getMatchScore(item, terms) }))
+          .filter((entry) => entry.score > 0)
+          .sort((current, next) => next.score - current.score || current.item.title.localeCompare(next.item.title, 'zh-Hans-CN'))
+          .map((entry) => entry.item);
+      }
+
+      function getInitial(item) {
+        const source = item.domain || item.title || item.browser;
+        return source.trim().slice(0, 1).toUpperCase() || 'B';
+      }
+
+      function getFaviconUrl(item) {
+        return '';
+      }
+
+      function shouldShowFavicon(item) {
+        return Boolean(item.domain && getFaviconUrl(item) && !state.failedFaviconHosts.has(item.domain));
+      }
+
+      function handleFaviconError(item) {
+        if (!item.domain) return;
+        state.failedFaviconHosts.add(item.domain);
+        renderList();
+      }
+
+      function getBrowserIconUrl(browserName) {
+        const normalizedName = normalizeText(browserName);
+        const bundledIcons = window.__TOOLDESK_BROWSER_ICON_URLS__ || {};
+
+        if (normalizedName.includes('chrome')) {
+          return bundledIcons.chrome || './chrome.svg';
+        }
+
+        if (normalizedName.includes('edge')) {
+          return bundledIcons.edge || './edge.svg';
+        }
+
+        return '';
+      }
+
+      function getEmptyText() {
+        if (state.isLoading) return '正在读取书签';
+        if (state.errorMessage) return state.errorMessage;
+        if (state.bookmarks.length === 0) return '没有扫描到支持的浏览器书签';
+        return '没有匹配的书签';
+      }
+
+      function renderTabs() {
+        const tabs = [
+          { key: 'all', label: '全部', count: state.bookmarks.length },
+          ...state.browsers
+            .filter((browser) => browser.count > 0)
+            .map((browser) => ({
+              count: browser.count,
+              iconUrl: getBrowserIconUrl(browser.name),
+              key: browser.name,
+              label: browser.name
+            }))
+        ];
+
+        $('tabs').replaceChildren(...tabs.map((tab) => {
+          const button = document.createElement('button');
+          button.className = `bookmark-tab${state.activeBrowser === tab.key ? ' active' : ''}`;
+          button.type = 'button';
+          button.innerHTML = `
+            ${tab.iconUrl ? `<span class="bookmark-browser-icon" aria-hidden="true"><img src="${escapeAttr(tab.iconUrl)}" alt="" /></span>` : ''}
+            <span>${escapeHtml(tab.label)}</span>
+            <strong>${tab.count}</strong>
+          `;
+          button.addEventListener('click', () => {
+            state.activeBrowser = tab.key;
+            render();
+          });
+          return button;
+        }));
+      }
+
+      function formatScanTime(value) {
+        if (!value) return '';
+        const raw = String(value).trim();
+        const date = /^\d+$/.test(raw) ? new Date(Number(raw)) : new Date(raw);
+        return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString();
+      }
+
+      function renderList() {
+        const items = filteredBookmarks();
+        $('summary').textContent = `${items.length} 个结果`;
+        const scanTime = formatScanTime(state.scannedAt);
+        $('scannedAt').textContent = scanTime ? `最近扫描 ${scanTime}` : '';
+
+        if (items.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'bookmark-empty';
+          empty.innerHTML = `<span class="app-icon" aria-hidden="true">☆</span><span>${escapeHtml(getEmptyText())}</span>`;
+          $('list').replaceChildren(empty);
+          return;
+        }
+
+        $('list').replaceChildren(...items.map((item) => {
+          const row = document.createElement('article');
+          row.className = 'bookmark-row';
+          row.title = `${item.title}\n${item.url}`;
+          row.addEventListener('dblclick', () => openBookmark(item));
+
+          const favicon = shouldShowFavicon(item) ? getFaviconUrl(item) : '';
+          row.innerHTML = `
+            <div class="bookmark-favicon${favicon ? ' image' : ''}">
+              ${favicon ? `<img alt="${escapeAttr(item.domain || item.title)}" src="${escapeAttr(favicon)}" loading="lazy" />` : `<span>${escapeHtml(getInitial(item))}</span>`}
+            </div>
+            <div class="bookmark-info">
+              <div class="bookmark-title-line">
+                <strong>${escapeHtml(item.title || item.url)}</strong>
+                <span>${escapeHtml(item.domain || item.browser)}</span>
+              </div>
+            </div>
+            <button class="bookmark-open" type="button"><span class="app-icon" aria-hidden="true">↗</span>打开</button>
+          `;
+          const image = row.querySelector('.bookmark-favicon img');
+          if (image) {
+            image.addEventListener('error', () => handleFaviconError(item));
+          }
+          row.querySelector('.bookmark-open').addEventListener('click', (event) => {
+            event.stopPropagation();
+            openBookmark(item);
+          });
+          return row;
+        }));
+      }
+
+      function render() {
+        renderTabs();
+        renderList();
+      }
+
+      async function openBookmark(item) {
+        await api.openExternalUrl(item.url);
+      }
+
+      async function loadBookmarks() {
+        state.isLoading = true;
+        state.errorMessage = '';
+        $('refresh').disabled = true;
+        render();
+
+        try {
+          const result = await api.listBrowserBookmarks();
+          state.failedFaviconHosts = new Set();
+          state.bookmarks = Array.isArray(result.items) ? result.items : [];
+          state.browsers = Array.isArray(result.browsers) ? result.browsers.filter((browser) => browser.count > 0) : [];
+          state.scannedAt = result.scannedAt || '';
+          if (state.activeBrowser !== 'all' && !state.browsers.some((browser) => browser.name === state.activeBrowser)) {
+            state.activeBrowser = 'all';
+          }
+        } catch (error) {
+          state.bookmarks = [];
+          state.browsers = [];
+          state.scannedAt = '';
+          state.errorMessage = error instanceof Error ? error.message : '读取书签失败';
+        } finally {
+          state.isLoading = false;
+          $('refresh').disabled = false;
+          render();
+        }
+      }
+
+      $('query').addEventListener('input', (event) => {
+        state.query = event.target.value;
+        renderList();
+      });
+      $('query').addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        const first = filteredBookmarks()[0];
+        if (first) {
+          event.preventDefault();
+          openBookmark(first);
+        }
+      });
+      $('refresh').addEventListener('click', loadBookmarks);
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-browser-bookmarks', capabilities: ['listBrowserBookmarks', 'openExternalUrl'] };
+        const pluginOnReady = function () { loadBookmarks(); };
+        const pluginOfflineReady = function () { loadBookmarks(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

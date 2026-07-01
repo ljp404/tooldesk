@@ -1,0 +1,35 @@
+{
+  "accent": "green",
+  "caption": "时间戳与日期时间相互转换",
+  "category": "dev",
+  "defaultAlias": "sjc",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-timestamp-converter",
+  "keywords": [
+    "time",
+    "date",
+    "unix",
+    "timestamp",
+    "sjczh",
+    "shijianchuo",
+    "riqi"
+  ],
+  "name": "时间戳转换",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png",
+  "clipboardMatch": {
+    "type": "timestamp",
+    "priority": 100
+  }
+}

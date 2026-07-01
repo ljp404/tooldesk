@@ -1,0 +1,45 @@
+{
+  "sharedConfig": {
+    "url": "",
+    "decryptKey": ""
+  },
+  "syncCloud": {
+    "functionUrl": "",
+    "apiKey": "",
+    "bucket": ""
+  },
+  "serviceGateway": {
+    "functionUrl": "",
+    "apiKey": "",
+    "clientToken": ""
+  },
+  "ocr": {
+    "provider": "baidu"
+  },
+  "baiduOcr": {
+    "apiKey": "",
+    "secretKey": "",
+    "apiVariant": "standard_located"
+  },
+  "qweather": {
+    "apiKey": "",
+    "apiHost": ""
+  },
+  "translate": {
+    "provider": "baidu",
+    "baidu": {
+      "appId": "",
+      "secretKey": ""
+    },
+    "tencent": {
+      "secretId": "",
+      "secretKey": "",
+      "region": "ap-guangzhou"
+    },
+    "aliyun": {
+      "accessKeyId": "",
+      "accessKeySecret": "",
+      "region": "cn-hangzhou"
+    }
+  }
+}

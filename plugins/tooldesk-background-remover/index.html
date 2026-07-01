@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 去背景</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: transparent;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  padding: 18px;
+}
+button, input, select { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .58; }
+[hidden] { display: none !important; }
+.panel {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 0 18px;
+}
+.title {
+  display: block;
+  min-width: 0;
+}
+.title-icon svg, .button svg {
+  display: block;
+  height: 16px;
+  width: 16px;
+}
+.title strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.title span {
+  color: #64748b;
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+}
+.head-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+.endpoint-input {
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  color: #334155;
+  height: 32px;
+  min-width: 280px;
+  padding: 0 12px;
+}
+.endpoint-input:focus {
+  border-color: #86efac;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, .12);
+  outline: 0;
+}
+.badge {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+.badge.ok {
+  background: rgba(34, 197, 94, .1);
+  border-color: rgba(34, 197, 94, .28);
+  color: #15803d;
+}
+.badge.warn {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+.layout {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 18px;
+}
+.work {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  width: 100%;
+}
+.pane {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 12px;
+}
+.pane-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  min-height: 24px;
+}
+.pane-head strong {
+  color: #111827;
+  font-size: 13px;
+}
+.pane-head span {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 800;
+}
+.compare-box {
+  align-items: center;
+  background:
+    linear-gradient(45deg, #f1f5f9 25%, transparent 25%) 0 0 / 18px 18px,
+    linear-gradient(45deg, transparent 75%, #f1f5f9 75%) 0 0 / 18px 18px,
+    linear-gradient(45deg, transparent 75%, #f1f5f9 75%) 9px 9px / 18px 18px,
+    linear-gradient(45deg, #f1f5f9 25%, #ffffff 25%) 9px 9px / 18px 18px;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 180px;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  --split: 50%;
+}
+.compare-image {
+  height: 100%;
+  inset: 0;
+  object-fit: contain;
+  padding: 14px;
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+}
+.compare-box.has-result #sourceImage {
+  clip-path: inset(0 0 0 var(--split));
+}
+.compare-result-layer {
+  clip-path: inset(0 calc(100% - var(--split)) 0 0);
+  inset: 0;
+  position: absolute;
+  z-index: 2;
+}
+.compare-handle {
+  background: #16a34a;
+  bottom: 0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .72);
+  cursor: ew-resize;
+  left: var(--split);
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: 2px;
+  z-index: 3;
+}
+.compare-handle::before {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, .16);
+  color: #16a34a;
+  content: "↔";
+  display: block;
+  font-size: 13px;
+  font-weight: 900;
+  height: 30px;
+  left: 50%;
+  line-height: 28px;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+}
+.compare-label {
+  background: rgba(15, 23, 42, .72);
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 5px 9px;
+  position: absolute;
+  top: 12px;
+  z-index: 2;
+}
+.compare-label.before { right: 12px; }
+.compare-label.after { left: 12px; }
+.compare-placeholder {
+  z-index: 1;
+}
+.empty {
+  color: #64748b;
+  display: grid;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px;
+  justify-items: center;
+  padding: 24px;
+  text-align: center;
+}
+.empty strong {
+  color: #111827;
+  font-size: 15px;
+}
+.drop.active {
+  border-color: #86efac;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, .12);
+}
+.toolbar {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+.left-tools, .right-tools {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.work-footer {
+  display: grid;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.button {
+  align-items: center;
+  border-radius: 8px;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 7px;
+  height: 36px;
+  justify-content: center;
+  padding: 0 13px;
+}
+.primary {
+  background: #16a34a;
+  color: #ffffff;
+  min-width: 112px;
+}
+.primary:hover:not(:disabled) { background: #15803d; }
+.secondary {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  color: #475569;
+}
+.file-input { display: none; }
+.error {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+  margin: 0;
+}
+@media (max-width: 820px) {
+  body { padding: 12px; }
+  .head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 18px;
+  }
+  .head-actions { flex-wrap: wrap; width: 100%; }
+  .endpoint-input { flex: 1; min-width: 220px; }
+}
+    </style>
+  </head>
+  <body>
+    <main class="panel">
+      <header class="head">
+        <div class="title">
+          <strong>AI 去背景</strong>
+          <span>上传图片，一键生成透明背景 PNG</span>
+        </div>
+        <div class="head-actions">
+          <input id="endpointInput" class="endpoint-input" type="text" spellcheck="false" hidden />
+          <button id="connectButton" class="button secondary" type="button" hidden>连接</button>
+          <span id="statusBadge" class="badge">连接中</span>
+        </div>
+      </header>
+
+      <section class="layout">
+        <section class="work">
+          <section class="pane">
+            <div class="pane-head">
+              <strong>去背景对比</strong>
+              <span id="resultMeta">等待生成</span>
+            </div>
+            <div id="dropZone" class="compare-box drop">
+              <img id="sourceImage" class="compare-image" alt="原图" hidden />
+              <div id="resultLayer" class="compare-result-layer" hidden>
+                <img id="resultImage" class="compare-image" alt="透明背景结果" />
+              </div>
+              <span id="afterLabel" class="compare-label after" hidden>去背景后</span>
+              <span id="beforeLabel" class="compare-label before" hidden>原图</span>
+              <span id="compareHandle" class="compare-handle" hidden></span>
+              <div id="sourceEmpty" class="empty compare-placeholder">
+                <strong>拖入图片或点击上传</strong>
+                <span>支持 PNG / JPG / WebP 等常见图片格式</span>
+              </div>
+            </div>
+          </section>
+
+          <div class="work-footer">
+            <div class="toolbar">
+              <div class="left-tools">
+                <label class="button secondary" title="选择本地图片">
+                  上传图片
+                  <input id="fileInput" class="file-input" type="file" accept="image/*" />
+                </label>
+                <button id="useResultButton" class="button secondary" type="button" disabled>继续处理结果</button>
+              </div>
+              <div class="right-tools">
+                <button id="downloadButton" class="button secondary" type="button" disabled>下载 PNG</button>
+                <button id="runButton" class="button primary" type="button" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M5 3l14 9-14 9V3z" /></svg>
+                  开始去背景
+                </button>
+              </div>
+            </div>
+            <p id="errorText" class="error" hidden></p>
+          </div>
+        </section>
+      </section></main>
+
+    <script>
+      let api = null;
+      let pluginConnect = Promise.resolve();
+      let pluginBootRetryTimer = 0;
+
+      const SETTINGS_KEY = 'tooldesk-background-remover-settings';
+      const DEFAULT_ENDPOINT = 'http://159.75.219.43:8089/';
+      const state = {
+        connected: false,
+        endpoint: DEFAULT_ENDPOINT,
+        imageDataUrl: '',
+        imageName: 'background-result.png',
+        resultDataUrl: '',
+        serverConfig: null,
+        compareDragging: false
+      };
+      const $ = (id) => document.getElementById(id);
+      function normalizeEndpoint(value) {
+        const trimmed = String(value || '').trim() || DEFAULT_ENDPOINT;
+        return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+      }
+
+      function loadSettings() {
+        try {
+          const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+          state.endpoint = normalizeEndpoint(settings.endpoint || DEFAULT_ENDPOINT);
+        } catch {
+          state.endpoint = normalizeEndpoint(DEFAULT_ENDPOINT);
+        }
+        $('endpointInput').value = state.endpoint;
+      }
+
+      function saveSettings() {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({ endpoint: state.endpoint }));
+      }
+
+      function apiUrl(path) {
+        return `${state.endpoint}${path.startsWith('/') ? path : `/${path}`}`;
+      }
+
+      function setBadge(text, tone = '') {
+        $('statusBadge').textContent = text;
+        $('statusBadge').className = `badge ${tone}`.trim();
+      }
+
+      function setConnectionControlsVisible(visible) {
+        $('endpointInput').hidden = !visible;
+        $('connectButton').hidden = !visible;
+      }
+
+      function setError(message) {
+        $('errorText').hidden = !message;
+        $('errorText').textContent = message || '';
+      }
+
+      function updateRunButtonState() {
+        const disabled = !state.connected || !hasRemoveBg() || !state.imageDataUrl;
+        $('runButton').disabled = disabled;
+      }
+      function dataUrlToBase64(dataUrl) {
+        return String(dataUrl).split(',')[1] || '';
+      }
+
+      function normalizeImageResponse(value) {
+        if (!value) return '';
+        if (typeof value === 'string') {
+          if (value.startsWith('data:image/')) return value;
+          if (/^[A-Za-z0-9+/=]+$/.test(value.slice(0, 80))) return `data:image/png;base64,${value}`;
+          return '';
+        }
+        for (const key of ['image', 'result', 'data']) {
+          if (typeof value[key] === 'string') return normalizeImageResponse(value[key]);
+        }
+        return '';
+      }
+
+      async function hostRequest(url, options = {}) {
+        if (!api?.sendHttpRequest) {
+          throw new Error('插件宿主连接尚未就绪，请稍后重试。');
+        }
+
+        const method = String(options.method || 'GET').toUpperCase();
+        const result = await api.sendHttpRequest({
+          body: options.body,
+          headers: options.headers || {},
+          method,
+          timeoutMs: options.timeoutMs ?? 120000,
+          url
+        });
+
+        if (!result.ok) {
+          throw new Error(result.error || result.body || `HTTP ${result.status}`);
+        }
+
+        return result;
+      }
+
+      async function apiJson(path, options = {}) {
+        const result = await hostRequest(apiUrl(path), {
+          body: options.body,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+          },
+          method: options.method || 'GET',
+          timeoutMs: options.timeoutMs
+        });
+
+        return result.body ? JSON.parse(result.body) : null;
+      }
+
+      function readHostImageResult(result) {
+        const type = String(result.headers['content-type'] || result.headers['Content-Type'] || '').toLowerCase();
+
+        if (type.includes('application/json') || result.bodyEncoding === 'utf-8') {
+          return normalizeImageResponse(JSON.parse(result.body));
+        }
+
+        const mime = type.includes('image/') ? type.split(';')[0] : 'image/png';
+        return `data:${mime};base64,${result.body}`;
+      }
+
+      async function connectServer() {
+        if (!api?.sendHttpRequest) {
+          state.connected = false;
+          updateRunButtonState();
+          setConnectionControlsVisible(true);
+          setBadge('未就绪', 'warn');
+          setError('插件宿主连接尚未就绪，请稍后重试。');
+          return;
+        }
+
+        state.endpoint = normalizeEndpoint($('endpointInput').value);
+        $('endpointInput').value = state.endpoint;
+        saveSettings();
+        state.connected = false;
+        updateRunButtonState();
+        setError('');
+        setBadge('连接中', 'warn');
+        setConnectionControlsVisible(false);
+        try {
+          const config = await apiJson('/api/v1/server-config');
+          state.serverConfig = config;
+          renderConfig();
+          state.connected = true;
+          updateRunButtonState();
+          setConnectionControlsVisible(false);
+          setBadge('已连接', 'ok');
+        } catch (error) {
+          state.connected = false;
+          updateRunButtonState();
+          setConnectionControlsVisible(true);
+          setBadge('连接失败', 'warn');
+          setError(error instanceof Error ? error.message : '连接失败');
+        }
+      }
+
+      function hasRemoveBg() {
+        return (state.serverConfig?.plugins || []).some((item) => item.name === 'RemoveBG' && item.support_gen_image);
+      }
+
+      function renderConfig() {
+        if (!hasRemoveBg()) {
+          setError('RemoveBG 服务未启用');
+        }
+        updateRunButtonState();
+      }
+
+      function setCompareSplit(clientX) {
+        const rect = $('dropZone').getBoundingClientRect();
+        if (!rect.width) return;
+        const percent = Math.min(92, Math.max(8, ((clientX - rect.left) / rect.width) * 100));
+        $('dropZone').style.setProperty('--split', `${percent}%`);
+      }
+
+      function resetResult() {
+        state.resultDataUrl = '';
+        $('dropZone').classList.remove('has-result');
+        $('resultLayer').hidden = true;
+        $('compareHandle').hidden = true;
+        $('afterLabel').hidden = true;
+        $('beforeLabel').hidden = true;
+        $('resultMeta').textContent = '等待生成';
+        $('downloadButton').disabled = true;
+        $('useResultButton').disabled = true;
+        $('dropZone').style.setProperty('--split', '50%');
+      }
+
+      function loadImage(dataUrl, name) {
+        state.imageDataUrl = dataUrl;
+        state.imageName = name || 'image.png';
+        resetResult();
+        $('sourceImage').src = dataUrl;
+        $('sourceImage').hidden = false;
+        $('sourceEmpty').hidden = true;
+        updateRunButtonState();
+      }
+
+      function readFile(file) {
+        const reader = new FileReader();
+        reader.onload = () => loadImage(String(reader.result || ''), file.name);
+        reader.readAsDataURL(file);
+      }
+
+      async function removeBackground() {
+        if (!state.imageDataUrl) {
+          setError('请先上传图片。');
+          return;
+        }
+        if (!state.connected) {
+          setError('请先连接 IOPaint 服务。');
+          return;
+        }
+        setError('');
+        $('runButton').disabled = true;
+        $('runButton').textContent = '处理中...';
+        $('resultMeta').textContent = '生成中';
+        setBadge('处理中', 'warn');
+        try {
+          const response = await hostRequest(apiUrl('/api/v1/run_plugin_gen_image'), {
+            body: JSON.stringify({ image: dataUrlToBase64(state.imageDataUrl), name: 'RemoveBG' }),
+            headers: { 'Content-Type': 'application/json' },
+            method: 'POST'
+          });
+          const result = readHostImageResult(response);
+          if (!result) throw new Error('服务未返回图片结果');
+          state.resultDataUrl = result;
+          $('resultImage').src = result;
+          $('dropZone').classList.add('has-result');
+          $('resultLayer').hidden = false;
+          $('compareHandle').hidden = false;
+          $('afterLabel').hidden = false;
+          $('beforeLabel').hidden = false;
+          $('dropZone').style.setProperty('--split', '50%');
+          $('resultMeta').textContent = '透明背景已生成';
+          $('downloadButton').disabled = false;
+          $('useResultButton').disabled = false;
+          setBadge('完成', 'ok');
+        } catch (error) {
+          $('resultMeta').textContent = '生成失败';
+          setBadge('失败', 'warn');
+          setError(error instanceof Error ? error.message : '去背景失败');
+        } finally {
+          updateRunButtonState();
+          $('runButton').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M5 3l14 9-14 9V3z" /></svg>开始去背景';
+        }
+      }
+
+      async function downloadResult() {
+        if (!state.resultDataUrl) return;
+        const fileName = state.imageName.replace(/\.[^.]+$/, '') + '-transparent.png';
+        const link = document.createElement('a');
+        link.href = state.resultDataUrl;
+        link.download = fileName;
+        link.click();
+      }
+
+      function useResult() {
+        if (!state.resultDataUrl) return;
+        loadImage(state.resultDataUrl, state.imageName.replace(/\.[^.]+$/, '') + '-transparent.png');
+      }
+
+      function bindEvents() {
+        $('connectButton').addEventListener('click', connectServer);
+        $('fileInput').addEventListener('change', (event) => {
+          const file = event.target.files?.[0];
+          if (file) readFile(file);
+        });
+        $('dropZone').addEventListener('dragover', (event) => {
+          event.preventDefault();
+          $('dropZone').classList.add('active');
+        });
+        $('dropZone').addEventListener('dragleave', () => $('dropZone').classList.remove('active'));
+        $('dropZone').addEventListener('drop', (event) => {
+          event.preventDefault();
+          $('dropZone').classList.remove('active');
+          const file = event.dataTransfer.files?.[0];
+          if (file) readFile(file);
+        });
+        $('dropZone').addEventListener('pointerdown', (event) => {
+          if (!state.resultDataUrl || event.button !== 0) return;
+          state.compareDragging = true;
+          $('dropZone').setPointerCapture?.(event.pointerId);
+          setCompareSplit(event.clientX);
+          event.preventDefault();
+        });
+        $('dropZone').addEventListener('pointermove', (event) => {
+          if (!state.compareDragging) return;
+          setCompareSplit(event.clientX);
+        });
+        $('dropZone').addEventListener('pointerup', (event) => {
+          state.compareDragging = false;
+          $('dropZone').releasePointerCapture?.(event.pointerId);
+        });
+        $('dropZone').addEventListener('pointercancel', () => {
+          state.compareDragging = false;
+        });
+        $('runButton').addEventListener('click', removeBackground);
+        $('downloadButton').addEventListener('click', downloadResult);
+        $('useResultButton').addEventListener('click', useResult);
+      }
+
+      loadSettings();
+      bindEvents();
+      updateRunButtonState();
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          window.clearTimeout(pluginBootRetryTimer);
+          pluginBootRetryTimer = window.setTimeout(bootPluginHost, 120);
+          return;
+        }
+        window.clearTimeout(pluginBootRetryTimer);
+        const pluginCreateOptions = { id: 'tooldesk-background-remover', capabilities: ['sendHttpRequest'] };
+        const pluginOnReady = function () { void connectServer(); };
+        const pluginOfflineReady = function () {
+          state.connected = false;
+          updateRunButtonState();
+          setConnectionControlsVisible(true);
+          setBadge('未就绪', 'warn');
+          setError('插件宿主连接未就绪，请稍后重试。');
+        };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

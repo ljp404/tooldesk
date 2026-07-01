@@ -1,0 +1,49 @@
+{
+  "accent": "blue",
+  "caption": "管理多个邮箱账号并通过 IMAP 收取邮件。",
+  "category": "document",
+  "defaultAlias": "yx",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-email-manager",
+  "keywords": [
+    "email",
+    "mail",
+    "邮箱",
+    "邮件",
+    "qq邮箱",
+    "139邮箱",
+    "imap",
+    "smtp",
+    "youxiang",
+    "yx",
+    "youjian"
+  ],
+  "manifestVersion": 1,
+  "minHostVersion": "0.1.0",
+  "name": "邮箱管理",
+  "permissions": [
+    "filesystem",
+    "http",
+    "mail"
+  ],
+  "publisher": "tooldesk",
+  "sdkVersion": "1.0.0",
+  "capabilities": [
+    "deleteMailMessage",
+    "downloadMailAttachment",
+    "fetchMailMessages",
+    "getPluginStorageItem",
+    "listMailFolders",
+    "openExternalUrl",
+    "openPath",
+    "readBinaryFile",
+    "removePluginStorageItem",
+    "sendMailMessage",
+    "setMailMessageSeen",
+    "setPluginStorageItem",
+    "showOpenDialog"
+  ],
+  "version": "0.1.0",
+  "windowIcon": "assets/window-icon.png"
+}

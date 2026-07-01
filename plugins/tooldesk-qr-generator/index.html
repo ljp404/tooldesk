@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>二维码生成</title>
+<style>
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{--brand:#2563eb;--panel-bg:#fff;--panel-border:#dbe4ef;--tool-surface-border:#dbe4ef;--tool-secondary-btn-bg:#f8fafc;--tool-hover-bg:#eef4ff;--tool-active-border:#bfdbfe;--text-main:#111827;--text-muted:#64748b;--shadow:none;background:#eef3f8;color:#111827;font-family:"Microsoft YaHei","Segoe UI",Arial,sans-serif;font-size:13px}button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}.tool-panel{background:var(--panel-bg);border: 0;border-radius:0;min-height:100%;overflow:hidden;padding:0}.tool-panel-fill{display:flex;flex-direction:column;height:100%}.tool-panel-head{align-items:center;border-bottom:1px solid var(--panel-border);display:flex;justify-content:flex-end;min-height:48px;padding:0 18px;position:relative}.tool-actions{display:flex;gap:16px}.tool-content{padding:18px}.tool-primary-button,.secondary-action{background:var(--brand);border-radius:7px;color:#fff;font-weight:800;min-height:34px;padding:0 14px}.secondary-action{align-items:center;display:inline-flex}.tool-primary-button:hover,.secondary-action:hover{background:#1d4ed8}.tool-inline-error{color:#dc2626;font-size:12px;margin:8px 0 0}.field{display:grid;gap:8px}.field span{color:#475569;font-size:12px;font-weight:800}.app-icon{align-items:center;display:inline-flex;height:18px;justify-content:center;width:18px}.app-icon svg{height:18px;width:18px}.copy-toast{background:rgba(15,23,42,.88);border-radius:6px;color:#fff;font-size:12px;font-weight:700;line-height:1;padding:7px 10px;position:absolute;right:14px;top:56px;z-index:5}[hidden]{display:none!important}
+textarea,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+  color: var(--text-main);
+  outline: none;
+  padding: 12px;
+}
+
+textarea:focus,
+textarea:focus-visible,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus-visible {
+  border-color: rgba(96, 165, 250, 0.68);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  outline: none;
+}
+
+.field.small input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  min-height: 40px;
+}
+
+.qr-layout {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.qr-input-field {
+  display: block;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  position: relative;
+}
+
+.qr-input-field textarea {
+  height: 100%;
+  min-height: 0;
+  resize: none;
+  width: 100%;
+}
+
+.qr-preview-card {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: auto;
+  margin-top: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.qr-preview-head {
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.qr-preview-title {
+  align-items: center;
+  color: #111827;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 8px;
+}
+
+.qr-preview-title .app-icon {
+  color: #2563eb;
+  height: 17px;
+  width: 17px;
+}
+
+.qr-preview-status {
+  background: #eef2f7;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 8px;
+}
+
+.qr-preview-status.active {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.28);
+  color: #15803d;
+}
+
+.qr-preview-stage {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  padding: 18px;
+}
+
+.qr-image-frame,
+.qr-empty-state {
+  aspect-ratio: 1;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  width: min(100%, 250px);
+}
+
+.qr-image-frame {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  padding: 12px;
+  position: relative;
+}
+
+.tool-panel .qr-image-frame {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: inherit;
+  cursor: pointer;
+  height: auto;
+  min-height: 0;
+  padding: 12px;
+}
+
+.tool-panel .qr-image-frame:hover {
+  background: #ffffff;
+  border-color: #bfdbfe;
+  box-shadow: 0 14px 34px rgba(37, 99, 235, 0.14);
+}
+
+.qr-image-frame img {
+  display: block;
+  height: 100%;
+  image-rendering: pixelated;
+  width: 100%;
+}
+
+.qr-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  left: 50%;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  top: 12px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.qr-empty-state {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #94a3b8;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.qr-empty-state .app-icon {
+  height: 42px;
+  width: 42px;
+}
+
+.qr-preview-footer {
+  align-items: center;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0 14px;
+}
+
+.qr-footer-meta {
+  display: grid;
+  gap: 4px;
+  place-items: start;
+}
+
+.qr-size-label {
+  color: #64748b;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tool-panel .qr-download-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  border-radius: 6px;
+  color: #2563eb;
+  display: inline-flex;
+  gap: 7px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.tool-panel .qr-download-button:hover {
+  background: #f8fbff;
+  border-color: #c8daf8;
+  color: #2563eb;
+}
+
+.tool-panel .qr-download-button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.qr-download-button .app-icon {
+  height: 15px;
+  width: 15px;
+}
+
+</style>
+</head>
+<body>
+<main class="tool-panel qr-panel"><div class="tool-content qr-layout"><label class="field qr-input-field" aria-label="二维码内容"><textarea id="qrInput" spellcheck="false"></textarea></label><aside class="qr-preview-card"><div class="qr-preview-head"><span class="qr-preview-title"><span class="app-icon" aria-hidden="true">▦</span>二维码预览</span><span id="qrStatus" class="qr-preview-status">待生成</span></div><div class="qr-preview-stage"><button id="qrCopyTarget" class="qr-image-frame qr-copy-target" type="button" title="点击复制二维码" aria-label="点击复制二维码" hidden><img id="qrImage" alt="二维码"/><span id="qrCopyToast" class="qr-copy-toast" role="status" hidden></span></button><div id="qrEmpty" class="qr-empty-state"><span class="app-icon" aria-hidden="true">▦</span><span>等待内容</span></div></div><div class="qr-preview-footer"><div class="qr-footer-meta"><span class="qr-size-label">尺寸：300 × 300</span><p id="qrError" class="tool-inline-error"></p></div><button id="qrDownload" class="qr-download-button" type="button" disabled title="下载 PNG"><span class="app-icon" aria-hidden="true">↓</span>PNG</button></div></aside></div></main>
+<script src="./assets/qrcode.bundle.js"></script>
+<script>
+const plugin=TooldeskPlugin.create({id:'tooldesk-qr-generator',capabilities:['copyImage']});const api=plugin.api;let qrDataUrl='';
+
+function byId(id){return document.getElementById(id)}
+function escapeHtml(value){return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function showToast(selector,text){const el=document.querySelector(selector);if(!el)return;el.textContent=text;el.hidden=false;clearTimeout(el._timer);el._timer=setTimeout(()=>{el.hidden=true},1600)}
+function applyLaunchContent(_plugin,_api,fn){window.addEventListener('message',event=>{const context=event.data||{};if(context.source==='tooldesk-host'&&context.type==='launch-context'){const content=typeof context.content==='string'?context.content:'';if(content)fn(content)}})}
+async function makeQr(value){const qrcode=window.QRCode;if(!qrcode){throw new Error('QRCode is not defined')}return await qrcode.toDataURL(value,{width:300,margin:2,color:{dark:'#101828',light:'#ffffff'}})}
+async function renderQr(){const value=byId('qrInput').value.trim();byId('qrError').textContent='';if(!value){qrDataUrl='';byId('qrCopyTarget').hidden=true;byId('qrEmpty').hidden=false;byId('qrDownload').disabled=true;byId('qrStatus').textContent='待生成';byId('qrStatus').classList.remove('active');return}try{qrDataUrl=await makeQr(value);byId('qrImage').src=qrDataUrl;byId('qrCopyTarget').hidden=false;byId('qrEmpty').hidden=true;byId('qrDownload').disabled=false;byId('qrStatus').textContent='已生成';byId('qrStatus').classList.add('active')}catch(e){qrDataUrl='';byId('qrError').textContent=e.message||'二维码生成失败'}}
+async function copyQr(){if(!qrDataUrl)return;let ok=false;try{ok=await api.copyImage(qrDataUrl)}catch{}byId('qrCopyToast').textContent=ok?'二维码已复制':'复制失败';byId('qrCopyToast').hidden=false;setTimeout(()=>byId('qrCopyToast').hidden=true,1600)}function downloadQr(){if(!qrDataUrl)return;const a=document.createElement('a');a.href=qrDataUrl;a.download='tooldesk-qrcode.png';a.click()}let qrTimer=0;byId('qrInput').addEventListener('input',()=>{clearTimeout(qrTimer);qrTimer=setTimeout(renderQr,80)});byId('qrCopyTarget').addEventListener('click',copyQr);byId('qrDownload').addEventListener('click',downloadQr);applyLaunchContent(plugin,api,content=>{byId('qrInput').value=content;void renderQr()});void plugin.connect().then(() => {});
+</script></body></html>

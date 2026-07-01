@@ -1,0 +1,41 @@
+{
+  "accent": "blue",
+  "caption": "面向国内访问场景测试域名的 Ping、HTTP 和 DNS 结果。",
+  "category": "dev",
+  "defaultAlias": "ddjc",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-global-node-test",
+  "keywords": [
+    "gnddjc",
+    "ping",
+    "duodianjiance",
+    "checkhost",
+    "dns",
+    "http",
+    "latency",
+    "延迟",
+    "国内ping",
+    "全国ping",
+    "多地ping",
+    "节点测试",
+    "多点检测"
+  ],
+  "name": "国内多点检测",
+  "permissions": [
+    "clipboard",
+    "hosts",
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText",
+    "sendHttpRequest",
+    "updateHostsEntry"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

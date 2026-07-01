@@ -1,0 +1,41 @@
+{
+  "accent": "violet",
+  "caption": "根据身份证号解析性别、出生日期和发证地区，结果仅供参考。",
+  "category": "life",
+  "clipboardMatch": {
+    "type": "id-card",
+    "priority": 96
+  },
+  "defaultAlias": "sfzjx",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-id-card-query",
+  "keywords": [
+    "sfzcx",
+    "idq",
+    "shenfenzhengjiexi",
+    "id",
+    "card",
+    "identity",
+    "身份证",
+    "查询",
+    "解析",
+    "归属地",
+    "性别",
+    "生日",
+    "发证地"
+  ],
+  "name": "身份证解析",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

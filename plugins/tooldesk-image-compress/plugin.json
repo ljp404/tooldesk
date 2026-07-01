@@ -1,0 +1,37 @@
+{
+  "accent": "green",
+  "caption": "压缩体积并转换 JPG / PNG / WebP。",
+  "category": "image",
+  "defaultAlias": "tpyss",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-image-compress",
+  "keywords": [
+    "tpys",
+    "image",
+    "tupianyasu",
+    "tupianzhuanhuan",
+    "compress",
+    "convert",
+    "webp",
+    "png",
+    "jpg",
+    "图片",
+    "压缩",
+    "转换",
+    "格式"
+  ],
+  "name": "图片压缩",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyImage"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

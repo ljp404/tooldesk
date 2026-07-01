@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>镜像拉取</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: #eef3f8;
+        color: #111827;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
+      }
+      button, input, textarea, select { font: inherit; }
+      input[type="text"],
+      input[type="password"],
+      input[type="number"],
+      textarea {
+        background: #fff;
+        border: 1px solid #d7e0ea;
+        border-radius: 7px;
+        color: #0f172a;
+        outline: none;
+        transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+      }
+      input[type="text"],
+      input[type="password"],
+      input[type="number"] {
+        height: 34px;
+        min-width: 0;
+        padding: 0 10px;
+      }
+      input::placeholder,
+      textarea::placeholder {
+        color: #94a3b8;
+      }
+      input[type="text"]:hover,
+      input[type="password"]:hover,
+      input[type="number"]:hover,
+      textarea:hover {
+        border-color: #bfd0e2;
+      }
+      input[type="text"]:focus,
+      input[type="password"]:focus,
+      input[type="number"]:focus,
+      textarea:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+      }
+      button {
+        background: #2563eb;
+        border: 0;
+        border-radius: 7px;
+        color: #fff;
+        cursor: pointer;
+        height: 34px;
+        padding: 0 14px;
+      }
+      button.secondary {
+        background: #fff;
+        border: 1px solid #dbe4ef;
+        color: #334155;
+      }
+      button.tab {
+        background: #f8fafc;
+        border: 1px solid #dbe4ef;
+        color: #475569;
+      }
+      button.tab.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
+      button:disabled { cursor: not-allowed; opacity: .62; }
+      [hidden] { display: none !important; }
+      .panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 100%;
+        min-height: 0;
+        padding: 14px;
+      }
+      .panel > .card:first-child {
+        flex-shrink: 0;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        padding: 12px;
+      }
+      .image-list-card,
+      .log-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .log-card {
+        background: transparent;
+        border: 0;
+        flex: 1;
+        min-height: 96px;
+        overflow: hidden;
+        padding: 12px 0 0;
+      }
+      .log-shell {
+        background: #0f172a;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .log-head {
+        background: #1e293b;
+        color: #94a3b8;
+        flex-shrink: 0;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 7px 10px;
+      }
+      .image-source-card {
+        min-width: 0;
+      }
+      .row {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .row > input[type="text"],
+      .row > input[type="password"],
+      .row > input[type="number"] {
+        flex: 1;
+        min-width: 120px;
+      }
+      .field-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+      .field-grid label {
+        color: #64748b;
+        display: grid;
+        font-size: 12px;
+        gap: 4px;
+      }
+      .field-grid .wide {
+        grid-column: 1 / -1;
+      }
+      .status-bar {
+        align-items: center;
+        color: #64748b;
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 12px;
+        gap: 12px;
+        justify-content: space-between;
+      }
+      .status-dot {
+        background: #94a3b8;
+        border-radius: 50%;
+        display: inline-block;
+        height: 8px;
+        margin-right: 6px;
+        width: 8px;
+      }
+      .status-dot.ok { background: #16a34a; }
+      .status-dot.warn { background: #f59e0b; }
+      .status-dot.err { background: #dc2626; }
+      .section-title {
+        color: #334155;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .hint {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.5;
+        margin-top: 8px;
+      }
+      .image-table-wrap {
+        flex: 1;
+        min-height: 100px;
+        overflow: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th, td {
+        border-bottom: 1px solid #eef2f7;
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      .tag {
+        border-radius: 999px;
+        display: inline-block;
+        font-size: 11px;
+        padding: 2px 8px;
+      }
+      .tag.pending { background: #f1f5f9; color: #64748b; }
+      .tag.pulling { background: #dbeafe; color: #1d4ed8; }
+      .tag.ok { background: #dcfce7; color: #15803d; }
+      .tag.skip { background: #fef3c7; color: #b45309; }
+      .tag.fail { background: #fee2e2; color: #b91c1c; }
+      textarea {
+        min-height: 88px;
+        padding: 8px 10px;
+        resize: vertical;
+        width: 100%;
+      }
+      textarea.script-output {
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 12px;
+        min-height: 180px;
+      }
+      .log {
+        background: #0f172a;
+        color: #e2e8f0;
+        flex: 1;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 12px;
+        line-height: 1.45;
+        min-height: 0;
+        overflow: auto;
+        padding: 10px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .main-grid {
+        display: grid;
+        flex: 1 1 55%;
+        gap: 12px;
+        grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
+        min-height: 0;
+      }
+      body[data-mode="script"] #scriptPanel {
+        display: flex;
+        flex: 1 1 35%;
+        flex-direction: column;
+        min-height: 0;
+      }
+      body[data-mode="script"] #scriptPanel .script-output {
+        flex: 1;
+        min-height: 80px;
+      }
+      body[data-mode="script"] .main-grid {
+        flex: 0 1 220px;
+      }
+      body[data-mode="script"] .log-card {
+        flex: 0 1 120px;
+        min-height: 80px;
+      }
+      @media (max-width: 720px) {
+        .main-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <div class="card">
+        <div class="row" style="margin-bottom: 10px;">
+          <button id="modeLocal" type="button" class="tab active" data-mode="local">本机 Docker</button>
+          <button id="modeRemote" type="button" class="tab" data-mode="remote">远程 SSH</button>
+          <button id="modeScript" type="button" class="tab" data-mode="script">生成脚本</button>
+        </div>
+
+        <div id="sshPanel" hidden>
+          <div class="section-title">远程 Linux 服务器（密码登录）</div>
+          <div class="field-grid">
+            <label>主机<input id="sshHost" type="text" placeholder="1.2.3.4" /></label>
+            <label>端口<input id="sshPort" type="number" value="22" min="1" max="65535" /></label>
+            <label>用户名<input id="sshUser" type="text" placeholder="root" /></label>
+            <label>密码<input id="sshPassword" type="password" /></label>
+            <label class="wide">远程 Compose 目录<input id="remoteComposeDir" type="text" placeholder="/opt/myapp" /></label>
+          </div>
+        </div>
+
+        <div id="remoteDirRow" hidden style="margin-top: 10px;">
+          <label style="color:#64748b;display:grid;font-size:12px;gap:4px;">
+            远程 Compose 目录
+            <input id="scriptRemoteComposeDir" type="text" placeholder="/opt/myapp" />
+          </label>
+        </div>
+
+        <div id="composePickerRow" class="row" style="margin-top: 10px;">
+          <input id="composePath" type="text" placeholder="选择本地 docker-compose.yml（用于解析镜像）" readonly />
+          <button id="pickCompose" type="button" class="secondary">选择文件</button>
+          <button id="parseCompose" type="button" class="secondary">解析镜像</button>
+        </div>
+
+        <div class="row" style="margin-top: 8px;">
+          <button id="testSsh" type="button" class="secondary" hidden>测试连接</button>
+          <button id="probeMirrors" type="button" class="secondary">检测镜像源</button>
+          <button id="prePull" type="button">拉取全部</button>
+          <button id="composeUp" type="button" class="secondary">Compose Up</button>
+        </div>
+
+        <div id="scriptActions" class="row" hidden style="margin-top: 8px;">
+          <button id="generateScript" type="button">生成远程脚本</button>
+          <button id="copyScript" type="button" class="secondary">复制脚本</button>
+        </div>
+
+        <div class="status-bar" style="margin-top: 10px;">
+          <span id="runtimeStatus"><span class="status-dot"></span>就绪</span>
+          <span id="summaryText">尚未解析 Compose</span>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="card image-list-card">
+          <div class="section-title">镜像列表</div>
+          <div class="image-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 38%;">镜像</th>
+                  <th style="width: 14%;">状态</th>
+                  <th>来源 / 说明</th>
+                </tr>
+              </thead>
+              <tbody id="imageRows">
+                <tr>
+                  <td colspan="3" style="color: #94a3b8;">请选择 Compose 文件并解析</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card image-source-card">
+          <div class="section-title">镜像源（每行一个，按顺序尝试）</div>
+          <textarea id="mirrorList" spellcheck="false"></textarea>
+          <div class="hint">仅对 Docker Hub 官方镜像生效；私有仓库会尝试直连拉取。</div>
+        </div>
+      </div>
+
+      <div id="scriptPanel" class="card" hidden>
+        <div class="section-title">远程 Bash 脚本（在 Linux 服务器上执行）</div>
+        <textarea id="scriptOutput" class="script-output" readonly spellcheck="false" placeholder="解析镜像后点击「生成远程脚本」"></textarea>
+      </div>
+
+      <div class="card log-card">
+        <div class="log-shell">
+          <div class="log-head">运行日志</div>
+          <div id="log" class="log"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const DEFAULT_MIRRORS = [
+        'https://docker.1ms.run',
+        'https://2a6bf1988cb6428c877f723ec7530dbc.mirror.swr.myhuaweicloud.com',
+        'https://docker-0.unsee.tech',
+        'https://docker-registry.nmqu.com',
+        'https://docker.kejilion.pro',
+        'https://hub.mirrorify.net',
+        'https://hub1.nat.tf',
+        'https://proxy.vvvv.ee'
+      ];
+      const MIRROR_STORAGE_KEY = 'tooldesk-docker-pull-mirrors';
+      const MODE_STORAGE_KEY = 'tooldesk-docker-pull-mode';
+      const SSH_STORAGE_KEY = 'tooldesk-docker-pull-ssh-config';
+      const PULL_TIMEOUT_MS = 5 * 60 * 1000;
+
+      const composePathInput = document.getElementById('composePath');
+      const mirrorListInput = document.getElementById('mirrorList');
+      const imageRows = document.getElementById('imageRows');
+      const logEl = document.getElementById('log');
+      const runtimeStatusEl = document.getElementById('runtimeStatus');
+      const summaryTextEl = document.getElementById('summaryText');
+      const scriptOutput = document.getElementById('scriptOutput');
+      const sshPanel = document.getElementById('sshPanel');
+      const scriptPanel = document.getElementById('scriptPanel');
+      const scriptActions = document.getElementById('scriptActions');
+
+      let api = null;
+      let composeDir = '';
+      let images = [];
+      let mirrorHealth = new Map();
+      let busy = false;
+      let mode = 'local';
+
+      const plugin = TooldeskPlugin.create({
+        id: 'tooldesk-docker-pull',
+        capabilities: [
+          'checkDockerAvailable',
+          'copyText',
+          'dockerImageExists',
+          'dockerPullImage',
+          'dockerTagImage',
+          'getPluginStorageItem',
+          'readTextFile',
+          'runDockerCompose',
+          'sendHttpRequest',
+          'setPluginStorageItem',
+          'showOpenDialog',
+          'sshExec',
+          'sshExecStream',
+          'testSshConnection',
+          'onSshExecOutput'
+        ]
+      });
+
+      function setBusy(next) {
+        busy = next;
+        for (const id of [
+          'pickCompose',
+          'parseCompose',
+          'probeMirrors',
+          'prePull',
+          'composeUp',
+          'testSsh',
+          'generateScript',
+          'copyScript'
+        ]) {
+          const node = document.getElementById(id);
+          if (node) {
+            node.disabled = next;
+          }
+        }
+      }
+
+      function appendLog(message) {
+        const line = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logEl.textContent = logEl.textContent ? `${logEl.textContent}\n${line}` : line;
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function dirname(filePath) {
+        const normalized = String(filePath || '');
+        const index = Math.max(normalized.lastIndexOf('\\'), normalized.lastIndexOf('/'));
+        return index >= 0 ? normalized.slice(0, index) : normalized;
+      }
+
+      function joinPath(dir, name) {
+        if (!dir) {
+          return name;
+        }
+        const separator = dir.includes('\\') ? '\\' : '/';
+        if (dir.endsWith('\\') || dir.endsWith('/')) {
+          return `${dir}${name}`;
+        }
+        return `${dir}${separator}${name}`;
+      }
+
+      function shQuote(value) {
+        return `'${String(value).replace(/'/g, `'\"'\"'`)}'`;
+      }
+
+      function parseEnvFile(content) {
+        const env = {};
+        for (const line of String(content || '').split(/\r?\n/)) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#')) {
+            continue;
+          }
+          const eq = trimmed.indexOf('=');
+          if (eq <= 0) {
+            continue;
+          }
+          const key = trimmed.slice(0, eq).trim();
+          let value = trimmed.slice(eq + 1).trim();
+          if (
+            (value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))
+          ) {
+            value = value.slice(1, -1);
+          }
+          env[key] = value;
+        }
+        return env;
+      }
+
+      function resolveEnvVars(value, env) {
+        return String(value || '').replace(/\$\{([^}:]+)(?::-([^}]*))?\}/g, (_, name, defaultValue) => {
+          if (Object.prototype.hasOwnProperty.call(env, name)) {
+            return env[name];
+          }
+          return defaultValue ?? '';
+        });
+      }
+
+      function extractImagesFromCompose(yamlText, env) {
+        const found = new Set();
+        const imageLineRe = /^\s*image\s*:\s*['"]?([^'"#\n]+?)['"]?\s*$/gm;
+        let match = imageLineRe.exec(yamlText);
+        while (match) {
+          const image = resolveEnvVars(match[1].trim(), env);
+          if (image && !image.includes('${')) {
+            found.add(image);
+          }
+          match = imageLineRe.exec(yamlText);
+        }
+        return [...found];
+      }
+
+      function normalizeMirrorHost(value) {
+        return String(value || '')
+          .trim()
+          .replace(/^https?:\/\//i, '')
+          .replace(/\/+$/, '');
+      }
+
+      function parseMirrorLines(text) {
+        return String(text || '')
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+      }
+
+      function parseDockerImage(image) {
+        let ref = String(image || '').trim();
+        let tag = 'latest';
+        const digestIndex = ref.indexOf('@');
+        if (digestIndex >= 0) {
+          ref = ref.slice(0, digestIndex);
+        }
+        const colonIndex = ref.lastIndexOf(':');
+        if (colonIndex > ref.lastIndexOf('/')) {
+          tag = ref.slice(colonIndex + 1);
+          ref = ref.slice(0, colonIndex);
+        }
+        const parts = ref.split('/');
+        const hasRegistry =
+          parts.length > 1 &&
+          (parts[0].includes('.') || parts[0].includes(':') || parts[0] === 'localhost');
+        if (!hasRegistry) {
+          if (parts.length === 1) {
+            return { isDockerHub: true, original: image, repository: `library/${parts[0]}`, tag };
+          }
+          return { isDockerHub: true, original: image, repository: ref, tag };
+        }
+        return {
+          isDockerHub: false,
+          original: image,
+          registry: parts[0],
+          repository: parts.slice(1).join('/'),
+          tag
+        };
+      }
+
+      function buildMirrorPullRef(image, mirrorHost) {
+        const parsed = parseDockerImage(image);
+        if (!parsed.isDockerHub) {
+          return null;
+        }
+        return `${normalizeMirrorHost(mirrorHost)}/${parsed.repository}:${parsed.tag}`;
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function renderImageRows() {
+        if (!images.length) {
+          imageRows.innerHTML =
+            '<tr><td colspan="3" style="color:#94a3b8;">未解析到 image 字段</td></tr>';
+          summaryTextEl.textContent = '未找到镜像';
+          return;
+        }
+        imageRows.innerHTML = images
+          .map(
+            (item) => `
+              <tr>
+                <td>${escapeHtml(item.name)}</td>
+                <td><span class="tag ${item.statusClass}">${escapeHtml(item.statusLabel)}</span></td>
+                <td>${escapeHtml(item.detail || '—')}</td>
+              </tr>
+            `
+          )
+          .join('');
+        const doneCount = images.filter((item) => item.status === 'ok' || item.status === 'skip').length;
+        summaryTextEl.textContent = `共 ${images.length} 个镜像，已完成 ${doneCount} 个`;
+      }
+
+      function updateImageState(name, patch) {
+        images = images.map((item) => (item.name === name ? { ...item, ...patch } : item));
+        renderImageRows();
+      }
+
+      function setRuntimeStatus(kind, text) {
+        const dotClass = kind === 'ok' ? 'ok' : kind === 'warn' ? 'warn' : kind === 'err' ? 'err' : '';
+        runtimeStatusEl.innerHTML = `<span class="status-dot ${dotClass}"></span>${escapeHtml(text)}`;
+      }
+
+      function getSshConfig() {
+        return {
+          host: document.getElementById('sshHost').value.trim(),
+          password: document.getElementById('sshPassword').value,
+          port: document.getElementById('sshPort').value || 22,
+          username: document.getElementById('sshUser').value.trim()
+        };
+      }
+
+      function getRemoteComposeDir() {
+        const remoteInput = document.getElementById('remoteComposeDir');
+        const scriptInput = document.getElementById('scriptRemoteComposeDir');
+        return (mode === 'script' ? scriptInput.value : remoteInput.value).trim();
+      }
+
+      async function loadSettings() {
+        try {
+          const savedMirrors = await plugin.api.getPluginStorageItem(MIRROR_STORAGE_KEY);
+          mirrorListInput.value = savedMirrors || DEFAULT_MIRRORS.join('\n');
+        } catch {
+          mirrorListInput.value = DEFAULT_MIRRORS.join('\n');
+        }
+
+        try {
+          const savedMode = await plugin.api.getPluginStorageItem(MODE_STORAGE_KEY);
+          if (savedMode === 'remote' || savedMode === 'script' || savedMode === 'local') {
+            setMode(savedMode, false);
+          }
+        } catch {
+          setMode('local', false);
+        }
+
+        try {
+          const raw = await plugin.api.getPluginStorageItem(SSH_STORAGE_KEY);
+          if (raw) {
+            const config = JSON.parse(raw);
+            document.getElementById('sshHost').value = config.host || '';
+            document.getElementById('sshPort').value = config.port || 22;
+            document.getElementById('sshUser').value = config.username || '';
+            document.getElementById('sshPassword').value = config.password || '';
+            document.getElementById('remoteComposeDir').value = config.remoteComposeDir || '';
+            document.getElementById('scriptRemoteComposeDir').value = config.remoteComposeDir || '';
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      async function saveSettings(showLog = false) {
+        try {
+          const sshPayload = JSON.stringify({
+            host: document.getElementById('sshHost').value.trim(),
+            password: document.getElementById('sshPassword').value,
+            port: document.getElementById('sshPort').value || 22,
+            remoteComposeDir: getRemoteComposeDir(),
+            username: document.getElementById('sshUser').value.trim()
+          });
+          const mirrorSaved = await plugin.api.setPluginStorageItem(MIRROR_STORAGE_KEY, mirrorListInput.value.trim());
+          const modeSaved = await plugin.api.setPluginStorageItem(MODE_STORAGE_KEY, mode);
+          const sshSaved = await plugin.api.setPluginStorageItem(SSH_STORAGE_KEY, sshPayload);
+
+          if (!mirrorSaved || !modeSaved || !sshSaved) {
+            appendLog('配置保存失败');
+            return false;
+          }
+
+          const savedSshConfig = await plugin.api.getPluginStorageItem(SSH_STORAGE_KEY);
+          if (savedSshConfig !== sshPayload) {
+            appendLog('配置保存失败：写入后读取不一致');
+            return false;
+          }
+
+          if (showLog) {
+            appendLog('配置已保存');
+          }
+
+          return true;
+        } catch (error) {
+          appendLog(error instanceof Error ? `配置保存失败：${error.message}` : '配置保存失败');
+          return false;
+        }
+      }
+
+      function setMode(nextMode, persist = true) {
+        mode = nextMode;
+        document.body.dataset.mode = nextMode;
+        for (const button of document.querySelectorAll('button.tab')) {
+          button.classList.toggle('active', button.dataset.mode === nextMode);
+        }
+        sshPanel.hidden = nextMode !== 'remote';
+        document.getElementById('remoteDirRow').hidden = nextMode !== 'script';
+        document.getElementById('composePickerRow').hidden = nextMode === 'remote';
+        scriptPanel.hidden = nextMode !== 'script';
+        scriptActions.hidden = nextMode !== 'script';
+        document.getElementById('testSsh').hidden = nextMode !== 'remote';
+        document.getElementById('prePull').hidden = nextMode === 'script';
+        document.getElementById('composeUp').hidden = nextMode !== 'local';
+
+        if (nextMode === 'local') {
+          void refreshLocalDockerStatus();
+        } else if (nextMode === 'remote') {
+          setRuntimeStatus('', '远程 SSH 模式');
+        } else {
+          setRuntimeStatus('warn', '脚本模式：本机无需 Docker');
+        }
+
+        if (persist) {
+          void saveSettings();
+        }
+      }
+
+      async function refreshLocalDockerStatus() {
+        if (mode !== 'local') {
+          return false;
+        }
+        const result = await api.checkDockerAvailable();
+        setRuntimeStatus(result.available ? 'ok' : 'err', result.available ? `本机 Docker ${result.version || ''}` : result.error || 'Docker 不可用');
+        return result.available;
+      }
+
+      async function readEnvForCompose(dir) {
+        const candidates = ['.env', '.env.local'];
+        let env = {};
+        for (const name of candidates) {
+          try {
+            const content = await api.readTextFile(joinPath(dir, name));
+            env = { ...env, ...parseEnvFile(content) };
+          } catch {
+            // ignore
+          }
+        }
+        return env;
+      }
+
+      function applyParsedImages(names, sourceLabel) {
+        images = names.map((name) => ({
+          detail: '',
+          name,
+          status: 'pending',
+          statusClass: 'pending',
+          statusLabel: '待拉取'
+        }));
+        appendLog(`${sourceLabel}：镜像 ${names.length} 个`);
+        renderImageRows();
+      }
+
+      async function parseComposeFile() {
+        const filePath = composePathInput.value.trim();
+        if (!filePath) {
+          appendLog('请先选择 Compose 文件');
+          return;
+        }
+        setBusy(true);
+        try {
+          composeDir = dirname(filePath);
+          const yamlText = await api.readTextFile(filePath);
+          const env = await readEnvForCompose(composeDir);
+          applyParsedImages(extractImagesFromCompose(yamlText, env), `解析完成 ${filePath}`);
+        } catch (error) {
+          appendLog(error instanceof Error ? error.message : '解析失败');
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function parseRemoteComposeFile() {
+        const remoteDir = getRemoteComposeDir();
+        const config = getSshConfig();
+        if (!remoteDir) {
+          appendLog('请填写远程 Compose 目录');
+          return;
+        }
+        setBusy(true);
+        try {
+          const candidates = ['docker-compose.yml', 'docker-compose.yaml', 'compose.yml', 'compose.yaml'];
+          let yamlText = '';
+          for (const name of candidates) {
+            const result = await api.sshExec(config, `cat ${shQuote(joinPath(remoteDir, name))}`);
+            if (result.ok) {
+              yamlText = result.stdout;
+              appendLog(`已从远程读取 ${name}`);
+              break;
+            }
+          }
+          if (!yamlText) {
+            appendLog('远程未找到 compose 文件');
+            return;
+          }
+          applyParsedImages(extractImagesFromCompose(yamlText, {}), '远程 compose 解析完成');
+        } catch (error) {
+          appendLog(error instanceof Error ? error.message : '远程读取失败');
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function probeMirrors() {
+        const mirrors = parseMirrorLines(mirrorListInput.value);
+        if (!mirrors.length) {
+          appendLog('请先填写镜像源');
+          return;
+        }
+        setBusy(true);
+        appendLog('开始检测镜像源…');
+        mirrorHealth = new Map();
+        for (const mirror of mirrors) {
+          const url = `${mirror.replace(/\/+$/, '')}/v2/`;
+          try {
+            const response = await api.sendHttpRequest({
+              headers: {},
+              method: 'GET',
+              timeoutMs: 8000,
+              url
+            });
+            const healthy = response.ok || response.status === 401;
+            mirrorHealth.set(mirror, healthy);
+            appendLog(`${mirror} → ${healthy ? '可用' : `不可用 (${response.status})`}`);
+          } catch {
+            mirrorHealth.set(mirror, false);
+            appendLog(`${mirror} → 不可用`);
+          }
+        }
+        await saveSettings();
+        setBusy(false);
+      }
+
+      function getOrderedMirrors() {
+        const mirrors = parseMirrorLines(mirrorListInput.value);
+        if (!mirrorHealth.size) {
+          return mirrors;
+        }
+        return [...mirrors].sort((left, right) => Number(mirrorHealth.get(right)) - Number(mirrorHealth.get(left)));
+      }
+
+      async function remoteExec(command, options = {}) {
+        const config = getSshConfig();
+        const activeImage = images.find((item) => item.status === 'pulling')?.name ?? '';
+        let unsubscribe = null;
+        let lastLine = '';
+
+        if (typeof api.onSshExecOutput === 'function') {
+          unsubscribe = api.onSshExecOutput((chunk) => {
+            const line = String(chunk?.line ?? '').trim();
+            if (!line) {
+              return;
+            }
+            lastLine = line;
+            if (activeImage) {
+              updateImageState(activeImage, { detail: line.slice(-80) });
+            }
+            appendLog(`  ${line.slice(-200)}`);
+          });
+        }
+
+        try {
+          if (typeof api.sshExecStream === 'function') {
+            return await api.sshExecStream(config, command, {
+              timeoutMs: options.timeoutMs ?? PULL_TIMEOUT_MS
+            });
+          }
+          return await api.sshExec(config, command, { timeoutMs: options.timeoutMs ?? PULL_TIMEOUT_MS });
+        } finally {
+          unsubscribe?.();
+          if (activeImage && lastLine) {
+            updateImageState(activeImage, { detail: lastLine.slice(-80) });
+          }
+        }
+      }
+
+      async function imageExists(imageName) {
+        if (mode === 'remote') {
+          const result = await remoteExec(`docker image inspect ${shQuote(imageName)}`, { timeoutMs: 30000 });
+          return result.ok;
+        }
+        return api.dockerImageExists(imageName);
+      }
+
+      async function pullImageRef(ref) {
+        const command = `docker pull --progress=plain ${shQuote(ref)}`;
+        if (mode === 'remote') {
+          return remoteExec(command, { timeoutMs: PULL_TIMEOUT_MS });
+        }
+        return api.dockerPullImage(ref);
+      }
+
+      async function tagImage(source, target) {
+        if (mode === 'remote') {
+          return remoteExec(`docker tag ${shQuote(source)} ${shQuote(target)}`, { timeoutMs: 60000 });
+        }
+        return api.dockerTagImage(source, target);
+      }
+
+      async function pullSingleImage(imageName) {
+        const exists = await imageExists(imageName);
+        if (exists) {
+          updateImageState(imageName, {
+            detail: '已存在，跳过',
+            status: 'skip',
+            statusClass: 'skip',
+            statusLabel: '已跳过'
+          });
+          appendLog(`${imageName} 已存在，跳过`);
+          return true;
+        }
+
+        updateImageState(imageName, {
+          detail: '拉取中…',
+          status: 'pulling',
+          statusClass: 'pulling',
+          statusLabel: '拉取中'
+        });
+
+        const parsed = parseDockerImage(imageName);
+        const mirrors = getOrderedMirrors();
+
+        if (parsed.isDockerHub) {
+          for (const mirror of mirrors) {
+            const mirrorRef = buildMirrorPullRef(imageName, mirror);
+            if (!mirrorRef) {
+              continue;
+            }
+            appendLog(`${imageName} ← 尝试 ${mirror}`);
+            appendLog(`  远程执行: docker pull ${mirrorRef}`);
+            const pullResult = await pullImageRef(mirrorRef);
+            if (pullResult.ok) {
+              if (mirrorRef !== imageName) {
+                const tagResult = await tagImage(mirrorRef, imageName);
+                if (!tagResult.ok) {
+                  appendLog(`${imageName} 打标签失败：${(tagResult.stderr || '').trim()}`);
+                  continue;
+                }
+              }
+              updateImageState(imageName, {
+                detail: mirror,
+                status: 'ok',
+                statusClass: 'ok',
+                statusLabel: '成功'
+              });
+              appendLog(`${imageName} 成功（${mirror}）`);
+              return true;
+            }
+            appendLog(`${imageName} 镜像源失败：${(pullResult.stderr || '').trim().slice(-240)}`);
+          }
+        }
+
+        appendLog(`${imageName} ← 尝试 Docker Hub 直连`);
+        const direct = await pullImageRef(imageName);
+        if (direct.ok) {
+          updateImageState(imageName, {
+            detail: 'Docker Hub',
+            status: 'ok',
+            statusClass: 'ok',
+            statusLabel: '成功'
+          });
+          appendLog(`${imageName} 直连成功`);
+          return true;
+        }
+
+        updateImageState(imageName, {
+          detail: (direct.stderr || '').trim().slice(-180) || '拉取失败',
+          status: 'fail',
+          statusClass: 'fail',
+          statusLabel: '失败'
+        });
+        appendLog(`${imageName} 拉取失败`);
+        return false;
+      }
+
+      async function prePullAll() {
+        if (!images.length) {
+          appendLog('请先解析 Compose 文件');
+          return;
+        }
+        if (mode === 'local') {
+          const dockerOk = await refreshLocalDockerStatus();
+          if (!dockerOk) {
+            return;
+          }
+        } else if (mode === 'remote') {
+          const test = await api.testSshConnection(getSshConfig());
+          if (!test.ok) {
+            appendLog(test.message || 'SSH 连接失败');
+            setRuntimeStatus('err', test.message || 'SSH 不可用');
+            return;
+          }
+          setRuntimeStatus('ok', 'SSH 已连接');
+        } else {
+          appendLog('脚本模式请使用「生成远程脚本」');
+          return;
+        }
+
+        setBusy(true);
+        await saveSettings();
+        appendLog(`开始拉取（${mode === 'remote' ? '远程服务器' : '本机'}）…`);
+        if (mode === 'remote') {
+          appendLog(`远程主机 ${getSshConfig().host}，单镜像超时 ${PULL_TIMEOUT_MS / 60000} 分钟`);
+        }
+        let successCount = 0;
+        for (const item of images) {
+          if (await pullSingleImage(item.name)) {
+            successCount += 1;
+          }
+        }
+        appendLog(`拉取完成：${successCount}/${images.length}`);
+        setBusy(false);
+      }
+
+      async function composeUp() {
+        if (mode === 'script') {
+          appendLog('脚本模式请复制脚本到服务器执行');
+          return;
+        }
+        setBusy(true);
+        try {
+          if (mode === 'remote') {
+            const remoteDir = getRemoteComposeDir();
+            if (!remoteDir) {
+              appendLog('请填写远程 Compose 目录');
+              return;
+            }
+            appendLog(`远程执行 compose up -d（${remoteDir}）`);
+            const result = await api.sshExec(getSshConfig(), `cd ${shQuote(remoteDir)} && docker compose up -d`);
+            if (result.ok) {
+              appendLog('远程 Compose 启动成功');
+              if (result.stdout.trim()) {
+                appendLog(result.stdout.trim());
+              }
+            } else {
+              appendLog((result.stderr || '').trim() || '远程 Compose 启动失败');
+            }
+            return;
+          }
+
+          if (!composeDir) {
+            appendLog('请先选择并解析 Compose 文件');
+            return;
+          }
+          const dockerOk = await refreshLocalDockerStatus();
+          if (!dockerOk) {
+            return;
+          }
+          appendLog(`本机执行 compose up -d（${composeDir}）`);
+          const result = await api.runDockerCompose(composeDir, ['up', '-d']);
+          if (result.ok) {
+            appendLog('Compose 启动成功');
+            if (result.stdout.trim()) {
+              appendLog(result.stdout.trim());
+            }
+          } else {
+            appendLog(result.stderr.trim() || 'Compose 启动失败');
+          }
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      function generatePullScript() {
+        if (!images.length) {
+          appendLog('请先解析镜像列表');
+          return '';
+        }
+        const mirrors = getOrderedMirrors();
+        const remoteDir = getRemoteComposeDir();
+        const lines = [
+          '#!/usr/bin/env bash',
+          'set -euo pipefail',
+          '',
+          '# Tooldesk 生成的 Compose 镜像拉取脚本',
+          '# 用法: chmod +x pull-images.sh && ./pull-images.sh',
+          ''
+        ];
+
+        for (const item of images) {
+          lines.push(`echo "=== ${item.name} ==="`);
+          lines.push(`if docker image inspect ${shQuote(item.name)} >/dev/null 2>&1; then`);
+          lines.push(`  echo "[skip] ${item.name}"`);
+          lines.push('else');
+          const parsed = parseDockerImage(item.name);
+          if (parsed.isDockerHub && mirrors.length) {
+            lines.push('  pulled=0');
+            for (const mirror of mirrors) {
+              const mirrorRef = buildMirrorPullRef(item.name, mirror);
+              if (!mirrorRef) {
+                continue;
+              }
+              lines.push(`  if [ "$pulled" -eq 0 ] && docker pull ${shQuote(mirrorRef)}; then`);
+              lines.push(`    docker tag ${shQuote(mirrorRef)} ${shQuote(item.name)}`);
+              lines.push(`    echo "[ok] ${item.name} via ${mirror}"`);
+              lines.push('    pulled=1');
+              lines.push('  fi');
+            }
+            lines.push(`  if [ "$pulled" -eq 0 ]; then`);
+            lines.push(`    docker pull ${shQuote(item.name)}`);
+            lines.push(`    echo "[ok] ${item.name} via Docker Hub"`);
+            lines.push('  fi');
+          } else {
+            lines.push(`  docker pull ${shQuote(item.name)}`);
+            lines.push(`  echo "[ok] ${item.name}"`);
+          }
+          lines.push('fi');
+          lines.push('');
+        }
+
+        if (remoteDir) {
+          lines.push(`cd ${shQuote(remoteDir)}`);
+          lines.push('docker compose up -d');
+          lines.push('');
+        }
+
+        lines.push('echo "全部完成"');
+        return lines.join('\n');
+      }
+
+      async function testSshConnection() {
+        setBusy(true);
+        try {
+          const saved = await saveSettings(true);
+          if (!saved) {
+            return;
+          }
+
+          const result = await api.testSshConnection(getSshConfig());
+          setRuntimeStatus(result.ok ? 'ok' : 'err', result.message);
+          appendLog(result.message);
+          if (result.ok) {
+            await parseRemoteComposeFile();
+          }
+        } catch (error) {
+          appendLog(error instanceof Error ? error.message : 'SSH 测试失败');
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      document.getElementById('modeLocal').addEventListener('click', () => setMode('local'));
+      document.getElementById('modeRemote').addEventListener('click', () => setMode('remote'));
+      document.getElementById('modeScript').addEventListener('click', () => setMode('script'));
+
+      document.getElementById('pickCompose').addEventListener('click', async () => {
+        try {
+          const result = await api.showOpenDialog({
+            filters: [
+              { extensions: ['yml', 'yaml'], name: 'Compose 文件' },
+              { extensions: ['*'], name: '所有文件' }
+            ],
+            properties: ['openFile'],
+            title: '选择 docker-compose 文件'
+          });
+          if (result.canceled || !result.filePaths?.length) {
+            return;
+          }
+          composePathInput.value = result.filePaths[0];
+          composeDir = dirname(result.filePaths[0]);
+          appendLog(`已选择 ${result.filePaths[0]}`);
+        } catch (error) {
+          appendLog(error instanceof Error ? error.message : '选择文件失败');
+        }
+      });
+
+      document.getElementById('parseCompose').addEventListener('click', () => void parseComposeFile());
+      document.getElementById('probeMirrors').addEventListener('click', () => void probeMirrors());
+      document.getElementById('prePull').addEventListener('click', () => void prePullAll());
+      document.getElementById('composeUp').addEventListener('click', () => void composeUp());
+      document.getElementById('testSsh').addEventListener('click', () => void testSshConnection());
+
+      document.getElementById('generateScript').addEventListener('click', () => {
+        const script = generatePullScript();
+        if (!script) {
+          return;
+        }
+        scriptOutput.value = script;
+        appendLog('远程脚本已生成，可复制到服务器执行');
+      });
+
+      document.getElementById('copyScript').addEventListener('click', async () => {
+        const text = scriptOutput.value.trim();
+        if (!text) {
+          appendLog('请先生成脚本');
+          return;
+        }
+        try {
+          await api.copyText(text);
+          appendLog('脚本已复制到剪贴板');
+        } catch (error) {
+          appendLog(error instanceof Error ? error.message : '复制失败');
+        }
+      });
+
+      mirrorListInput.value = DEFAULT_MIRRORS.join('\n');
+
+      void plugin.connect().then(async () => {
+        api = plugin.api;
+        await loadSettings();
+        if (mode === 'local') {
+          await refreshLocalDockerStatus();
+        }
+      });
+    </script>
+  </body>
+</html>

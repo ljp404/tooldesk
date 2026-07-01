@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>录屏区域边框</title>
+    <style>
+      html,
+      body {
+        background: transparent;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      /* 与 screenshot-overlay.html #selection.recording-region 一致 */
+      #frame {
+        background: transparent;
+        border: 2px solid transparent;
+        box-sizing: border-box;
+        height: 100%;
+        outline: 2px solid #3b82f6;
+        outline-offset: 0;
+        pointer-events: none;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="frame" aria-hidden="true"></div>
+  </body>
+</html>

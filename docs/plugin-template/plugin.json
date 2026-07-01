@@ -1,0 +1,22 @@
+{
+  "accent": "blue",
+  "caption": "Tooldesk 插件最小示例，演示 SDK 与 launch-context。",
+  "category": "dev",
+  "clipboardMatch": {
+    "type": "decimal-amount",
+    "priority": 80
+  },
+  "defaultAlias": "demo",
+  "entry": "index.html",
+  "icon": "toolbox",
+  "id": "tooldesk-plugin-starter",
+  "keywords": ["demo", "starter", "示例", "模板"],
+  "manifestVersion": 1,
+  "minHostVersion": "0.1.0",
+  "name": "插件 Starter",
+  "permissions": ["clipboard"],
+  "publisher": "tooldesk",
+  "sdkVersion": "1.0.0",
+  "capabilities": ["copyText"],
+  "version": "0.1.0"
+}

@@ -1,0 +1,2254 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>邮箱管理</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: #f3f6fb;
+        color: #172033;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
+      }
+      button, input, select { font: inherit; }
+      button { border: 0; cursor: pointer; }
+      button:disabled { cursor: not-allowed; opacity: .55; }
+      .mail-app {
+        display: grid;
+        grid-template-columns: 228px minmax(300px, .92fr) minmax(380px, 1.08fr);
+        grid-template-rows: minmax(0, 1fr);
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .sidebar,
+      .message-list,
+      .reader {
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        min-width: 0;
+      }
+      .sidebar {
+        background: #f8fafc;
+        border-right: 1px solid #d9e2ef;
+        height: 100%;
+        overflow: hidden;
+      }
+      .message-list {
+        border-right: 1px solid #d9e2ef;
+      }
+      .bar {
+        align-items: center;
+        border-bottom: 1px solid #e5ecf5;
+        display: flex;
+        gap: 10px;
+        min-height: 54px;
+        padding: 0 14px;
+      }
+      .sidebar-head {
+        min-height: 58px;
+        gap: 8px;
+        padding-right: 12px;
+      }
+      .list-toolbar {
+        gap: 12px;
+        min-height: 58px;
+      }
+      .brand-mark,
+      .avatar {
+        align-items: center;
+        border-radius: 10px;
+        color: #fff;
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-weight: 900;
+        justify-content: center;
+      }
+      .brand-mark {
+        background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+        height: 32px;
+        width: 32px;
+      }
+      .avatar {
+        background: #2563eb;
+        font-size: 13px;
+        height: 34px;
+        letter-spacing: 0;
+        overflow: hidden;
+        width: 34px;
+      }
+      .avatar img {
+        display: block;
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+      .avatar-image {
+        background: transparent;
+        color: inherit;
+      }
+      .avatar-provider-qq {
+        font-family: Arial, "Segoe UI", sans-serif;
+      }
+      .avatar-provider-139 {
+        background: #fff;
+        border: 1px solid #dbeafe;
+        color: #2b7fd8;
+        font-family: Arial, "Segoe UI", sans-serif;
+        font-size: 11px;
+        letter-spacing: 0;
+      }
+      .avatar-provider-163 {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        font-family: Arial, "Segoe UI", sans-serif;
+        font-size: 11px;
+      }
+      .avatar-provider-custom {
+        background: linear-gradient(135deg, #64748b, #475569);
+      }
+      .title-block {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+      .title-block strong,
+      .reader-title {
+        color: #111827;
+        font-size: 14px;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .title-block span,
+      .muted {
+        color: #6b7280;
+        font-size: 12px;
+      }
+      .spacer { flex: 1; }
+      .icon-btn,
+      .text-btn {
+        align-items: center;
+        border-radius: 8px;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .icon-btn {
+        background: #eef4ff;
+        color: #2563eb;
+        height: 32px;
+        width: 32px;
+      }
+      .toolbar-icon-btn {
+        background: transparent;
+        border: 1px solid transparent;
+        color: #2563eb;
+      }
+      .toolbar-icon-btn .toolbar-plus-icon {
+        font-size: 20px;
+        line-height: 1;
+        transform: translateY(-1px);
+      }
+      .toolbar-icon-btn .toolbar-refresh-icon {
+        font-size: 18px;
+        line-height: 1;
+      }
+      .toolbar-icon-btn:hover {
+        background: #eef4ff;
+        border-color: #d8e6ff;
+      }
+      .icon-btn:hover,
+      .text-btn:hover { background: #e8f1ff; }
+      .text-btn {
+        background: #fff;
+        border: 1px solid #d8e4f4;
+        color: #2563eb;
+        gap: 6px;
+        min-height: 32px;
+        padding: 0 11px;
+        white-space: nowrap;
+      }
+      .primary-btn {
+        background: #2563eb;
+        border: 1px solid #2563eb;
+        color: #fff;
+      }
+      .primary-btn:hover { background: #1d4ed8; }
+      .danger-btn {
+        border-color: #fecaca;
+        color: #dc2626;
+      }
+      .account-nav {
+        display: flex;
+        flex: 1 1 0;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding: 12px 12px 6px;
+        scrollbar-color: #cbd5e1 transparent;
+        scrollbar-width: thin;
+      }
+      .account-nav::-webkit-scrollbar {
+        width: 6px;
+      }
+      .account-nav::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 999px;
+      }
+      .account-nav::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .nav-section {
+        color: #8a94a6;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: .08em;
+        padding: 10px 7px 4px;
+      }
+      .account-item {
+        align-items: center;
+        background: transparent;
+        border-radius: 9px;
+        color: #263142;
+        display: flex;
+        gap: 10px;
+        min-height: 46px;
+        padding: 7px 8px;
+        text-align: left;
+        width: 100%;
+      }
+      .folder-item {
+        margin-left: 18px;
+        min-height: 34px;
+        padding: 5px 8px 5px 16px;
+        position: relative;
+      }
+      .folder-item::before {
+        background: #cbd5e1;
+        border-radius: 999px;
+        content: "";
+        height: 18px;
+        left: 5px;
+        position: absolute;
+        top: 8px;
+        width: 2px;
+      }
+      .folder-item.active::before {
+        background: #2563eb;
+      }
+      .folder-item .account-meta strong {
+        font-size: 12px;
+      }
+      .account-item:hover { background: #eef4ff; }
+      .account-item.active {
+        background: #e7f0ff;
+        color: #1d4ed8;
+      }
+      .account-meta {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+      .account-meta strong,
+      .account-meta span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .account-meta span {
+        color: #6b7280;
+        font-size: 12px;
+      }
+      .count-pill {
+        background: #e2e8f0;
+        border-radius: 999px;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 900;
+        min-width: 24px;
+        padding: 3px 7px;
+        text-align: center;
+      }
+      .account-edit-btn {
+        align-items: center;
+        background: transparent;
+        border-radius: 7px;
+        color: #64748b;
+        display: none;
+        flex: 0 0 auto;
+        font-size: 14px;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+      .account-item:hover .account-edit-btn,
+      .account-item.active .account-edit-btn {
+        display: inline-flex;
+      }
+      .account-edit-btn:hover {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .status-line {
+        color: #64748b;
+        display: -webkit-box;
+        font-size: 12px;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        line-height: 1.45;
+        max-height: calc(1.45em * 3);
+        overflow: hidden;
+        overflow-wrap: anywhere;
+      }
+      .status-line.error { color: #dc2626; }
+      .empty-state.error {
+        color: #dc2626;
+      }
+      .search-wrap {
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #dbe6f3;
+        border-radius: 9px;
+        display: flex;
+        flex: 1;
+        gap: 8px;
+        height: 36px;
+        min-width: 0;
+        padding: 0 10px;
+      }
+      .search-wrap input {
+        background: transparent;
+        border: 0;
+        color: #111827;
+        min-width: 0;
+        outline: none;
+        width: 100%;
+      }
+      .message-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+      }
+      .message-row {
+        background: #fff;
+        border-bottom: 1px solid #edf2f7;
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 7px;
+        padding: 13px 15px;
+        text-align: left;
+        width: 100%;
+      }
+      .message-avatar {
+        background: #fff;
+        border: 1px solid #d8e4f4;
+        border-radius: 9px;
+        color: #2563eb;
+        font-size: 12px;
+        height: 30px;
+        margin-top: 1px;
+        width: 30px;
+      }
+      .message-main {
+        display: grid;
+        gap: 7px;
+        min-width: 0;
+      }
+      .message-row:hover { background: #f8fbff; }
+      .message-row.active {
+        background: #eef6ff;
+        box-shadow: inset 3px 0 0 #2563eb;
+      }
+      .message-top,
+      .message-sub {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        min-width: 0;
+      }
+      .message-top strong,
+      .subject-line {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .message-time {
+        color: #8a94a6;
+        font-size: 12px;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+      .dot {
+        background: #2563eb;
+        border-radius: 999px;
+        flex: 0 0 auto;
+        height: 8px;
+        width: 8px;
+      }
+      .message-row.seen .dot { background: transparent; }
+      .snippet {
+        color: #64748b;
+        line-height: 1.45;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .empty-state {
+        align-items: center;
+        color: #8792a3;
+        display: flex;
+        flex: 1;
+        font-weight: 700;
+        justify-content: center;
+        min-height: 180px;
+        padding: 28px;
+        text-align: center;
+      }
+      .account-nav .empty-state {
+        align-items: flex-start;
+        font-weight: 700;
+        justify-content: flex-start;
+        min-height: 0;
+        padding: 6px 8px 10px;
+        text-align: left;
+      }
+      .reader-head {
+        border-bottom: 1px solid #e5ecf5;
+        display: grid;
+        gap: 12px;
+        padding: 17px 18px 15px;
+      }
+      #readerContent {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .reader-title {
+        font-size: 19px;
+        line-height: 1.35;
+        white-space: normal;
+      }
+      .reader-meta {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        min-width: 0;
+      }
+      .reader-meta-text {
+        display: grid;
+        gap: 3px;
+        min-width: 0;
+      }
+      .reader-meta-text strong,
+      .reader-meta-text span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .reader-actions {
+        align-items: center;
+        display: flex;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .reader-body {
+        flex: 1;
+        line-height: 1.72;
+        min-height: 0;
+        overflow: auto;
+        padding: 18px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .reader-body.has-html {
+        padding: 0;
+        white-space: normal;
+      }
+      .email-frame {
+        background: #fff;
+        border: 0;
+        display: block;
+        height: 100%;
+        width: 100%;
+      }
+      .reader-body img {
+        max-width: 100%;
+      }
+      .attachment-list {
+        border-top: 1px solid #e5ecf5;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 18px;
+      }
+      .attachment {
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #dbe6f3;
+        border-radius: 8px;
+        color: #475569;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        gap: 6px;
+        padding: 6px 9px;
+      }
+      .attachment:hover {
+        background: #eef4ff;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+      }
+      .compose-attachments {
+        border: 1px solid #e2e8f0;
+        display: grid;
+        gap: 10px;
+        padding: 10px;
+      }
+      .compose-attachment-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+      .compose-attachment-head span {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .compose-attachment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .compose-attachment {
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #dbe6f3;
+        color: #475569;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        gap: 8px;
+        min-width: 0;
+        padding: 6px 8px;
+      }
+      .compose-attachment-name {
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .compose-attachment button {
+        background: transparent;
+        border: 0;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        padding: 0 2px;
+      }
+      .compose-attachment button:hover {
+        color: #dc2626;
+      }
+      .drawer-mask {
+        align-items: center;
+        background: rgba(15, 23, 42, .28);
+        display: none;
+        inset: 0;
+        justify-content: center;
+        padding: 22px;
+        position: fixed;
+        z-index: 10;
+      }
+      .drawer-mask.show { display: flex; }
+      .account-dialog {
+        background: #fff;
+        border: 1px solid #d8e4f4;
+        box-shadow: 0 24px 70px rgba(15, 23, 42, .22);
+        display: grid;
+        gap: 16px;
+        max-height: min(720px, calc(100vh - 44px));
+        max-width: 720px;
+        overflow: auto;
+        padding: 18px;
+        width: min(720px, calc(100vw - 44px));
+      }
+      .dialog-head {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+      }
+      .form-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+      .field.full { grid-column: 1 / -1; }
+      .field span {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        background: #fff;
+        border: 1px solid #d8e4f4;
+        border-radius: 8px;
+        color: #111827;
+        outline: none;
+        padding: 0 10px;
+        width: 100%;
+      }
+      .field input,
+      .field select {
+        height: 38px;
+      }
+      .field textarea {
+        min-height: 180px;
+        padding: 10px;
+        resize: vertical;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+      }
+      .provider-select-control {
+        position: relative;
+      }
+      .provider-select-control select {
+        padding-left: 46px;
+      }
+      .field .provider-select-icon {
+        height: 24px;
+        left: 10px;
+        pointer-events: none;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        z-index: 1;
+      }
+      .field .provider-select-icon.avatar {
+        font-size: 10px;
+      }
+      .dialog-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      .tip-box {
+        background: #f8fafc;
+        border: 1px solid #dbe6f3;
+        color: #475569;
+        line-height: 1.62;
+        margin: 0;
+        padding: 11px 13px;
+      }
+      [hidden] { display: none !important; }
+      @media (width <= 760px) {
+        .mail-app { grid-template-columns: 210px minmax(320px, 1fr); }
+        .reader { grid-column: 1 / -1; min-height: 420px; }
+      }
+      @media (width <= 680px) {
+        .mail-app {
+          grid-template-columns: 1fr;
+          overflow: auto;
+        }
+        .sidebar,
+        .message-list,
+        .reader { min-height: 340px; }
+        .form-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="mail-app">
+      <aside class="sidebar">
+        <div class="bar sidebar-head">
+          <div class="title-block">
+            <strong>邮箱</strong>
+            <span id="mailTotal">0 封邮件</span>
+          </div>
+          <span class="spacer"></span>
+          <button id="addAccount" class="icon-btn toolbar-icon-btn" type="button" title="新增账号" aria-label="新增账号">
+            <span class="toolbar-plus-icon" aria-hidden="true">+</span>
+          </button>
+          <button id="refreshAll" class="icon-btn toolbar-icon-btn" type="button" title="刷新全部" aria-label="刷新全部">
+            <span class="toolbar-refresh-icon" aria-hidden="true">↻</span>
+          </button>
+        </div>
+        <nav id="accountNav" class="account-nav"></nav>
+      </aside>
+
+      <section class="message-list">
+        <div class="bar list-toolbar">
+          <label class="search-wrap">
+            <span>⌕</span>
+            <input id="searchInput" type="search" placeholder="搜索发件人、主题或正文" />
+          </label>
+          <button id="refreshCurrent" class="text-btn" type="button">刷新</button>
+          <button id="composeMail" class="text-btn primary-btn" type="button">写信</button>
+        </div>
+        <div id="messageList" class="message-scroll"></div>
+      </section>
+
+      <section class="reader">
+        <div id="readerEmpty" class="empty-state">选择一封邮件后在这里阅读正文。</div>
+        <div id="readerContent" hidden>
+          <div class="reader-head">
+            <div class="reader-title" id="readerSubject"></div>
+            <div class="reader-meta">
+              <span id="readerAvatar" class="avatar">M</span>
+              <div class="reader-meta-text">
+                <strong id="readerFrom"></strong>
+                <span id="readerInfo"></span>
+              </div>
+              <span class="spacer"></span>
+              <div class="reader-actions">
+                <button id="replyMessage" class="text-btn" type="button">回复</button>
+                <button id="forwardMessage" class="text-btn" type="button">转发</button>
+                <button id="deleteMessage" class="text-btn danger-btn" type="button">删除</button>
+              </div>
+            </div>
+          </div>
+          <article id="readerBody" class="reader-body"></article>
+          <div id="attachments" class="attachment-list" hidden></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="accountDrawer" class="drawer-mask" aria-hidden="true">
+      <section class="account-dialog" role="dialog" aria-modal="true" aria-label="邮箱账号设置">
+        <div class="dialog-head">
+          <span class="brand-mark">✉</span>
+          <div class="title-block">
+            <strong id="dialogTitle">新增邮箱账号</strong>
+            <span>QQ、139、163 和企业邮箱均可通过 IMAP 收取邮件。</span>
+          </div>
+          <span class="spacer"></span>
+          <button id="closeDrawer" class="icon-btn" type="button" title="关闭">×</button>
+        </div>
+        <form id="accountForm" class="form-grid">
+          <label class="field">
+            <span>邮箱类型</span>
+            <div class="provider-select-control">
+              <span id="providerIcon" class="provider-select-icon avatar" aria-hidden="true"></span>
+              <select id="provider"></select>
+            </div>
+          </label>
+          <label class="field">
+            <span>显示名称</span>
+            <input id="displayName" type="text" placeholder="工作邮箱" />
+          </label>
+          <label class="field full">
+            <span>邮箱地址</span>
+            <input id="email" type="email" placeholder="name@example.com" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>登录账号</span>
+            <input id="username" type="text" placeholder="通常为完整邮箱地址" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>授权码 / 客户端密码</span>
+            <input id="authCode" type="password" placeholder="建议使用客户端授权码" autocomplete="new-password" />
+          </label>
+          <label class="field custom-imap-field">
+            <span>IMAP 服务器</span>
+            <input id="imapHost" type="text" placeholder="收件服务器，例如 imap.qq.com" />
+          </label>
+          <label class="field custom-imap-field">
+            <span>IMAP 端口</span>
+            <input id="imapPort" type="number" min="1" max="65535" placeholder="993" />
+          </label>
+          <label class="field custom-imap-field">
+            <span>安全连接</span>
+            <select id="secure">
+              <option value="true">SSL/TLS</option>
+              <option value="false">普通连接</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>网页邮箱</span>
+            <input id="webmailUrl" type="url" placeholder="https://mail.example.com/" />
+          </label>
+        </form>
+        <p id="providerTip" class="tip-box"></p>
+        <div id="dialogStatus" class="status-line"></div>
+        <div class="dialog-actions">
+          <button id="deleteAccount" class="text-btn danger-btn" type="button">删除账号</button>
+          <button id="openSettings" class="text-btn" type="button">授权码设置</button>
+          <button id="saveAccount" class="text-btn primary-btn" type="button">保存并收取</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="composeDrawer" class="drawer-mask" aria-hidden="true">
+      <section class="account-dialog" role="dialog" aria-modal="true" aria-label="写邮件">
+        <div class="dialog-head">
+          <span class="brand-mark">✉</span>
+          <div class="title-block">
+            <strong id="composeTitle">写邮件</strong>
+            <span>通过当前账号的 SMTP 服务发送邮件。</span>
+          </div>
+          <span class="spacer"></span>
+          <button id="closeCompose" class="icon-btn" type="button" title="关闭">×</button>
+        </div>
+        <form id="composeForm" class="form-grid">
+          <label class="field">
+            <span>发件账号</span>
+            <select id="composeAccount"></select>
+          </label>
+          <label class="field">
+            <span>收件人</span>
+            <input id="composeTo" type="text" placeholder="多个邮箱用逗号分隔" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>抄送</span>
+            <input id="composeCc" type="text" placeholder="可选，多个邮箱用逗号分隔" autocomplete="off" />
+          </label>
+          <label class="field full">
+            <span>主题</span>
+            <input id="composeSubject" type="text" placeholder="邮件主题" autocomplete="off" />
+          </label>
+          <label class="field full">
+            <span>正文</span>
+            <textarea id="composeBody" rows="10" placeholder="输入邮件正文"></textarea>
+          </label>
+          <div class="field full compose-attachments">
+            <div class="compose-attachment-head">
+              <button id="addComposeAttachment" class="text-btn" type="button">添加附件</button>
+              <span id="composeAttachmentSummary">未添加附件</span>
+            </div>
+            <div id="composeAttachmentList" class="compose-attachment-list"></div>
+          </div>
+        </form>
+        <div id="composeStatus" class="status-line"></div>
+        <div class="dialog-actions">
+          <button id="discardCompose" class="text-btn" type="button">取消</button>
+          <button id="sendCompose" class="text-btn primary-btn" type="button">发送</button>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const STORAGE_KEY = 'tooldesk-email-manager-accounts:v1';
+      const CACHE_KEY = 'tooldesk-email-manager-cache:v1';
+      const FETCH_LIMIT = 30;
+      const providers = {
+        qq: {
+          label: 'QQ 邮箱',
+          iconClass: 'avatar-provider-qq',
+          iconSrc: 'assets/qq-mail.ico',
+          iconLabel: 'Q',
+          imapHost: 'imap.qq.com',
+          imapPort: 993,
+          secure: true,
+          webmailUrl: 'https://mail.qq.com/',
+          settingsUrl: 'https://help.mail.qq.com/detail/106/985',
+          tip: 'QQ 邮箱收件请使用 imap.qq.com + 993 + SSL/TLS；smtp.qq.com/25 是发信配置，不能用于收取邮件。'
+        },
+        mail139: {
+          label: '139 邮箱',
+          iconClass: 'avatar-provider-139',
+          iconLabel: '139',
+          imapHost: 'imap.139.com',
+          imapPort: 993,
+          secure: true,
+          webmailUrl: 'https://mail.10086.cn/',
+          settingsUrl: 'https://help.mail.10086.cn/statichtml/4/Content/837.html',
+          tip: '139 邮箱收件请使用 imap.139.com + 993 + SSL/TLS；网页端需开启 IMAP/SMTP 服务，不是 POP3/SMTP，并使用授权码登录。'
+        },
+        netease163: {
+          label: '163 邮箱',
+          iconClass: 'avatar-provider-163',
+          iconLabel: '163',
+          imapHost: 'imap.163.com',
+          imapPort: 993,
+          secure: true,
+          webmailUrl: 'https://mail.163.com/',
+          settingsUrl: 'https://help.mail.163.com/',
+          tip: '163 邮箱建议开启客户端授权码后连接 IMAP。'
+        },
+        custom: {
+          label: '自定义邮箱',
+          iconClass: 'avatar-provider-custom',
+          iconLabel: '',
+          imapHost: '',
+          imapPort: 993,
+          secure: true,
+          webmailUrl: '',
+          settingsUrl: '',
+          tip: '企业邮箱或其他服务商请填写 IMAP 服务器、端口和客户端授权码。'
+        }
+      };
+
+      let api = null;
+      let accounts = [];
+      let mailbox = new Map();
+      let activeAccountId = 'all';
+      let activeFolderByAccount = new Map();
+      let collapsedAccountIds = new Set();
+      let selectedMessageId = '';
+      let editingAccountId = '';
+      let composingMode = 'new';
+      let composeAttachments = [];
+      let globalStatus = '';
+      let globalStatusIsError = false;
+      let statusTimer = 0;
+
+      const $ = (id) => document.getElementById(id);
+
+      function createId() {
+        return `mail-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function getProvider(key) {
+        return providers[key] || providers.custom;
+      }
+
+      function isCustomProvider(providerKey) {
+        return providerKey === 'custom';
+      }
+
+      function normalizeAccount(raw) {
+        const providerKey = providers[raw?.provider] ? raw.provider : 'custom';
+        const provider = getProvider(providerKey);
+        const customProvider = isCustomProvider(providerKey);
+        const email = String(raw?.email || '').trim();
+        const imapHost = customProvider
+          ? String(raw?.imapHost || provider.imapHost || '').trim()
+          : provider.imapHost;
+        const imapPort = customProvider
+          ? Number(raw?.imapPort || provider.imapPort || 993)
+          : provider.imapPort;
+        const secure = customProvider
+          ? (typeof raw?.secure === 'boolean' ? raw.secure : provider.secure !== false)
+          : provider.secure !== false;
+        return {
+          authCode: String(raw?.authCode || ''),
+          displayName: String(raw?.displayName || provider.label).trim() || provider.label,
+          email,
+          id: String(raw?.id || createId()),
+          imapHost,
+          imapPort,
+          provider: providerKey,
+          secure,
+          username: String(raw?.username || email).trim(),
+          webmailUrl: String(raw?.webmailUrl || provider.webmailUrl || '').trim()
+        };
+      }
+
+      function inferProviderByEmail(email) {
+        const value = String(email || '').toLowerCase();
+        if (value.endsWith('@qq.com') || value.endsWith('@foxmail.com')) return 'qq';
+        if (value.endsWith('@139.com')) return 'mail139';
+        if (value.endsWith('@163.com') || value.endsWith('@126.com')) return 'netease163';
+        return 'custom';
+      }
+
+      function accountInitial(account) {
+        return (account.displayName || account.email || 'M').trim().slice(0, 1).toUpperCase();
+      }
+
+      function getAccountAvatar(account) {
+        const provider = getProvider(account?.provider);
+        return {
+          className: provider.iconClass || 'avatar-provider-custom',
+          src: provider.iconSrc || '',
+          label: provider.iconLabel || accountInitial(account)
+        };
+      }
+
+      function renderAvatar(target, avatar) {
+        const baseClass = target.classList.contains('message-avatar')
+          ? 'message-avatar avatar'
+          : target.classList.contains('provider-select-icon')
+            ? 'provider-select-icon avatar'
+            : 'avatar';
+        target.className = baseClass;
+        target.style.background = avatar.background || '';
+        target.replaceChildren();
+        if (avatar.className) {
+          target.classList.add(avatar.className);
+        }
+
+        if (avatar.src) {
+          target.classList.add('avatar-image');
+          const image = document.createElement('img');
+          image.alt = avatar.label || '';
+          image.src = avatar.src;
+          image.addEventListener('error', () => {
+            target.classList.remove('avatar-image');
+            target.style.background = avatar.background || '';
+            target.replaceChildren(document.createTextNode(avatar.label || 'M'));
+          }, { once: true });
+          target.append(image);
+          return;
+        }
+
+        target.textContent = avatar.label || 'M';
+      }
+
+      function extractEmailAddress(value) {
+        const text = String(value || '').trim();
+        const angleMatch = text.match(/<([^<>@\s]+@[^<>@\s]+)>/);
+        if (angleMatch) return angleMatch[1].trim().toLowerCase();
+        const plainMatch = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+        return plainMatch ? plainMatch[0].trim().toLowerCase() : '';
+      }
+
+      function senderInitial(message) {
+        const value = String(message?.from || message?.account?.displayName || message?.account?.email || 'M').trim();
+        const clean = value.replace(/^["'\s]+|["'\s]+$/g, '');
+        return (clean || 'M').slice(0, 1).toUpperCase();
+      }
+
+      function getMessageAvatar(message) {
+        return {
+          background: '#fff',
+          className: '',
+          label: senderInitial(message),
+          src: ''
+        };
+      }
+
+      function formatDate(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        const now = new Date();
+        const sameDay = date.toDateString() === now.toDateString();
+        if (sameDay) {
+          return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        }
+        return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
+      }
+
+      function formatFullDate(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleString('zh-CN', { hour12: false });
+      }
+
+      function stripHtml(value) {
+        const doc = new DOMParser().parseFromString(String(value || ''), 'text/html');
+        return doc.body.textContent || '';
+      }
+
+      function messageText(message) {
+        return String(message.text || stripHtml(message.html) || '(这封邮件没有可显示的文本正文。)').trim();
+      }
+
+      function sanitizeEmailHtml(value) {
+        const doc = new DOMParser().parseFromString(String(value || ''), 'text/html');
+        doc.querySelectorAll('script, iframe, object, embed, form, input, button, textarea').forEach((node) => node.remove());
+        doc.querySelectorAll('*').forEach((node) => {
+          for (const attribute of Array.from(node.attributes)) {
+            const name = attribute.name.toLowerCase();
+            const attrValue = attribute.value.trim().toLowerCase();
+            if (name.startsWith('on') || attrValue.startsWith('javascript:')) {
+              node.removeAttribute(attribute.name);
+            }
+          }
+        });
+        return `<!doctype html>
+          <html>
+            <head>
+              <base target="_blank">
+              <meta charset="utf-8">
+              <style>
+                html, body { margin: 0; min-height: 100%; }
+                body { box-sizing: border-box; color: #111827; font: 14px/1.72 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 18px; word-break: break-word; }
+                img { height: auto; max-width: 100%; }
+                table { max-width: 100%; }
+              </style>
+            </head>
+            <body>${doc.body.innerHTML}</body>
+          </html>`;
+      }
+
+      function renderPlainMessageBody(target, text) {
+        const dataImagePattern = /(data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+)/g;
+        const value = String(text || '(这封邮件没有可显示的文本正文。)');
+        const parts = value.split(dataImagePattern);
+        target.replaceChildren(...parts.filter((part) => part !== '').map((part) => {
+          if (dataImagePattern.test(part)) {
+            dataImagePattern.lastIndex = 0;
+            const image = document.createElement('img');
+            image.alt = '邮件图片';
+            image.src = part;
+            return image;
+          }
+          dataImagePattern.lastIndex = 0;
+          return document.createTextNode(part);
+        }));
+      }
+
+      function allMessages() {
+        const rows = [];
+        for (const account of accounts) {
+          for (const message of getFolderCache(account.id, 'INBOX').messages || []) {
+            rows.push({ ...message, account });
+          }
+        }
+        return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      }
+
+      function folderMessages(accountId, folderPath) {
+        const account = accounts.find((item) => item.id === accountId);
+        if (!account) return [];
+        return (getFolderCache(accountId, folderPath).messages || [])
+          .map((message) => ({ ...message, account }))
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      }
+
+      function cachedMessages() {
+        const rows = [];
+        for (const account of accounts) {
+          const state = getMailboxState(account.id);
+          for (const cache of Object.values(state.messagesByFolder || {})) {
+            for (const message of cache?.messages || []) {
+              rows.push({ ...message, account });
+            }
+          }
+        }
+        return rows;
+      }
+
+      function visibleMessages() {
+        const keyword = $('searchInput').value.trim().toLowerCase();
+        const base = activeAccountId === 'all'
+          ? allMessages()
+          : folderMessages(activeAccountId, getActiveFolder(activeAccountId));
+
+        if (!keyword) return base;
+        return base.filter((message) => {
+          const haystack = [
+            message.subject,
+            message.from,
+            message.to,
+            message.account.displayName,
+            message.account.email,
+            messageText(message)
+          ].join('\n').toLowerCase();
+          return haystack.includes(keyword);
+        });
+      }
+
+      function selectedMessage() {
+        return cachedMessages().find((message) => message.id === selectedMessageId) || null;
+      }
+
+      function selectedAccount() {
+        if (activeAccountId !== 'all') {
+          return accounts.find((item) => item.id === activeAccountId) || accounts[0] || null;
+        }
+
+        return selectedMessage()?.account || accounts[0] || null;
+      }
+
+      function getActiveFolder(accountId) {
+        return activeFolderByAccount.get(accountId) || 'INBOX';
+      }
+
+      function setActiveFolder(accountId, folderPath) {
+        activeFolderByAccount.set(accountId, String(folderPath || 'INBOX'));
+      }
+
+      function createMailboxState() {
+        return {
+          error: '',
+          folder: 'INBOX',
+          folders: [{ kind: 'inbox', name: '收件箱', path: 'INBOX', total: 0 }],
+          messagesByFolder: {}
+        };
+      }
+
+      function getMailboxState(accountId) {
+        const existing = mailbox.get(accountId);
+        if (existing?.messagesByFolder) return existing;
+
+        const state = createMailboxState();
+        if (existing) {
+          state.error = existing.error || '';
+          state.folder = existing.folder || 'INBOX';
+          state.folders = normalizeFolders(existing.folders);
+          if (Array.isArray(existing.messages) && existing.messages.length) {
+            const folder = existing.folder || 'INBOX';
+            state.messagesByFolder[folder] = {
+              error: existing.error || '',
+              fetchedAt: Date.now(),
+              messages: existing.messages,
+              total: existing.messages.length
+            };
+          }
+        }
+        mailbox.set(accountId, state);
+        return state;
+      }
+
+      function getFolderCache(accountId, folderPath = 'INBOX') {
+        const state = getMailboxState(accountId);
+        return state.messagesByFolder[String(folderPath || 'INBOX')] || {
+          error: '',
+          fetchedAt: 0,
+          messages: [],
+          total: 0
+        };
+      }
+
+      function decodeModifiedUtf7(value) {
+        return String(value || '').replace(/&([^-]*)-/g, (match, encoded) => {
+          if (!encoded) return '&';
+          try {
+            const base64 = encoded.replace(/,/g, '/') + '==='.slice((encoded.length + 3) % 4);
+            const binary = atob(base64);
+            const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+            const view = new DataView(bytes.buffer);
+            let text = '';
+            for (let index = 0; index + 1 < bytes.length; index += 2) {
+              text += String.fromCharCode(view.getUint16(index, false));
+            }
+            return text;
+          } catch {
+            return match;
+          }
+        });
+      }
+
+      function displayFolderPath(path) {
+        return String(path || 'INBOX')
+          .split(/[/.]/)
+          .filter(Boolean)
+          .map(decodeModifiedUtf7)
+          .join(' / ') || '收件箱';
+      }
+
+      function setFolderCache(accountId, folderPath, patch) {
+        const state = getMailboxState(accountId);
+        const folder = String(folderPath || 'INBOX');
+        state.messagesByFolder[folder] = {
+          ...getFolderCache(accountId, folder),
+          ...patch
+        };
+      }
+
+      function normalizeFolders(folders) {
+        const list = Array.isArray(folders) ? folders : [];
+        const byPath = new Map();
+
+        for (const folder of [{ kind: 'inbox', name: '收件箱', path: 'INBOX', total: 0 }, ...list]) {
+          const path = String(folder?.path || '').trim();
+          if (!path) continue;
+          const name = decodeModifiedUtf7(String(folder.name || folderName(path)).trim()) || folderName(path);
+          byPath.set(path, {
+            kind: String(folder.kind || '').trim() || inferFolderKind(path, folder.name),
+            name,
+            path,
+            total: Number(folder.total) || 0
+          });
+        }
+
+        const order = { inbox: 0, sent: 1, drafts: 2, junk: 3, trash: 4, folder: 9 };
+        return Array.from(byPath.values()).sort((current, next) => {
+          const left = order[current.kind] ?? 9;
+          const right = order[next.kind] ?? 9;
+          return left === right ? current.name.localeCompare(next.name, 'zh-CN') : left - right;
+        });
+      }
+
+      function inferFolderKind(path, name) {
+        const value = `${path || ''}\n${name || ''}`.toLowerCase();
+        if (value.includes('inbox') || value.includes('收件')) return 'inbox';
+        if (value.includes('sent') || value.includes('已发送') || value.includes('发件')) return 'sent';
+        if (value.includes('draft') || value.includes('草稿')) return 'drafts';
+        if (value.includes('trash') || value.includes('deleted') || value.includes('已删除') || value.includes('垃圾箱')) return 'trash';
+        if (value.includes('junk') || value.includes('spam') || value.includes('垃圾邮件')) return 'junk';
+        return 'folder';
+      }
+
+      function folderName(path) {
+        const parts = displayFolderPath(path).split(' / ').filter(Boolean);
+        return parts.pop() || '收件箱';
+      }
+
+      function folderDisplayName(folder) {
+        const labels = {
+          drafts: '草稿',
+          inbox: '收件箱',
+          junk: '垃圾邮件',
+          sent: '已发送',
+          trash: '已删除'
+        };
+        return labels[folder.kind] || folder.name || folderName(folder.path);
+      }
+
+      function folderLabel(folder) {
+        const labels = {
+          drafts: '草稿',
+          inbox: '收件',
+          junk: '垃圾邮件',
+          sent: '已发送',
+          trash: '已删除'
+        };
+        return labels[folder.kind] || displayFolderPath(folder.path);
+      }
+
+      function accountPayload(account) {
+        return {
+          authCode: account.authCode,
+          email: account.email,
+          imapHost: account.imapHost,
+          imapPort: account.imapPort,
+          secure: account.secure,
+          username: account.username
+        };
+      }
+
+      function splitAddresses(value) {
+        return String(value || '')
+          .split(/[;,，；]/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function setComposeStatus(message, error = false) {
+        $('composeStatus').textContent = message || '';
+        $('composeStatus').classList.toggle('error', Boolean(error));
+      }
+
+      function getMessageAccountPayload(message) {
+        return accountPayload(message.account);
+      }
+
+      function updateLocalMessage(messageId, patch) {
+        for (const state of mailbox.values()) {
+          for (const cache of Object.values(state?.messagesByFolder || {})) {
+            const item = (cache?.messages || []).find((message) => message.id === messageId);
+            if (item) {
+              Object.assign(item, patch);
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function removeLocalMessage(messageId) {
+        for (const state of mailbox.values()) {
+          for (const cache of Object.values(state?.messagesByFolder || {})) {
+            if (!cache?.messages) continue;
+            const before = cache.messages.length;
+            cache.messages = cache.messages.filter((message) => message.id !== messageId);
+            cache.total = Math.max(0, Number(cache.total || before) - (before - cache.messages.length));
+            if (cache.messages.length !== before) return true;
+          }
+        }
+        return false;
+      }
+
+      function setStatus(message, error = false) {
+        globalStatus = message;
+        globalStatusIsError = error;
+        renderMessages();
+        window.clearTimeout(statusTimer);
+        if (!error) {
+          statusTimer = window.setTimeout(() => {
+            globalStatus = '';
+            globalStatusIsError = false;
+            renderMessages();
+          }, 2600);
+        }
+      }
+
+      function setDialogStatus(message, error = false) {
+        $('dialogStatus').textContent = message;
+        $('dialogStatus').classList.toggle('error', error);
+      }
+
+      async function persistAccounts() {
+        await api.setPluginStorageItem(STORAGE_KEY, JSON.stringify(accounts));
+      }
+
+      async function persistMailboxCache() {
+        const payload = {};
+        for (const account of accounts) {
+          const state = getMailboxState(account.id);
+          payload[account.id] = {
+            error: state.error || '',
+            folder: state.folder || 'INBOX',
+            folders: normalizeFolders(state.folders),
+            messagesByFolder: Object.fromEntries(Object.entries(state.messagesByFolder || {}).map(([folder, cache]) => [
+              folder,
+              {
+                error: cache?.error || '',
+                fetchedAt: Number(cache?.fetchedAt) || 0,
+                messages: Array.isArray(cache?.messages) ? cache.messages.slice(0, FETCH_LIMIT) : [],
+                total: Number(cache?.total) || 0
+              }
+            ]))
+          };
+        }
+        await api.setPluginStorageItem(CACHE_KEY, JSON.stringify(payload));
+      }
+
+      async function loadAccounts() {
+        try {
+          const saved = await api.getPluginStorageItem(STORAGE_KEY);
+          const parsed = saved ? JSON.parse(saved) : [];
+          accounts = Array.isArray(parsed) ? parsed.map(normalizeAccount) : [];
+        } catch {
+          accounts = [];
+        }
+      }
+
+      async function loadMailboxCache() {
+        try {
+          const saved = await api.getPluginStorageItem(CACHE_KEY);
+          const parsed = saved ? JSON.parse(saved) : {};
+          const allowedIds = new Set(accounts.map((account) => account.id));
+          mailbox = new Map();
+
+          for (const [accountId, raw] of Object.entries(parsed || {})) {
+            if (!allowedIds.has(accountId)) continue;
+            const state = createMailboxState();
+            state.error = String(raw?.error || '');
+            state.folder = String(raw?.folder || 'INBOX');
+            state.folders = normalizeFolders(raw?.folders);
+            state.messagesByFolder = {};
+            for (const [folder, cache] of Object.entries(raw?.messagesByFolder || {})) {
+              state.messagesByFolder[folder] = {
+                error: String(cache?.error || ''),
+                fetchedAt: Number(cache?.fetchedAt) || 0,
+                messages: Array.isArray(cache?.messages) ? cache.messages : [],
+                total: Number(cache?.total) || 0
+              };
+            }
+            mailbox.set(accountId, state);
+          }
+        } catch {
+          mailbox = new Map();
+        }
+      }
+
+      function renderProviderOptions() {
+        $('provider').replaceChildren(...Object.entries(providers).map(([key, provider]) => {
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = provider.label;
+          return option;
+        }));
+        updateProviderIcon();
+      }
+
+      function updateProviderIcon() {
+        const provider = getProvider($('provider').value);
+        renderAvatar($('providerIcon'), {
+          className: provider.iconClass || 'avatar-provider-custom',
+          src: provider.iconSrc || '',
+          label: provider.iconLabel || provider.label.slice(0, 1)
+        });
+      }
+
+      function renderAccounts() {
+        const total = allMessages().length;
+        $('mailTotal').textContent = `${total} 封邮件`;
+
+        const nodes = [];
+        nodes.push(createNavItem({
+          id: 'all',
+          label: '全部收件箱',
+          sub: `${accounts.length} 个账号`,
+          count: total,
+          active: activeAccountId === 'all',
+          onClick: () => {
+            activeAccountId = 'all';
+            selectedMessageId = visibleMessages()[0]?.id || '';
+            render();
+          }
+        }));
+
+        const title = document.createElement('div');
+        title.className = 'nav-section';
+        title.textContent = '邮箱账号';
+        nodes.push(title);
+
+        if (!accounts.length) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.textContent = '还没有邮箱账号';
+          nodes.push(empty);
+        } else {
+          for (const account of accounts) {
+            const state = getMailboxState(account.id);
+            const activeFolder = getActiveFolder(account.id);
+            const collapsed = collapsedAccountIds.has(account.id);
+            nodes.push(createNavItem({
+              id: account.id,
+              label: account.displayName,
+              sub: account.email || getProvider(account.provider).label,
+              count: getFolderCache(account.id, 'INBOX').total || getFolderCache(account.id, 'INBOX').messages.length,
+              active: activeAccountId === account.id && activeFolder === 'INBOX',
+              onClick: () => {
+                if (collapsed) collapsedAccountIds.delete(account.id);
+                else collapsedAccountIds.add(account.id);
+                render();
+              },
+              onEdit: () => {
+                openDrawer(account.id);
+              }
+            }));
+            if (collapsed) continue;
+            const folders = normalizeFolders(state?.folders);
+            for (const folder of folders) {
+              const cache = getFolderCache(account.id, folder.path);
+              nodes.push(createNavItem({
+                className: 'folder-item',
+                id: `${account.id}:${folder.path}`,
+                label: folderDisplayName(folder),
+                sub: folderLabel(folder),
+                count: cache.total || cache.messages.length || folder.total || 0,
+                active: activeAccountId === account.id && activeFolder === folder.path,
+                folder,
+                onClick: async () => {
+                  activeAccountId = account.id;
+                  setActiveFolder(account.id, folder.path);
+                  selectedMessageId = folderMessages(account.id, folder.path)[0]?.id || '';
+                  render();
+                  if (!cache.messages.length) {
+                    await refreshAccount(account.id, folder.path);
+                  }
+                }
+              }));
+            }
+          }
+        }
+
+        $('accountNav').replaceChildren(...nodes);
+      }
+
+      function createNavItem(options) {
+        const button = document.createElement('button');
+        button.className = `account-item${options.className ? ` ${options.className}` : ''}${options.active ? ' active' : ''}`;
+        button.type = 'button';
+        button.innerHTML = `${options.folder ? '' : '<span class="avatar"></span>'}<span class="account-meta"><strong></strong><span></span></span><span class="spacer"></span><span class="count-pill"></span>`;
+        if (options.onEdit) {
+          button.insertAdjacentHTML('beforeend', '<span class="account-edit-btn" title="编辑账号" aria-label="编辑账号">✎</span>');
+        }
+        const avatar = button.querySelector('.avatar');
+        if (options.id === 'all') {
+          avatar.textContent = '收';
+        } else if (avatar) {
+          const account = accounts.find((item) => item.id === options.id) || {};
+          const accountAvatar = getAccountAvatar(account);
+          renderAvatar(avatar, accountAvatar);
+        }
+        button.querySelector('strong').textContent = options.label;
+        button.querySelector('.account-meta span').textContent = options.sub;
+        button.querySelector('.count-pill').textContent = String(options.count || 0);
+        button.querySelector('.account-edit-btn')?.addEventListener('click', (event) => {
+          event.stopPropagation();
+          options.onEdit?.();
+        });
+        if (options.onEdit) {
+          button.addEventListener('dblclick', (event) => {
+            event.preventDefault();
+            options.onEdit?.();
+          });
+        }
+        button.addEventListener('click', options.onClick);
+        return button;
+      }
+
+      function renderMessages() {
+        const list = visibleMessages();
+        if (!selectedMessageId || !list.some((message) => message.id === selectedMessageId)) {
+          selectedMessageId = list[0]?.id || '';
+        }
+
+        if (!accounts.length) {
+          $('messageList').replaceChildren(createEmpty(globalStatus || '新增账号后即可收取邮件。', globalStatusIsError));
+          renderReader();
+          return;
+        }
+
+        if (!list.length) {
+          $('messageList').replaceChildren(createEmpty(globalStatus || ($('searchInput').value.trim() ? '没有匹配的邮件。' : '点击刷新开始收取邮件。'), globalStatusIsError));
+          renderReader();
+          return;
+        }
+
+        $('messageList').replaceChildren(...list.map((message) => {
+          const button = document.createElement('button');
+          button.className = `message-row${message.id === selectedMessageId ? ' active' : ''}${message.seen ? ' seen' : ''}`;
+          button.type = 'button';
+          button.innerHTML = '<span class="message-avatar avatar"></span><div class="message-main"><div class="message-top"><span class="dot"></span><strong></strong><span class="message-time"></span></div><div class="message-sub"><span class="subject-line"></span></div><p class="snippet"></p></div>';
+          renderAvatar(button.querySelector('.message-avatar'), getMessageAvatar(message));
+          button.querySelector('strong').textContent = message.from || message.account.displayName;
+          button.querySelector('.message-time').textContent = formatDate(message.date);
+          button.querySelector('.subject-line').textContent = message.subject || '(无主题)';
+          button.querySelector('.snippet').textContent = messageText(message).replace(/\s+/g, ' ').slice(0, 140);
+          button.addEventListener('click', () => {
+            selectedMessageId = message.id;
+            renderReader();
+            renderMessages();
+            void markMessageSeen(message);
+          });
+          return button;
+        }));
+        renderReader();
+      }
+
+      function createEmpty(text, error = false) {
+        const empty = document.createElement('div');
+        empty.className = `empty-state${error ? ' error' : ''}`;
+        empty.textContent = text;
+        return empty;
+      }
+
+      function renderReader() {
+        const message = selectedMessage();
+        $('readerEmpty').hidden = Boolean(message);
+        $('readerContent').hidden = !message;
+        if (!message) return;
+
+        $('readerSubject').textContent = message.subject || '(无主题)';
+        const readerAvatar = $('readerAvatar');
+        const accountAvatar = getAccountAvatar(message.account);
+        renderAvatar(readerAvatar, accountAvatar);
+        $('readerFrom').textContent = message.from || message.account.email || message.account.displayName;
+        $('readerInfo').textContent = `收件人：${message.to || '-'} · ${formatFullDate(message.date)}`;
+        $('replyMessage').disabled = typeof api.sendMailMessage !== 'function';
+        $('forwardMessage').disabled = typeof api.sendMailMessage !== 'function';
+        $('deleteMessage').disabled = typeof api.deleteMailMessage !== 'function';
+        const readerBody = $('readerBody');
+        const hasHtml = Boolean(String(message.html || '').trim());
+        readerBody.classList.toggle('has-html', hasHtml);
+        if (hasHtml) {
+          const frame = document.createElement('iframe');
+          frame.className = 'email-frame';
+          frame.referrerPolicy = 'no-referrer';
+          frame.sandbox = 'allow-popups allow-popups-to-escape-sandbox';
+          frame.srcdoc = sanitizeEmailHtml(message.html);
+          readerBody.replaceChildren(frame);
+        } else {
+          renderPlainMessageBody(readerBody, messageText(message));
+        }
+
+        const attachments = message.attachments || [];
+        $('attachments').hidden = attachments.length === 0;
+        $('attachments').replaceChildren(...attachments.map((attachment) => {
+          const item = document.createElement('button');
+          item.className = 'attachment';
+          item.type = 'button';
+          item.title = '下载附件';
+          item.textContent = `${attachment.filename || '未命名附件'} · ${formatSize(attachment.size)}`;
+          item.addEventListener('click', () => void downloadAttachment(message, attachment));
+          return item;
+        }));
+      }
+
+      async function downloadAttachment(message, attachment) {
+        if (!message?.account || typeof api.downloadMailAttachment !== 'function') {
+          setStatus('附件下载 API 不可用', true);
+          return;
+        }
+
+        try {
+          setStatus(`正在下载附件 ${attachment.filename || '未命名附件'}...`);
+          const result = await api.downloadMailAttachment(
+            getMessageAccountPayload(message),
+            { folder: message.folder || 'INBOX', uid: message.uid },
+            { filename: attachment.filename, folder: message.folder || 'INBOX', index: attachment.index }
+          );
+          setStatus(`附件已保存：${result.path}`);
+          if (result.path && typeof api.openPath === 'function') {
+            await api.openPath(result.path);
+          }
+        } catch (error) {
+          const messageText = error instanceof Error ? error.message : String(error || '下载失败');
+          setStatus(`附件下载失败：${messageText}`, true);
+        }
+      }
+
+      async function markMessageSeen(message) {
+        if (!message || typeof api.setMailMessageSeen !== 'function') {
+          return;
+        }
+
+        if (message.seen) return;
+
+        try {
+          await api.setMailMessageSeen(getMessageAccountPayload(message), { folder: message.folder || 'INBOX', uid: message.uid }, true);
+          updateLocalMessage(message.id, {
+            flags: Array.from(new Set([...(message.flags || []), '\\Seen'])),
+            seen: true
+          });
+          await persistMailboxCache();
+          render();
+        } catch (error) {
+          const messageText = error instanceof Error ? error.message : String(error || '操作失败');
+          setStatus(`邮件状态更新失败：${messageText}`, true);
+        }
+      }
+
+      async function deleteSelectedMessage() {
+        const message = selectedMessage();
+        if (!message || typeof api.deleteMailMessage !== 'function') {
+          setStatus('删除邮件 API 不可用', true);
+          return;
+        }
+
+        if (!window.confirm(`确定删除“${message.subject || '(无主题)'}”吗？`)) {
+          return;
+        }
+
+        try {
+          await api.deleteMailMessage(getMessageAccountPayload(message), { folder: message.folder || 'INBOX', uid: message.uid });
+          removeLocalMessage(message.id);
+          await persistMailboxCache();
+          selectedMessageId = visibleMessages()[0]?.id || '';
+          render();
+          setStatus('邮件已删除');
+        } catch (error) {
+          const messageText = error instanceof Error ? error.message : String(error || '删除失败');
+          setStatus(`邮件删除失败：${messageText}`, true);
+        }
+      }
+
+      function formatSize(size) {
+        const value = Number(size) || 0;
+        if (value < 1024) return `${value} B`;
+        if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+        return `${(value / 1024 / 1024).toFixed(1)} MB`;
+      }
+
+      function fileNameFromPath(filePath) {
+        return String(filePath || '').split(/[\\/]/).filter(Boolean).pop() || '未命名附件';
+      }
+
+      function guessContentType(fileName) {
+        const ext = String(fileName || '').toLowerCase().split('.').pop();
+        const types = {
+          csv: 'text/csv',
+          gif: 'image/gif',
+          jpeg: 'image/jpeg',
+          jpg: 'image/jpeg',
+          json: 'application/json',
+          pdf: 'application/pdf',
+          png: 'image/png',
+          txt: 'text/plain',
+          webp: 'image/webp',
+          xls: 'application/vnd.ms-excel',
+          xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          zip: 'application/zip'
+        };
+        return types[ext] || 'application/octet-stream';
+      }
+
+      function normalizeBytes(bytes) {
+        if (bytes instanceof ArrayBuffer) return new Uint8Array(bytes);
+        if (ArrayBuffer.isView(bytes)) return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        if (Array.isArray(bytes)) return Uint8Array.from(bytes);
+        return new Uint8Array();
+      }
+
+      function bytesToBase64(bytes) {
+        const value = normalizeBytes(bytes);
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let index = 0; index < value.length; index += chunkSize) {
+          binary += String.fromCharCode(...value.subarray(index, index + chunkSize));
+        }
+        return btoa(binary);
+      }
+
+      function renderComposeAttachments() {
+        const list = $('composeAttachmentList');
+        const summary = $('composeAttachmentSummary');
+        const totalSize = composeAttachments.reduce((sum, item) => sum + item.size, 0);
+        summary.textContent = composeAttachments.length
+          ? `${composeAttachments.length} 个附件 · ${formatSize(totalSize)}`
+          : '未添加附件';
+        list.replaceChildren(...composeAttachments.map((attachment) => {
+          const item = document.createElement('span');
+          item.className = 'compose-attachment';
+          const name = document.createElement('span');
+          name.className = 'compose-attachment-name';
+          name.textContent = `${attachment.filename} · ${formatSize(attachment.size)}`;
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.title = '移除附件';
+          remove.textContent = '×';
+          remove.addEventListener('click', () => {
+            composeAttachments = composeAttachments.filter((current) => current.id !== attachment.id);
+            renderComposeAttachments();
+          });
+          item.append(name, remove);
+          return item;
+        }));
+      }
+
+      async function addComposeAttachments() {
+        if (typeof api.showOpenDialog !== 'function' || typeof api.readBinaryFile !== 'function') {
+          setComposeStatus('选择附件 API 不可用', true);
+          return;
+        }
+
+        const result = await api.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
+        if (result?.canceled || !result?.filePaths?.length) return;
+
+        setComposeStatus('正在读取附件...');
+        try {
+          for (const filePath of result.filePaths) {
+            const bytes = normalizeBytes(await api.readBinaryFile(filePath));
+            const filename = fileNameFromPath(filePath);
+            composeAttachments.push({
+              contentBase64: bytesToBase64(bytes),
+              contentType: guessContentType(filename),
+              filename,
+              id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+              size: bytes.length
+            });
+          }
+          renderComposeAttachments();
+          setComposeStatus('');
+        } catch (error) {
+          setComposeStatus(error instanceof Error ? error.message : String(error || '读取附件失败'), true);
+        }
+      }
+
+      function render() {
+        renderAccounts();
+        renderMessages();
+      }
+
+      function openDrawer(accountId = '') {
+        editingAccountId = accountId;
+        const account = accounts.find((item) => item.id === accountId) || normalizeAccount({ provider: 'qq' });
+        $('dialogTitle').textContent = accountId ? '编辑邮箱账号' : '新增邮箱账号';
+        $('provider').value = account.provider;
+        $('displayName').value = account.displayName;
+        $('email').value = account.email;
+        $('username').value = account.username;
+        $('authCode').value = account.authCode;
+        $('imapHost').value = account.imapHost;
+        $('imapPort').value = String(account.imapPort);
+        $('secure').value = String(account.secure);
+        $('webmailUrl').value = account.webmailUrl;
+        $('deleteAccount').hidden = !accountId;
+        updateProviderTip();
+        updateProviderIcon();
+        updateCustomImapFields();
+        setDialogStatus('');
+        $('accountDrawer').classList.add('show');
+        $('accountDrawer').setAttribute('aria-hidden', 'false');
+        window.setTimeout(() => $('email').focus(), 0);
+      }
+
+      function closeDrawer() {
+        $('accountDrawer').classList.remove('show');
+        $('accountDrawer').setAttribute('aria-hidden', 'true');
+      }
+
+      function renderComposeAccounts(selectedId = '') {
+        const options = accounts.map((account) => {
+          const option = document.createElement('option');
+          option.value = account.id;
+          option.textContent = `${account.displayName || account.email} <${account.email}>`;
+          option.selected = account.id === selectedId;
+          return option;
+        });
+        $('composeAccount').replaceChildren(...options);
+      }
+
+      function openCompose(mode = 'new', message = null) {
+        if (!accounts.length) {
+          setStatus('请先新增邮箱账号', true);
+          openDrawer();
+          return;
+        }
+
+        composingMode = mode;
+        composeAttachments = [];
+        const account = message?.account || selectedAccount();
+        renderComposeAccounts(account?.id || accounts[0]?.id || '');
+        $('composeTitle').textContent = mode === 'reply' ? '回复邮件' : mode === 'forward' ? '转发邮件' : '写邮件';
+        $('composeTo').value = mode === 'reply' && message ? extractEmailAddress(message.from) : '';
+        $('composeCc').value = '';
+        $('composeSubject').value = message
+          ? `${mode === 'forward' ? '转发' : '回复'}：${message.subject || '(无主题)'}`
+          : '';
+        $('composeBody').value = message
+          ? `\n\n-------- 原始邮件 --------\n发件人：${message.from || '-'}\n时间：${formatFullDate(message.date)}\n主题：${message.subject || '(无主题)'}\n\n${messageText(message)}`
+          : '';
+        renderComposeAttachments();
+        setComposeStatus('');
+        $('composeDrawer').classList.add('show');
+        $('composeDrawer').setAttribute('aria-hidden', 'false');
+        window.setTimeout(() => (mode === 'new' ? $('composeTo') : $('composeBody')).focus(), 0);
+      }
+
+      function closeCompose() {
+        composeAttachments = [];
+        renderComposeAttachments();
+        $('composeDrawer').classList.remove('show');
+        $('composeDrawer').setAttribute('aria-hidden', 'true');
+      }
+
+      async function sendCompose() {
+        if (typeof api.sendMailMessage !== 'function') {
+          setComposeStatus('发送邮件 API 不可用', true);
+          return;
+        }
+
+        const account = accounts.find((item) => item.id === $('composeAccount').value);
+        if (!account) {
+          setComposeStatus('请选择发件账号', true);
+          return;
+        }
+
+        const to = splitAddresses($('composeTo').value);
+        if (!to.length) {
+          setComposeStatus('请填写收件人', true);
+          return;
+        }
+
+        const sendButton = $('sendCompose');
+        sendButton.disabled = true;
+        setComposeStatus('正在发送...');
+
+        try {
+          await api.sendMailMessage({
+            authCode: account.authCode,
+            email: account.email,
+            imapHost: account.imapHost,
+            imapPort: account.imapPort,
+            secure: account.secure,
+            username: account.username
+          }, {
+            cc: splitAddresses($('composeCc').value),
+            attachments: composeAttachments.map((attachment) => ({
+              contentBase64: attachment.contentBase64,
+              contentType: attachment.contentType,
+              filename: attachment.filename
+            })),
+            subject: $('composeSubject').value.trim() || '(无主题)',
+            text: $('composeBody').value,
+            to
+          });
+          closeCompose();
+          setStatus(composingMode === 'new' ? '邮件已发送' : '邮件回复/转发已发送');
+        } catch (error) {
+          setComposeStatus(error instanceof Error ? error.message : String(error || '发送失败'), true);
+        } finally {
+          sendButton.disabled = false;
+        }
+      }
+
+      function updateProviderTip() {
+        const provider = getProvider($('provider').value);
+        $('providerTip').textContent = provider.tip;
+      }
+
+      function updateCustomImapFields() {
+        const show = isCustomProvider($('provider').value);
+        document.querySelectorAll('.custom-imap-field').forEach((field) => {
+          field.hidden = !show;
+        });
+      }
+
+      function applyProviderPreset(providerKey) {
+        const provider = getProvider(providerKey);
+        $('displayName').value = editingAccountId ? ($('displayName').value.trim() || provider.label) : provider.label;
+        $('imapHost').value = provider.imapHost;
+        $('imapPort').value = String(provider.imapPort);
+        $('secure').value = String(provider.secure !== false);
+        $('webmailUrl').value = editingAccountId ? ($('webmailUrl').value.trim() || provider.webmailUrl) : provider.webmailUrl;
+        updateProviderTip();
+        updateProviderIcon();
+        updateCustomImapFields();
+      }
+
+      function readForm() {
+        const providerKey = $('provider').value;
+        const provider = getProvider(providerKey);
+        const customProvider = isCustomProvider(providerKey);
+        const email = $('email').value.trim();
+        return normalizeAccount({
+          authCode: $('authCode').value,
+          displayName: $('displayName').value.trim() || provider.label,
+          email,
+          id: editingAccountId || createId(),
+          imapHost: customProvider ? $('imapHost').value.trim() : provider.imapHost,
+          imapPort: customProvider ? Number($('imapPort').value) : provider.imapPort,
+          provider: providerKey,
+          secure: customProvider ? $('secure').value === 'true' : provider.secure !== false,
+          username: $('username').value.trim() || email,
+          webmailUrl: $('webmailUrl').value.trim() || provider.webmailUrl
+        });
+      }
+
+      function getImapConfigError(account) {
+        const host = String(account?.imapHost || '').trim().toLowerCase();
+        const port = Number(account?.imapPort);
+
+        if (!host) {
+          return '请填写 IMAP 收件服务器';
+        }
+
+        if (host.startsWith('smtp.') || host.includes('.smtp.')) {
+          return '当前填写的是 SMTP 发信服务器。收取邮件请填写 IMAP 收件服务器，例如 QQ 邮箱使用 imap.qq.com。';
+        }
+
+        if ([25, 465, 587].includes(port)) {
+          return '当前端口是 SMTP 发信端口。收取邮件请使用 IMAP 端口，例如 QQ 邮箱使用 993 + SSL/TLS。';
+        }
+
+        if (account.secure && port === 143) {
+          return '143 通常是普通 IMAP 端口；如果选择 SSL/TLS，请改用 993，或关闭安全连接。';
+        }
+
+        if (!account.secure && port === 993) {
+          return '993 通常需要 SSL/TLS，请开启安全连接。';
+        }
+
+        return '';
+      }
+
+      function formatMailError(error, account) {
+        const configError = getImapConfigError(account);
+        if (configError) return configError;
+
+        const message = error instanceof Error ? error.message : String(error || '未知错误');
+        if (/139 邮箱/i.test(message)) {
+          return message;
+        }
+
+        if (/AUTHENTICATIONFAILED|authentication|login|invalid credentials|Command failed/i.test(message)) {
+          if (account?.provider === 'mail139') {
+            return '139 邮箱登录失败，请确认登录账号是正确的 139 邮箱账号，网页端已开启 IMAP/SMTP 服务，并使用当前有效的 139 授权码。';
+          }
+
+          return '邮箱登录失败，请确认已开启 IMAP 服务，并使用授权码或客户端密码。';
+        }
+
+        if (/WRONG_VERSION_NUMBER|ssl/i.test(message)) {
+          return 'SSL/TLS 握手失败，请检查是否填成了 SMTP 服务器或端口。QQ 邮箱收件通常是 imap.qq.com + 993 + SSL/TLS。';
+        }
+
+        return message;
+      }
+
+      async function saveAccount() {
+        const account = readForm();
+        if (!account.email) {
+          setDialogStatus('请填写邮箱地址', true);
+          return;
+        }
+        const configError = getImapConfigError(account);
+        if (configError) {
+          setDialogStatus(configError, true);
+          return;
+        }
+
+        const index = accounts.findIndex((item) => item.id === account.id);
+        if (index >= 0) accounts[index] = account;
+        else accounts.unshift(account);
+        activeAccountId = account.id;
+        await persistAccounts();
+        closeDrawer();
+        render();
+        await refreshAccount(account.id);
+      }
+
+      async function deleteAccount() {
+        if (!editingAccountId) return;
+        accounts = accounts.filter((item) => item.id !== editingAccountId);
+        mailbox.delete(editingAccountId);
+        if (activeAccountId === editingAccountId) activeAccountId = 'all';
+        selectedMessageId = '';
+        if (accounts.length) {
+          await persistAccounts();
+          await persistMailboxCache();
+        } else {
+          await api.removePluginStorageItem(STORAGE_KEY);
+          await api.removePluginStorageItem(CACHE_KEY);
+        }
+        closeDrawer();
+        render();
+        setStatus('账号已删除');
+      }
+
+      async function refreshAccount(accountId, folderPath = '') {
+        const account = accounts.find((item) => item.id === accountId);
+        if (!account) return;
+        const folder = folderPath || getActiveFolder(account.id);
+        if (!account.authCode) {
+          const state = getMailboxState(account.id);
+          state.error = '缺少授权码或客户端密码';
+          setFolderCache(account.id, folder, { error: state.error });
+          await persistMailboxCache();
+          render();
+          setStatus(`${account.displayName} 缺少授权码`, true);
+          return;
+        }
+
+        setStatus(`正在收取 ${account.displayName} · ${folderName(folder)}...`);
+        $('refreshAll').disabled = true;
+        $('refreshCurrent').disabled = true;
+        try {
+          const folders = typeof api.listMailFolders === 'function'
+            ? await api.listMailFolders(accountPayload(account))
+            : [{ kind: 'inbox', name: '收件箱', path: 'INBOX', total: 0 }];
+          const result = await api.fetchMailMessages(accountPayload(account), { folder, limit: FETCH_LIMIT });
+          const state = getMailboxState(account.id);
+          state.error = '';
+          state.folder = folder;
+          state.folders = normalizeFolders(folders);
+          setFolderCache(account.id, folder, {
+            error: '',
+            fetchedAt: Date.now(),
+            messages: (result.messages || []).map((message) => ({
+              ...message,
+              folder: message.folder || folder,
+              id: `${account.id}:${message.folder || folder}:${message.uid}`
+            })),
+            total: Number(result.total) || 0
+          });
+          await persistMailboxCache();
+          selectedMessageId = visibleMessages()[0]?.id || selectedMessageId;
+          render();
+          setStatus(`${account.displayName} · ${folderName(folder)} 已收取 ${result.messages.length} 封，服务器共 ${result.total} 封`);
+        } catch (error) {
+          const message = formatMailError(error, account);
+          const state = getMailboxState(account.id);
+          state.error = message;
+          state.folder = folder;
+          setFolderCache(account.id, folder, { error: message });
+          await persistMailboxCache();
+          render();
+          setStatus(`${account.displayName} 收取失败：${message}`, true);
+        } finally {
+          $('refreshAll').disabled = false;
+          $('refreshCurrent').disabled = false;
+        }
+      }
+
+      async function refreshCurrent() {
+        if (!accounts.length) {
+          setStatus('请先点击左侧“新增账号”完成配置。', true);
+          return;
+        }
+        if (activeAccountId === 'all') {
+          await refreshAll();
+        } else {
+          await refreshAccount(activeAccountId, getActiveFolder(activeAccountId));
+        }
+      }
+
+      async function refreshAll() {
+        if (!accounts.length) {
+          setStatus('请先点击左侧“新增账号”完成配置。', true);
+          return;
+        }
+        for (const account of accounts) {
+          await refreshAccount(account.id);
+        }
+      }
+
+      async function openUrl(url) {
+        const target = String(url || '').trim();
+        if (!target) {
+          setStatus('当前账号没有配置网页地址', true);
+          return;
+        }
+        try {
+          await api.openExternalUrl(target);
+        } catch {
+          window.open(target, '_blank', 'noopener,noreferrer');
+        }
+      }
+
+      function openSettings() {
+        const provider = getProvider($('provider').value);
+        void openUrl(provider.settingsUrl || provider.webmailUrl);
+      }
+
+      function bindEvents() {
+        $('addAccount').addEventListener('click', () => openDrawer());
+        $('closeDrawer').addEventListener('click', closeDrawer);
+        $('accountDrawer').addEventListener('click', (event) => {
+          if (event.target === $('accountDrawer')) closeDrawer();
+        });
+        $('saveAccount').addEventListener('click', () => void saveAccount());
+        $('deleteAccount').addEventListener('click', () => void deleteAccount());
+        $('refreshAll').addEventListener('click', () => void refreshAll());
+        $('refreshCurrent').addEventListener('click', () => void refreshCurrent());
+        $('composeMail').addEventListener('click', () => openCompose());
+        $('replyMessage').addEventListener('click', () => openCompose('reply', selectedMessage()));
+        $('forwardMessage').addEventListener('click', () => openCompose('forward', selectedMessage()));
+        $('deleteMessage').addEventListener('click', () => void deleteSelectedMessage());
+        $('openSettings').addEventListener('click', openSettings);
+        $('closeCompose').addEventListener('click', closeCompose);
+        $('discardCompose').addEventListener('click', closeCompose);
+        $('sendCompose').addEventListener('click', () => void sendCompose());
+        $('addComposeAttachment').addEventListener('click', () => void addComposeAttachments());
+        $('composeDrawer').addEventListener('click', (event) => {
+          if (event.target === $('composeDrawer')) closeCompose();
+        });
+        $('searchInput').addEventListener('input', renderMessages);
+        $('provider').addEventListener('change', () => applyProviderPreset($('provider').value));
+        $('email').addEventListener('blur', () => {
+          const provider = inferProviderByEmail($('email').value);
+          if (provider !== 'custom' && provider !== $('provider').value) {
+            $('provider').value = provider;
+            applyProviderPreset(provider);
+          }
+          if (!$('username').value.trim()) $('username').value = $('email').value.trim();
+        });
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && $('composeDrawer').classList.contains('show')) {
+            closeCompose();
+          } else if (event.key === 'Escape' && $('accountDrawer').classList.contains('show')) {
+            closeDrawer();
+          }
+        });
+      }
+
+      renderProviderOptions();
+      bindEvents();
+
+      const plugin = TooldeskPlugin.create({
+        id: 'tooldesk-email-manager',
+        capabilities: ['deleteMailMessage', 'downloadMailAttachment', 'fetchMailMessages', 'getPluginStorageItem', 'listMailFolders', 'openExternalUrl', 'openPath', 'readBinaryFile', 'removePluginStorageItem', 'sendMailMessage', 'setMailMessageSeen', 'setPluginStorageItem', 'showOpenDialog']
+      });
+      api = plugin.api;
+
+      void plugin.connect().then(async () => {
+        await loadAccounts();
+        await loadMailboxCache();
+        render();
+      });
+    </script>
+  </body>
+</html>
