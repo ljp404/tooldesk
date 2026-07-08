@@ -1,0 +1,203 @@
+
+
+.static-server-panel {
+  min-height: 0;
+}
+
+.static-server-layout {
+  display: grid;
+  flex: 1;
+  gap: 12px;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.static-server-form {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.static-server-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.static-server-field span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.static-server-row {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.static-server-path {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  color: #111827;
+  font-size: 13px;
+  min-height: 36px;
+  overflow: hidden;
+  padding: 8px 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.static-server-options {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
+}
+
+.static-server-field input[type='number'],
+.static-server-field select {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.static-server-checkbox {
+  align-items: center;
+  color: #334155;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.static-server-checkbox input {
+  accent-color: #0f766e;
+  height: 16px;
+  width: 16px;
+}
+
+.static-server-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.static-server-actions .tool-primary-button,
+.static-server-actions .secondary-action {
+  min-width: 96px;
+}
+
+.static-server-actions .secondary-action.danger {
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.static-server-actions .secondary-action.danger:hover {
+  background: #fef2f2;
+}
+
+.static-server-status {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+  padding: 12px;
+}
+
+.static-server-status-head {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.static-server-status-head h3 {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.static-server-badge {
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 10px;
+}
+
+.static-server-badge.running {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.static-server-badge.stopped {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.static-server-url {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: 10px 12px;
+}
+
+.static-server-url code {
+  color: #0f766e;
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.static-server-hint {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.static-server-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 12px;
+}
+
+.static-server-notes {
+  color: #64748b;
+  display: grid;
+  font-size: 12px;
+  gap: 6px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.static-server-notes li {
+  margin: 0;
+}

@@ -1,0 +1,14 @@
+export const PLUGIN_ERROR_CODES = {
+  PLUGIN_API_DENIED: 'PLUGIN_API_DENIED',
+  PLUGIN_API_UNAVAILABLE: 'PLUGIN_API_UNAVAILABLE',
+  PLUGIN_CONNECT_FAILED: 'PLUGIN_CONNECT_FAILED',
+  PLUGIN_HOST_INCOMPATIBLE: 'PLUGIN_HOST_INCOMPATIBLE',
+  PLUGIN_SDK_NOT_READY: 'PLUGIN_SDK_NOT_READY',
+  PLUGIN_STORAGE_DENIED: 'PLUGIN_STORAGE_DENIED'
+} as const;
+
+export type PluginErrorCode = (typeof PLUGIN_ERROR_CODES)[keyof typeof PLUGIN_ERROR_CODES];
+
+export function formatPluginHostError(code: PluginErrorCode, message: string) {
+  return `${code}: ${message}`;
+}

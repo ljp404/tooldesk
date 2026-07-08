@@ -1,0 +1,35 @@
+{
+  "accent": "orange",
+  "caption": "文本或链接快速生成二维码",
+  "category": "image",
+  "defaultAlias": "ewm",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-qr-generator",
+  "keywords": [
+    "qr",
+    "qrcode",
+    "url",
+    "二维码",
+    "ewmsc",
+    "erweima",
+    "erweimashengcheng"
+  ],
+  "name": "二维码生成",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyImage"
+  ],
+  "windowIcon": "assets/window-icon.png",
+  "clipboardMatch": {
+    "type": "http-url",
+    "priority": 84
+  }
+}

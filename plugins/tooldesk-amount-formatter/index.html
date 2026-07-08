@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>金额格式化</title>
+    <style>
+* { box-sizing: border-box; } html, body { height: 100%; margin: 0; }
+body { background: #eef3f8; color: #111827; font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif; font-size: 13px; }
+button, input, select, textarea { font: inherit; } button { border: 0; cursor: pointer; }
+.tool-content { height: 100%; min-height: 0; } .field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-layout { display: grid; gap: 16px; grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr); }
+.fin-card { background: #fff; border: 1px solid #dbe4ef; border-radius: 8px; display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; position: relative; }
+.fin-head { align-items: center; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; min-height: 48px; padding: 0 14px; }
+.fin-head strong { font-size: 14px; font-weight: 800; }
+.fin-badge { align-items: center; background: #f5f3ff; border-radius: 6px; color: #7c3aed; display: inline-flex; font-size: 12px; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.fin-form { display: grid; gap: 12px; padding: 16px; }
+.fin-field { display: grid; gap: 8px; }
+.fin-field input, .fin-field select, .fin-field textarea { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; outline: none; padding: 10px; width: 100%; }
+.fin-field textarea { font-family: Consolas, monospace; font-size: 13px; line-height: 1.65; min-height: 280px; resize: vertical; }
+.fin-field input, .fin-field select { height: 38px; padding: 0 10px; }
+.fin-grid2 { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+.fin-option { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; display: flex; font-size: 12px; font-weight: 700; gap: 10px; min-height: 38px; padding: 0 12px; }
+.fin-option input { accent-color: #7c3aed; height: 16px; width: 16px; }
+.fin-copy { background: #fff; border: 1px solid #ddd6fe; border-radius: 7px; color: #7c3aed; font-size: 12px; font-weight: 800; height: 30px; margin-left: auto; padding: 0 10px; }
+.fin-meta { color: #64748b; font-size: 12px; font-weight: 700; margin-left: auto; }
+.fin-note { color: #64748b; font-size: 12px; font-weight: 700; line-height: 1.6; margin: 0; padding: 0 16px 16px; }
+.fin-toast { background: rgba(15,23,42,.88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; padding: 7px 10px; position: absolute; right: 14px; top: 56px; z-index: 2; }
+    
+/* tooldesk responsive plugin layout */
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content, .fin-layout { height: auto; min-height: calc(100dvh - 20px); overflow: visible; }
+  .fin-layout { grid-template-columns: 1fr !important; gap: 12px; }
+  .fin-card { min-height: auto; overflow: visible; }
+  .fin-body, .fin-table-wrap { overflow: auto; }
+  .fin-grid2, .fin-row { grid-template-columns: 1fr !important; }
+  .fin-actions, .fin-quick { flex-wrap: wrap; }
+  .fin-result { font-size: 18px; margin: 12px; }
+  input, select, textarea, button { max-width: 100%; }
+}
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content fin-layout">
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">入</span><strong>原始金额</strong><span id="count" class="fin-meta">0 条</span></div>
+        <div class="fin-form">
+          <textarea id="input" spellcheck="false" placeholder="每行一条，可含 ¥、逗号、空格等"></textarea>
+          <div class="fin-grid2">
+            <label class="field small fin-field">小数位数<select id="decimals"><option value="2">2 位</option><option value="0">0 位</option><option value="4">4 位</option></select></label>
+            <label class="field small fin-field">无效行<select id="invalid"><option value="keep">保留原文</option><option value="skip">跳过</option></select></label>
+          </div>
+          <label class="fin-option"><input id="grouping" type="checkbox" checked />千分位分隔</label>
+          <label class="fin-option"><input id="prefix" type="checkbox" />添加 ¥ 前缀</label>
+        </div>
+        <p class="fin-note">自动识别每行中的数字，支持负数与小数。</p>
+      </section>
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">出</span><strong>格式化结果</strong><button id="copy" class="fin-copy">复制全部</button></div>
+        <span id="toast" class="fin-toast" hidden></span>
+        <div class="fin-form"><textarea id="output" readonly spellcheck="false"></textarea></div>
+      </section>
+    </main>
+<script>
+const $ = (id) => document.getElementById(id);
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function parseLine(line) {
+        const cleaned = line.replace(/[¥￥,\s]/g, '');
+        const match = cleaned.match(/^-?\d+(?:\.\d+)?$/);
+        if (!match) return null;
+        const value = Number(cleaned);
+        return Number.isFinite(value) ? value : null;
+      }
+      function formatValue(value) {
+        const decimals = Number($('decimals').value);
+        const text = value.toLocaleString('zh-CN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: $('grouping').checked });
+        return $('prefix').checked ? `¥ ${text}` : text;
+      }
+      function applyLaunchContent(content) {
+        const text = String(content || '');
+        if (!text.trim()) return;
+        $('input').value = text;
+        render();
+      }
+      function render() {
+        const lines = $('input').value.split(/\r?\n/);
+        const invalidMode = $('invalid').value;
+        const output = lines.map((line) => {
+          if (!line.trim()) return '';
+          const value = parseLine(line.trim());
+          if (value === null) return invalidMode === 'skip' ? null : line;
+          return formatValue(value);
+        }).filter((line) => line !== null);
+        $('count').textContent = `${output.filter(Boolean).length} 条`;
+        $('output').value = output.join('\n');
+      }
+      $('input').value = '1234567.8\n¥ 98,765.432\n  2500\nabc\n-120.5';
+      ['input','decimals','invalid','grouping','prefix'].forEach((id) => {
+        $(id).addEventListener('input', render); $(id).addEventListener('change', render);
+      });
+      $('copy').addEventListener('click', async () => {
+        const text = $('output').value; if (!text) return;
+        await api.copyText(text);
+        $('toast').textContent = '已复制'; $('toast').hidden = false; setTimeout(() => { $('toast').hidden = true; }, 1600);
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-amount-formatter', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

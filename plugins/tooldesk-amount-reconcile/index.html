@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>批量金额核对</title>
+    <style>
+* { box-sizing: border-box; } html, body { height: 100%; margin: 0; }
+body { background: #eef3f8; color: #111827; font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif; font-size: 13px; }
+button, input, textarea { font: inherit; } button { border: 0; cursor: pointer; }
+.tool-content { height: 100%; min-height: 0; } .field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-layout { display: grid; gap: 16px; grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr); }
+.fin-card { background: #fff; border: 1px solid #dbe4ef; border-radius: 8px; display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; position: relative; }
+.fin-head { align-items: center; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; min-height: 48px; padding: 0 14px; }
+.fin-head strong { font-size: 14px; font-weight: 800; }
+.fin-badge { align-items: center; background: #ecfdf5; border-radius: 6px; color: #16a34a; display: inline-flex; font-size: 12px; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.fin-form { display: grid; gap: 12px; padding: 16px; }
+.fin-field { display: grid; gap: 8px; }
+.fin-field input, .fin-field textarea { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; outline: none; padding: 10px; width: 100%; }
+.fin-field textarea { font-family: Consolas, monospace; font-size: 13px; line-height: 1.65; min-height: 260px; resize: vertical; }
+.fin-field input { height: 38px; padding: 0 10px; }
+.fin-highlight { background: linear-gradient(180deg,#ecfdf5 0%,#fff 100%); border: 1px solid #bbf7d0; border-radius: 8px; margin: 14px; padding: 16px; }
+.fin-highlight small { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-highlight strong { color: #15803d; display: block; font-family: Consolas, monospace; font-size: 24px; font-weight: 800; margin-top: 6px; }
+.fin-grid { display: grid; gap: 8px; padding: 0 14px 14px; }
+.fin-row { align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; display: grid; gap: 12px; grid-template-columns: 120px minmax(0,1fr); min-height: 42px; padding: 0 12px; }
+.fin-row span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-row strong { color: #111827; font-family: Consolas, monospace; font-size: 13px; font-weight: 800; text-align: right; }
+.fin-row.warn { background: #fff7ed; border-color: #fed7aa; }
+.fin-row.warn strong { color: #c2410c; }
+.fin-row.ok { background: #ecfdf5; border-color: #bbf7d0; }
+.fin-row.ok strong { color: #15803d; }
+.fin-copy { background: #fff; border: 1px solid #bbf7d0; border-radius: 7px; color: #16a34a; font-size: 12px; font-weight: 800; height: 30px; margin-left: auto; padding: 0 10px; }
+.fin-toast { background: rgba(15,23,42,.88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; padding: 7px 10px; position: absolute; right: 14px; top: 56px; z-index: 2; }
+    
+/* tooldesk responsive plugin layout */
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content, .fin-layout { height: auto; min-height: calc(100dvh - 20px); overflow: visible; }
+  .fin-layout { grid-template-columns: 1fr !important; gap: 12px; }
+  .fin-card { min-height: auto; overflow: visible; }
+  .fin-body, .fin-table-wrap { overflow: auto; }
+  .fin-grid2, .fin-row { grid-template-columns: 1fr !important; }
+  .fin-actions, .fin-quick { flex-wrap: wrap; }
+  .fin-result { font-size: 18px; margin: 12px; }
+  input, select, textarea, button { max-width: 100%; }
+}
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content fin-layout">
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">∑</span><strong>明细金额</strong></div>
+        <div class="fin-form">
+          <textarea id="input" spellcheck="false" placeholder="每行一条金额，支持逗号/¥/空格"></textarea>
+          <label class="field small fin-field">目标总额（可选，用于核对尾差）<input id="target" type="number" step="0.01" placeholder="留空则仅加总" /></label>
+        </div>
+      </section>
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">∑</span><strong>核对结果</strong><button id="copy" class="fin-copy">复制报告</button></div>
+        <span id="toast" class="fin-toast" hidden></span>
+        <div class="fin-highlight"><small>合计金额</small><strong id="sum">-</strong></div>
+        <div id="grid" class="fin-grid"></div>
+      </section>
+    </main>
+<script>
+const $ = (id) => document.getElementById(id);
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const fmt = (v) => Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const round2 = (v) => Math.round(v * 100) / 100;
+      function parseAmounts(text) {
+        const values = []; const invalid = [];
+        text.split(/\r?\n/).forEach((line, index) => {
+          const raw = line.trim(); if (!raw) return;
+          const cleaned = raw.replace(/[¥￥,\s]/g, '');
+          if (!/^-?\d+(?:\.\d+)?$/.test(cleaned)) { invalid.push({ line: index + 1, raw }); return; }
+          values.push(Number(cleaned));
+        });
+        return { values, invalid };
+      }
+      function calc() {
+        const { values, invalid } = parseAmounts($('input').value);
+        const count = values.length;
+        const sum = round2(values.reduce((t, v) => t + v, 0));
+        const avg = count ? round2(sum / count) : 0;
+        const min = count ? Math.min(...values) : 0;
+        const max = count ? Math.max(...values) : 0;
+        const targetRaw = $('target').value.trim();
+        const hasTarget = targetRaw !== '' && Number.isFinite(Number(targetRaw));
+        const target = hasTarget ? round2(Number(targetRaw)) : null;
+        const diff = hasTarget ? round2(sum - target) : null;
+        return { count, invalid: invalid.length, sum, avg, min, max, target, diff, hasTarget, balanced: hasTarget && Math.abs(diff) < 0.005 };
+      }
+      function applyLaunchContent(content) {
+        const text = String(content || '');
+        if (!text.trim()) return;
+        $('input').value = text;
+        $('target').value = '';
+        render();
+      }
+      function render() {
+        const r = calc();
+        $('sum').textContent = `¥ ${fmt(r.sum)}`;
+        const rows = [
+          ['有效条数', String(r.count)],
+          ['无效行数', String(r.invalid)],
+          ['平均金额', r.count ? fmt(r.avg) : '-'],
+          ['最小值', r.count ? fmt(r.min) : '-'],
+          ['最大值', r.count ? fmt(r.max) : '-']
+        ];
+        if (r.hasTarget) {
+          rows.push(['目标总额', fmt(r.target)]);
+          rows.push(['尾差（合计-目标）', fmt(r.diff)]);
+        }
+        $('grid').replaceChildren(...rows.map(([label, value], index) => {
+          const row = document.createElement('div');
+          let cls = 'fin-row';
+          if (r.hasTarget && label.startsWith('尾差')) cls += r.balanced ? ' ok' : ' warn';
+          row.className = cls;
+          row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+          return row;
+        }));
+      }
+      $('input').value = '1000.50\n2,300.00\n¥ 450.25\n1500\n-50';
+      $('target').value = '5200.75';
+      ['input','target'].forEach((id) => { $(id).addEventListener('input', render); });
+      $('copy').addEventListener('click', async () => {
+        const r = calc();
+        const lines = [`合计: ${fmt(r.sum)}`, `条数: ${r.count}`, `无效行: ${r.invalid}`];
+        if (r.hasTarget) lines.push(`目标: ${fmt(r.target)}`, `尾差: ${fmt(r.diff)}`, r.balanced ? '状态: 已平' : '状态: 有差异');
+        await api.copyText(lines.join('\n'));
+        $('toast').textContent = '已复制'; $('toast').hidden = false; setTimeout(() => { $('toast').hidden = true; }, 1600);
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-amount-reconcile', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

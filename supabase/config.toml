@@ -1,0 +1,2 @@
+[functions.tooldesk-services]
+verify_jwt = false

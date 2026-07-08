@@ -1,0 +1,44 @@
+{
+  "accent": "purple",
+  "caption": "搜索已配置的 Obsidian 笔记库和本地 Markdown 文件。",
+  "category": "document",
+  "defaultAlias": "biji",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-obsidian",
+  "keywords": [
+    "obsidian",
+    "ss",
+    "sousuo",
+    "note",
+    "notes",
+    "md",
+    "markdown",
+    "biji"
+  ],
+  "name": "Obsidian 搜索",
+  "permissions": [
+    "local-library",
+    "filesystem"
+  ],
+  "publisher": "tooldesk",
+  "settings": {
+    "entry": "settings.html",
+    "icon": "folder",
+    "label": "Obsidian"
+  },
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "getAppSettings",
+    "getLocalLibraries",
+    "onLocalLibraryChanged",
+    "openLocalLibraryFile",
+    "searchLocalLibrary",
+    "setAppSettings",
+    "showOpenDialog"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

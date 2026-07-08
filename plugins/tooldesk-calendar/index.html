@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="zh-CN" style="background: transparent !important;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>日历</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { 
+  height: 100%; 
+  margin: 0; 
+  padding: 0;
+  background: transparent; 
+  overflow: hidden;
+}
+html {
+  /* 确保 html 根元素也是透明的，避免四角露出背景色 */
+  background: transparent !important;
+}
+body {
+  background: transparent;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button { border: 0; cursor: pointer; font: inherit; background: none; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+
+.cal-root {
+  background: #ffffff;
+  border: 1px solid rgba(148,163,184,.18);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(15,23,42,.16), 0 2px 10px rgba(15,23,42,.08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── 顶部信息区 ── */
+.cal-header {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+  border-bottom: 1px solid rgba(148,163,184,.16);
+  border-radius: 14px 14px 0 0;
+  color: #111827;
+  flex-shrink: 0;
+  padding: 14px 18px 12px;
+  position: relative;
+}
+.cal-header-top {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.cal-month-nav {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+.cal-month-nav button {
+  align-items: center;
+  border: 1px solid rgba(148,163,184,.22);
+  border-radius: 8px;
+  color: #64748b;
+  display: inline-flex;
+  font-size: 16px;
+  height: 26px;
+  justify-content: center;
+  transition: background .15s, border-color .15s, color .15s;
+  width: 26px;
+}
+.cal-month-nav button:hover {
+  background: #ffffff;
+  border-color: rgba(37,99,235,.22);
+  color: #2563eb;
+}
+#monthTitle {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 4px;
+}
+.cal-today-btn {
+  background: #ffffff !important;
+  border: 1px solid rgba(37,99,235,.18);
+  border-radius: 8px;
+  color: #2563eb !important;
+  font-size: 12px;
+  font-weight: 600;
+  height: 28px;
+  padding: 0 12px;
+  transition: background .15s, border-color .15s;
+}
+.cal-today-btn:hover {
+  background: #eff6ff !important;
+  border-color: rgba(37,99,235,.32);
+}
+
+.cal-today-info {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+.cal-today-day {
+  color: #2563eb;
+  font-size: 46px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.cal-today-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cal-today-meta span {
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.cal-today-meta small {
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 14px;
+}
+
+/* ── 月历区 ── */
+.cal-body {
+  border-radius: 0 0 14px 14px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px 16px 16px;
+}
+.cal-weekdays {
+  color: #64748b;
+  display: grid;
+  font-size: 11px;
+  font-weight: 700;
+  grid-template-columns: repeat(7, 1fr);
+  letter-spacing: 0;
+  margin-bottom: 8px;
+  padding: 0 2px;
+  text-align: center;
+}
+.cal-weekdays span:last-child,
+.cal-weekdays span:nth-child(6) { color: #ef4444; }
+
+.cal-grid {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+}
+
+.cal-day {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  min-height: 0;
+  padding: 4px 2px 5px;
+  position: relative;
+  transition: background .12s, border-color .12s, box-shadow .12s;
+}
+.cal-day:hover {
+  background: #f8fafc;
+  border-color: rgba(148,163,184,.22);
+}
+
+.cal-day-num {
+  align-items: center;
+  border-radius: 50%;
+  display: flex;
+  font-size: 16px;
+  font-weight: 700;
+  height: 25px;
+  justify-content: center;
+  line-height: 1;
+  width: 25px;
+}
+.cal-day-sub {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-day-badge {
+  background: #3b82f6;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 2px 3px;
+  position: absolute;
+  right: 3px;
+  top: 3px;
+}
+.cal-day-badge.workday { background: #f59e0b; color: #fff; }
+
+/* 状态 */
+.cal-day.muted .cal-day-num { color: #c0c7d1; }
+.cal-day.muted .cal-day-sub { color: #cbd5e1; }
+.cal-day.muted:hover { background: #f8fafc; }
+
+.cal-day.weekend:not(.muted) .cal-day-num { color: #ef4444; }
+.cal-day.weekend:not(.muted) .cal-day-sub { color: #ef4444; }
+
+.cal-day.holiday:not(.today) {
+  background: #fff0f1;
+  border-color: transparent;
+}
+.cal-day.holiday:not(.today):hover {
+  background: #ffe7e9;
+  border-color: transparent;
+}
+.cal-day.holiday:not(.today) .cal-day-num {
+  color: #ef4444;
+}
+.cal-day.holiday:not(.today) .cal-day-sub {
+  color: #ef4444;
+  font-weight: 600;
+}
+.cal-day.holiday.muted:not(.today) {
+  background: #fff6f7;
+}
+.cal-day.holiday.muted:not(.today) .cal-day-num,
+.cal-day.holiday.muted:not(.today) .cal-day-sub {
+  color: #fca5a5;
+}
+.cal-day.today {
+  background: transparent;
+  border-color: transparent;
+}
+.cal-day.today.selected {
+  background: #eff6ff;
+  border-color: rgba(37,99,235,.62);
+  box-shadow: inset 0 0 0 1px rgba(37,99,235,.28);
+}
+
+.cal-day.today .cal-day-num {
+  background: transparent;
+  box-shadow: none;
+  color: #2563eb;
+  font-weight: 800;
+}
+.cal-day.today .cal-day-sub {
+  color: #2563eb;
+  font-weight: 600;
+}
+.cal-day.today::after {
+  background: #60a5fa;
+  border-radius: 5px;
+  color: #fff;
+  content: "今";
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 2px 3px;
+  position: absolute;
+  right: 3px;
+  top: 3px;
+}
+
+.cal-day.selected:not(.today) {
+  background: #ffffff;
+  border-color: rgba(37,99,235,.62);
+  box-shadow: inset 0 0 0 1px rgba(37,99,235,.28);
+}
+.cal-day.selected:not(.today) .cal-day-num {
+  color: #1d4ed8;
+  font-weight: 800;
+}
+.cal-day.selected:not(.today) .cal-day-sub { color: #3b82f6; }
+
+/* ── compact 模式（作为弹窗使用）── */
+body.quick-compact-tool {
+  background: transparent;
+}
+body.quick-compact-tool .cal-root {
+  border-radius: 14px;
+}
+    </style>
+  </head>
+  <body>
+    <div class="cal-root">
+      <div class="cal-header">
+        <div class="cal-header-top">
+          <div class="cal-month-nav">
+            <button id="prev" type="button" aria-label="上个月">‹</button>
+            <span id="monthTitle"></span>
+            <button id="next" type="button" aria-label="下个月">›</button>
+          </div>
+          <button id="todayBtn" class="cal-today-btn" type="button">今天</button>
+        </div>
+        <div class="cal-today-info">
+          <div class="cal-today-day" id="todayDay"></div>
+          <div class="cal-today-meta">
+            <span id="todayWeekday"></span>
+            <span id="todayLunar"></span>
+            <small id="todayHoliday"></small>
+          </div>
+        </div>
+      </div>
+      <div class="cal-body">
+        <div class="cal-weekdays">
+          <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+        </div>
+        <div id="grid" class="cal-grid"></div>
+      </div>
+    </div>
+    <script>
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const weekLabels = ['日','一','二','三','四','五','六'];
+      const lunarDayLabels = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+      const lunarMonthShortLabels = ['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+      const heavenlyStems = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+      const earthlyBranches = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+      const lunarInfo = [
+        0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+        0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+        0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+        0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+        0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+        0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+        0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+        0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+        0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+        0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+        0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+        0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+        0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+        0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+        0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+        0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+        0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+        0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+        0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+        0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,
+        0x0d520
+      ];
+      const localHolidays = {
+        2024:[{date:'2024-01-01',name:'元旦',isOffDay:true},{date:'2024-02-04',name:'春节调休',isOffDay:false},{date:'2024-02-10',name:'春节',isOffDay:true},{date:'2024-02-11',name:'',isOffDay:true},{date:'2024-02-12',name:'',isOffDay:true},{date:'2024-02-13',name:'',isOffDay:true},{date:'2024-02-14',name:'',isOffDay:true},{date:'2024-02-15',name:'',isOffDay:true},{date:'2024-02-16',name:'',isOffDay:true},{date:'2024-02-17',name:'',isOffDay:true},{date:'2024-02-18',name:'春节调休',isOffDay:false},{date:'2024-04-04',name:'清明节',isOffDay:true},{date:'2024-04-05',name:'',isOffDay:true},{date:'2024-04-06',name:'',isOffDay:true},{date:'2024-04-07',name:'清明节调休',isOffDay:false},{date:'2024-04-28',name:'劳动节调休',isOffDay:false},{date:'2024-05-01',name:'劳动节',isOffDay:true},{date:'2024-05-02',name:'',isOffDay:true},{date:'2024-05-03',name:'',isOffDay:true},{date:'2024-05-04',name:'',isOffDay:true},{date:'2024-05-05',name:'',isOffDay:true},{date:'2024-05-11',name:'劳动节调休',isOffDay:false},{date:'2024-06-10',name:'端午节',isOffDay:true},{date:'2024-09-14',name:'中秋节调休',isOffDay:false},{date:'2024-09-15',name:'中秋节',isOffDay:true},{date:'2024-09-16',name:'',isOffDay:true},{date:'2024-09-17',name:'',isOffDay:true},{date:'2024-09-29',name:'国庆节调休',isOffDay:false},{date:'2024-10-01',name:'国庆节',isOffDay:true},{date:'2024-10-02',name:'',isOffDay:true},{date:'2024-10-03',name:'',isOffDay:true},{date:'2024-10-04',name:'',isOffDay:true},{date:'2024-10-05',name:'',isOffDay:true},{date:'2024-10-06',name:'',isOffDay:true},{date:'2024-10-07',name:'',isOffDay:true},{date:'2024-10-12',name:'国庆节调休',isOffDay:false}],
+        2025:[{date:'2025-01-01',name:'元旦',isOffDay:true},{date:'2025-01-26',name:'春节调休',isOffDay:false},{date:'2025-01-28',name:'春节',isOffDay:true},{date:'2025-01-29',name:'',isOffDay:true},{date:'2025-01-30',name:'',isOffDay:true},{date:'2025-01-31',name:'',isOffDay:true},{date:'2025-02-01',name:'',isOffDay:true},{date:'2025-02-02',name:'',isOffDay:true},{date:'2025-02-03',name:'',isOffDay:true},{date:'2025-02-04',name:'',isOffDay:true},{date:'2025-02-08',name:'春节调休',isOffDay:false},{date:'2025-04-04',name:'清明节',isOffDay:true},{date:'2025-04-05',name:'',isOffDay:true},{date:'2025-04-06',name:'',isOffDay:true},{date:'2025-04-27',name:'劳动节调休',isOffDay:false},{date:'2025-05-01',name:'劳动节',isOffDay:true},{date:'2025-05-02',name:'',isOffDay:true},{date:'2025-05-03',name:'',isOffDay:true},{date:'2025-05-04',name:'',isOffDay:true},{date:'2025-05-05',name:'',isOffDay:true},{date:'2025-05-31',name:'端午节',isOffDay:true},{date:'2025-06-01',name:'',isOffDay:true},{date:'2025-06-02',name:'',isOffDay:true},{date:'2025-09-28',name:'国庆节调休',isOffDay:false},{date:'2025-10-01',name:'国庆节',isOffDay:true},{date:'2025-10-02',name:'',isOffDay:true},{date:'2025-10-03',name:'',isOffDay:true},{date:'2025-10-04',name:'',isOffDay:true},{date:'2025-10-05',name:'',isOffDay:true},{date:'2025-10-06',name:'',isOffDay:true},{date:'2025-10-07',name:'',isOffDay:true},{date:'2025-10-08',name:'',isOffDay:true},{date:'2025-10-11',name:'国庆节调休',isOffDay:false}],
+        2026:[{date:'2026-01-01',name:'元旦',isOffDay:true},{date:'2026-01-02',name:'',isOffDay:true},{date:'2026-01-03',name:'',isOffDay:true},{date:'2026-01-04',name:'元旦调休',isOffDay:false},{date:'2026-02-14',name:'春节调休',isOffDay:false},{date:'2026-02-15',name:'春节',isOffDay:true},{date:'2026-02-16',name:'',isOffDay:true},{date:'2026-02-17',name:'',isOffDay:true},{date:'2026-02-18',name:'',isOffDay:true},{date:'2026-02-19',name:'',isOffDay:true},{date:'2026-02-20',name:'',isOffDay:true},{date:'2026-02-21',name:'',isOffDay:true},{date:'2026-02-22',name:'',isOffDay:true},{date:'2026-02-23',name:'',isOffDay:true},{date:'2026-02-28',name:'春节调休',isOffDay:false},{date:'2026-04-04',name:'清明节',isOffDay:true},{date:'2026-04-05',name:'',isOffDay:true},{date:'2026-04-06',name:'',isOffDay:true},{date:'2026-05-01',name:'劳动节',isOffDay:true},{date:'2026-05-02',name:'',isOffDay:true},{date:'2026-05-03',name:'',isOffDay:true},{date:'2026-05-04',name:'',isOffDay:true},{date:'2026-05-05',name:'',isOffDay:true},{date:'2026-05-09',name:'劳动节调休',isOffDay:false},{date:'2026-06-19',name:'端午节',isOffDay:true},{date:'2026-06-20',name:'',isOffDay:true},{date:'2026-06-21',name:'',isOffDay:true},{date:'2026-09-20',name:'国庆节调休',isOffDay:false},{date:'2026-09-25',name:'中秋节',isOffDay:true},{date:'2026-09-26',name:'',isOffDay:true},{date:'2026-09-27',name:'',isOffDay:true},{date:'2026-10-01',name:'国庆节',isOffDay:true},{date:'2026-10-02',name:'',isOffDay:true},{date:'2026-10-03',name:'',isOffDay:true},{date:'2026-10-04',name:'',isOffDay:true},{date:'2026-10-05',name:'',isOffDay:true},{date:'2026-10-06',name:'',isOffDay:true},{date:'2026-10-07',name:'',isOffDay:true},{date:'2026-10-10',name:'国庆节调休',isOffDay:false}]
+      };
+
+      const isCompact = new URLSearchParams(location.search).get('compact') === '1';
+      if (isCompact) document.body.classList.add('quick-compact-tool');
+
+      let today = stripTime(new Date());
+      const state = { visibleMonth: new Date(today.getFullYear(), today.getMonth(), 1), selected: today };
+      const $ = id => document.getElementById(id);
+
+      function resetToToday() {
+        today = stripTime(new Date());
+        state.selected = today;
+        state.visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        void renderCalendar();
+      }
+
+      window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (data?.source === 'tooldesk-host' && data?.type === 'calendar:reset-to-today') {
+          resetToToday();
+        }
+      });
+
+      function stripTime(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+      function isSameDate(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+      function dateId(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+      function getLeapMonth(y) { return lunarInfo[y-1900] & 0xf; }
+      function getLeapMonthDays(y) { return getLeapMonth(y) ? (lunarInfo[y-1900] & 0x10000 ? 30:29) : 0; }
+      function getLunarMonthDays(y, m) { return lunarInfo[y-1900] & (0x10000>>m) ? 30:29; }
+      function getLunarYearDays(y) {
+        let s=348; for (let i=0x8000;i>0x8;i>>=1) s+=lunarInfo[y-1900]&i?1:0; return s+getLeapMonthDays(y);
+      }
+      function getLunarYearName(y) { return heavenlyStems[(y-4)%10]+earthlyBranches[(y-4)%12]; }
+      function solarToLunar(date) {
+        let offset=Math.floor((date.getTime()-new Date(1900,0,31).getTime())/86400000), y, m, isLeap=false;
+        for (y=1900;y<2101&&offset>0;y++) offset-=getLunarYearDays(y);
+        if (offset<0){offset+=getLunarYearDays(y-1);y--;}
+        const lm=getLeapMonth(y); let ily=false;
+        for (m=1;m<13&&offset>0;m++) {
+          let md; if (lm>0&&m===lm+1&&!ily){m--;ily=true;md=getLeapMonthDays(y);}else{md=getLunarMonthDays(y,m);}
+          if (ily&&m===lm+1) ily=false; offset-=md; if (ily) isLeap=true;
+        }
+        if (offset===0&&lm>0&&m===lm+1){if(ily){isLeap=false;ily=false;}else{isLeap=true;ily=true;m--;}}
+        if (offset<0){offset+=ily?getLeapMonthDays(y):getLunarMonthDays(y,m-1);m--;}
+        const day=offset+1;
+        return {
+          dayShort: day===1?`${isLeap?'闰':''}${lunarMonthShortLabels[m-1]}月`:lunarDayLabels[day-1],
+          full: `${getLunarYearName(y)}年 ${isLeap?'闰':''}${lunarMonthShortLabels[m-1]}月${lunarDayLabels[day-1]}`,
+          isLeapMonth: isLeap,
+          lunarDay: day,
+          lunarMonth: m,
+          lunarYear: y
+        };
+      }
+
+      const holidayMemoryCache = {};
+      function hGet(k){try{return localStorage.getItem(k);}catch{return null;}}
+      function hSet(k,v){try{localStorage.setItem(k,v);}catch{}}
+      function hDel(k){try{localStorage.removeItem(k);}catch{}}
+      function loadHolidays(y) {
+        const c=hGet('td_cal_h_'+y), t=hGet('td_cal_ts_'+y);
+        if (!c||!t) return null;
+        return JSON.parse(c);
+      }
+      function saveHolidays(y,h){hSet('td_cal_h_'+y,JSON.stringify(h));hSet('td_cal_ts_'+y,String(Date.now()));}
+      async function fetchHolidays(y) {
+        try {
+          const ft=Number(hGet('td_cal_fail_'+y)||0);
+          if (ft&&Date.now()-ft<3600000) return null;
+          const result = await api.sendHttpRequest({
+            headers: { accept: 'application/json' },
+            method: 'GET',
+            timeoutMs: 15000,
+            url: `https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/${y}.json`
+          });
+          if (!result?.ok){hSet('td_cal_fail_'+y,String(Date.now()));return null;}
+          const d = result.body ? JSON.parse(result.body) : null;
+          const h=Array.isArray(d?.days)?d.days.map(x=>({date:x.date,isOffDay:!!x.isOffDay,name:x.name||''})):[];
+          holidayMemoryCache[y]=h; saveHolidays(y,h); hDel('td_cal_fail_'+y); return h;
+        } catch { hSet('td_cal_fail_'+y,String(Date.now())); return null; }
+      }
+      async function getHolidays(y) {
+        if (holidayMemoryCache[y]) return holidayMemoryCache[y];
+        const c=loadHolidays(y); if(c){holidayMemoryCache[y]=c;return c;}
+        const l=localHolidays[y]; if(l){holidayMemoryCache[y]=l;void fetchHolidays(y);return l;}
+        const o=await fetchHolidays(y); if(o) return o;
+        const prev=holidayMemoryCache[y-1]||loadHolidays(y-1)||localHolidays[y-1];
+        if (prev){const r=prev.map(h=>({...h,date:h.date.replace(String(y-1),String(y))}));holidayMemoryCache[y]=r;return r;}
+        return [];
+      }
+      function holidayInfo(date, byYear) {
+        return (byYear[date.getFullYear()]||[]).find(h=>h.date===dateId(date))||null;
+      }
+      function isFirstNamed(date, h, byYear) {
+        const n=h?.name?.trim(); if(!n||n.includes('调休')||!h.isOffDay) return false;
+        const prev=new Date(date); prev.setDate(date.getDate()-1);
+        const ph=holidayInfo(prev,byYear);
+        return ph?.isOffDay!==h.isOffDay||ph?.name?.trim()!==n;
+      }
+      // 传统节日/纪念日（非法定假日）
+      const traditionalHolidays = {
+        '01-01': '元旦',
+        '02-14': '情人节',
+        '03-08': '妇女节',
+        '05-01': '劳动节',
+        '05-04': '青年节',
+        '06-01': '儿童节',
+        '07-01': '建党节',
+        '08-01': '建军节',
+        '09-10': '教师节',
+        '10-01': '国庆节',
+        '11-01': '万圣节',
+        '12-24': '平安夜',
+        '12-25': '圣诞节'
+      };
+      const lunarHolidays = {
+        '01-01': '春节',
+        '01-15': '元宵节',
+        '02-02': '龙抬头',
+        '05-05': '端午节',
+        '07-07': '七夕',
+        '07-15': '中元节',
+        '08-15': '中秋节',
+        '09-09': '重阳节',
+        '10-01': '寒衣节',
+        '10-15': '下元节',
+        '12-08': '腊八节',
+        '12-23': '小年'
+      };
+
+      function getNthWeekdayOfMonth(year, month, weekday, nth) {
+        const first = new Date(year, month - 1, 1);
+        const offset = (weekday - first.getDay() + 7) % 7;
+        return 1 + offset + (nth - 1) * 7;
+      }
+
+      function getFloatingHoliday(date) {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+
+        if (month === 5 && day === getNthWeekdayOfMonth(year, 5, 0, 2)) {
+          return '母亲节';
+        }
+
+        if (month === 6 && day === getNthWeekdayOfMonth(year, 6, 0, 3)) {
+          return '父亲节';
+        }
+
+        if (month === 11 && day === getNthWeekdayOfMonth(year, 11, 4, 4)) {
+          return '感恩节';
+        }
+
+        return '';
+      }
+
+      // 二十四节气：按世纪常数公式计算日期，避免维护零散特例。
+      const solarTermNames = [
+        '小寒','大寒','立春','雨水','惊蛰','春分','清明','谷雨',
+        '立夏','小满','芒种','夏至','小暑','大暑','立秋','处暑',
+        '白露','秋分','寒露','霜降','立冬','小雪','大雪','冬至'
+      ];
+      const solarTermCenturyConstants = {
+        20: [6.11,20.84,4.6295,19.4599,6.3826,21.4155,5.59,20.888,6.318,21.86,6.5,22.20,7.928,23.65,8.35,23.95,8.44,23.822,9.098,24.218,8.218,23.08,7.9,22.60],
+        21: [5.4055,20.12,3.87,18.73,5.63,20.646,4.81,20.1,5.52,21.04,5.678,21.37,7.108,22.83,7.5,23.13,7.646,23.042,8.318,23.438,7.438,22.36,7.18,21.94]
+      };
+      function getSolarTerm(year, month, day) {
+        if (year < 1900 || year > 2100) return null;
+        const idx = (month - 1) * 2;
+        const term1Day = getSolarTermDay(year, idx);
+        const term2Day = getSolarTermDay(year, idx + 1);
+        if (day === term1Day) return solarTermNames[idx];
+        if (day === term2Day) return solarTermNames[idx + 1];
+        return null;
+      }
+      function getSolarTermDay(year, termIndex) {
+        const century = year < 2000 ? 20 : 21;
+        const yearInCentury = year % 100;
+        const constant = solarTermCenturyConstants[century][termIndex];
+
+        return Math.floor(yearInCentury * 0.2422 + constant) - Math.floor((yearInCentury - 1) / 4);
+      }
+      function daysBetween(start, end) {
+        return Math.round((stripTime(end).getTime() - stripTime(start).getTime()) / 86400000);
+      }
+      function getJulianDayNumber(date) {
+        let year = date.getFullYear();
+        let month = date.getMonth() + 1;
+        const day = date.getDate();
+        const adjust = Math.floor((14 - month) / 12);
+
+        year = year + 4800 - adjust;
+        month = month + 12 * adjust - 3;
+
+        return day +
+          Math.floor((153 * month + 2) / 5) +
+          365 * year +
+          Math.floor(year / 4) -
+          Math.floor(year / 100) +
+          Math.floor(year / 400) -
+          32045;
+      }
+      function getDayStemIndex(date) {
+        return (getJulianDayNumber(date) + 9) % 10;
+      }
+      function isGengDay(date) {
+        return getDayStemIndex(date) === 6;
+      }
+      function getNextGengDay(startDate, ordinal) {
+        const date = stripTime(startDate);
+        let count = 0;
+
+        for (let offset = 0; offset < 80; offset += 1) {
+          const current = new Date(date);
+          current.setDate(date.getDate() + offset);
+
+          if (!isGengDay(current)) {
+            continue;
+          }
+
+          count += 1;
+
+          if (count === ordinal) {
+            return current;
+          }
+        }
+
+        return null;
+      }
+      function getDogDays(year) {
+        const summerSolstice = new Date(year, 5, getSolarTermDay(year, 11));
+        const autumnStarts = new Date(year, 7, getSolarTermDay(year, 14));
+        const firstFu = getNextGengDay(summerSolstice, 3);
+        const lastFu = getNextGengDay(autumnStarts, 1);
+
+        if (!firstFu || !lastFu) {
+          return null;
+        }
+
+        const middleFu = new Date(firstFu);
+        middleFu.setDate(firstFu.getDate() + 10);
+        const outFu = new Date(lastFu);
+        outFu.setDate(lastFu.getDate() + 10);
+
+        return {
+          firstFu,
+          lastFu,
+          middleFu,
+          outFu
+        };
+      }
+      function getTraditionalCalendarDay(date) {
+        const dogDays = getDogDays(date.getFullYear());
+
+        if (!dogDays) {
+          return '';
+        }
+
+        const offsetFromFirstFu = daysBetween(dogDays.firstFu, date);
+        const offsetFromMiddleFu = daysBetween(dogDays.middleFu, date);
+        const offsetFromLastFu = daysBetween(dogDays.lastFu, date);
+        const offsetFromOutFu = daysBetween(dogDays.outFu, date);
+
+        if (offsetFromFirstFu === 0) return '初伏';
+        if (offsetFromMiddleFu === 0) return '中伏';
+        if (offsetFromLastFu === 0) return '末伏';
+        if (offsetFromOutFu === 0) return '出伏';
+
+        return '';
+      }
+
+      function holidayDisplayText(date, byYear) {
+        const h=holidayInfo(date,byYear);
+        if (h&&isFirstNamed(date,h,byYear)) return h.name.trim();
+
+        // 检查传统节日
+        const mmdd = `${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+        if (traditionalHolidays[mmdd]) {
+          return traditionalHolidays[mmdd];
+        }
+
+        const floatingHoliday = getFloatingHoliday(date);
+        if (floatingHoliday) return floatingHoliday;
+
+        const lunarHoliday = getLunarHoliday(date);
+        if (lunarHoliday) return lunarHoliday;
+
+        const traditionalCalendarDay = getTraditionalCalendarDay(date);
+        if (traditionalCalendarDay) return traditionalCalendarDay;
+
+        return '';
+      }
+      function getLunarHoliday(date) {
+        const lunar = solarToLunar(date);
+
+        if (lunar.isLeapMonth) {
+          return '';
+        }
+
+        const key = `${String(lunar.lunarMonth).padStart(2,'0')}-${String(lunar.lunarDay).padStart(2,'0')}`;
+
+        if (lunarHolidays[key]) {
+          return lunarHolidays[key];
+        }
+
+        if (lunar.lunarMonth === 12 && lunar.lunarDay === getLunarMonthDays(lunar.lunarYear, 12)) {
+          return '除夕';
+        }
+
+        return '';
+      }
+
+      function dayDisplayText(date, byYear) {
+        const holiday = holidayDisplayText(date, byYear);
+        if (holiday) return holiday;
+        
+        // 检查节气
+        const term = getSolarTerm(date.getFullYear(), date.getMonth()+1, date.getDate());
+        if (term) return term;
+        
+        return solarToLunar(date).dayShort;
+      }
+      function isHolidayOffDay(date, byYear) {
+        const h = holidayInfo(date, byYear);
+
+        if (!h?.isOffDay) return false;
+
+        for (let offset = -10; offset <= 10; offset += 1) {
+          const nearby = new Date(date);
+          nearby.setDate(date.getDate() + offset);
+          const nearbyHoliday = holidayInfo(nearby, byYear);
+
+          if (!nearbyHoliday?.isOffDay) {
+            continue;
+          }
+
+          if (Math.abs(offset) > 0) {
+            let contiguous = true;
+            const step = offset > 0 ? 1 : -1;
+
+            for (let currentOffset = step; currentOffset !== offset + step; currentOffset += step) {
+              const current = new Date(date);
+              current.setDate(date.getDate() + currentOffset);
+              if (!holidayInfo(current, byYear)?.isOffDay) {
+                contiguous = false;
+                break;
+              }
+            }
+
+            if (!contiguous) {
+              continue;
+            }
+          }
+
+          const nearbyName = nearbyHoliday.name?.trim() ?? '';
+
+          if (nearbyName && !nearbyName.includes('调休')) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+      function offLabel(date, byYear) {
+        const wd=date.getDay(), isWe=wd===0||wd===6, h=holidayInfo(date,byYear);
+        if (h&&!h.isOffDay&&isWe) return '班';
+        if (h&&h.isOffDay&&!isWe) return '休';
+        if (isWe) return '休';
+        return '';
+      }
+
+      // 顶部今日信息
+      function renderHeader() {
+        $('todayDay').textContent = today.getDate();
+        $('todayWeekday').textContent = `星期${weekLabels[today.getDay()]}`;
+        const lunar = solarToLunar(today);
+        $('todayLunar').textContent = lunar.full;
+        const h = (holidayMemoryCache[today.getFullYear()]||[]).find(x=>x.date===dateId(today));
+        $('todayHoliday').textContent = h&&h.name?h.name:'';
+      }
+
+      let renderReqId = 0;
+      async function renderCalendar() {
+        const reqId = ++renderReqId;
+        const month = state.visibleMonth;
+        $('monthTitle').textContent = `${month.getFullYear()}年 ${month.getMonth()+1}月`;
+        const first = new Date(month.getFullYear(), month.getMonth(), 1);
+        const start = new Date(first);
+        start.setDate(first.getDate() - ((first.getDay()+6)%7));
+        const days = Array.from({length:42},(_,i)=>{ const d=new Date(start); d.setDate(start.getDate()+i); return d; });
+        const byYear = {};
+        await Promise.all([...new Set(days.map(d=>d.getFullYear()))].map(async y=>{ byYear[y]=await getHolidays(y); }));
+        if (reqId!==renderReqId) return;
+        renderHeader();
+        $('grid').replaceChildren(...days.map(date=>{
+          const btn = document.createElement('button');
+          const isToday = isSameDate(date,today);
+          const isSel = isSameDate(date,state.selected);
+          const h = holidayInfo(date,byYear);
+          const isWeekend = date.getDay()===0||date.getDay()===6;
+          // 判断是否为休息日：周末或法定节假日的休息日
+          const isOffDay = isWeekend || (h && h.isOffDay);
+          btn.type = 'button';
+          const label = offLabel(date,byYear);
+          const sub = dayDisplayText(date,byYear);
+          const isHoliday = isHolidayOffDay(date, byYear);
+          btn.className = ['cal-day', date.getMonth()!==month.getMonth()?'muted':'', isOffDay?'weekend':'', isHoliday?'holiday':'', isToday?'today':'', isSel?'selected':''].filter(Boolean).join(' ');
+          btn.innerHTML = `<span class="cal-day-num">${date.getDate()}</span><span class="cal-day-sub">${sub}</span>${label?`<span class="cal-day-badge${label==='班'?' workday':''}">${label}</span>`:''}`;
+          btn.addEventListener('click',()=>{
+            state.selected = stripTime(date);
+            if (date.getMonth()!==state.visibleMonth.getMonth()) state.visibleMonth=new Date(date.getFullYear(),date.getMonth(),1);
+            void renderCalendar();
+          });
+          return btn;
+        }));
+      }
+
+      $('prev').addEventListener('click',()=>{ state.visibleMonth=new Date(state.visibleMonth.getFullYear(),state.visibleMonth.getMonth()-1,1); void renderCalendar(); });
+      $('next').addEventListener('click',()=>{ state.visibleMonth=new Date(state.visibleMonth.getFullYear(),state.visibleMonth.getMonth()+1,1); void renderCalendar(); });
+      $('todayBtn').addEventListener('click', () => resetToToday());
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-calendar', capabilities: ['sendHttpRequest'] };
+        const pluginOnReady = function () { renderCalendar(); };
+        const pluginOfflineReady = function () { void renderCalendar(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

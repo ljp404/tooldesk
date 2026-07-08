@@ -1,0 +1,31 @@
+{
+  "accent": "violet",
+  "caption": "定位零宽、控制符和不可见空白",
+  "category": "text",
+  "defaultAlias": "yc",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-hidden-char-detector",
+  "keywords": [
+    "hidden",
+    "zero width",
+    "control",
+    "space",
+    "ycjc",
+    "yincang",
+    "yincangzifu"
+  ],
+  "name": "隐藏字符检测",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

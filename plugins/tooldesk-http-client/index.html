@@ -1,0 +1,4945 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTTP 请求</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+[hidden] { display: none !important; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #2563eb; color: #fff; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+.app-icon svg { display: block; height: 100%; width: 100%; }
+
+
+
+.workspace:has(.http-client) {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workspace-content:has(.http-client) {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.workspace-content:has(.http-client) .tool-detail,
+.workspace-content:has(.http-client) .tool-panel-fill {
+  flex: 1;
+  min-height: 0;
+}
+
+.tool-panel-fill .tool-content.http-client {
+  background: #eef3f8;
+  display: flex;
+  flex: 1;
+  gap: 12px;
+  min-height: 0;
+  padding: 12px;
+  position: relative;
+}
+
+.http-client-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  min-width: 0;
+}
+
+.http-client-main.no-open-tabs .http-client-composer,
+.http-client-main.no-open-tabs .http-client-workspace {
+  display: none;
+}
+
+.http-client-main.no-open-tabs .http-client-empty-state {
+  display: flex;
+}
+
+.http-client-empty-state {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  color: #64748b;
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  padding: 24px;
+  text-align: center;
+}
+
+.http-client-empty-state strong {
+  color: #334155;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.http-client-empty-state p {
+  font-size: 12px;
+  margin: 0 0 14px;
+}
+
+.http-client-empty-state button {
+  background: #2563eb;
+  border-radius: 7px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  height: 34px;
+  padding: 0 14px;
+}
+
+.http-client-sidebar {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-shrink: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  transition: width 0.18s ease;
+  width: var(--sidebar-width, 328px);
+}
+
+.http-client-sidebar.collapsed {
+  width: 44px;
+}
+
+.http-client-sidebar.collapsed .http-client-side-nav {
+  border-right: 0;
+}
+
+.http-client-sidebar.collapsed .http-client-sidebar-resizer {
+  display: none;
+}
+
+.http-client-sidebar.resizing {
+  transition: none;
+}
+
+.http-client-sidebar-resizer {
+  bottom: 0;
+  cursor: col-resize;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8px;
+  z-index: 20;
+}
+
+.http-client-sidebar-resizer::after {
+  background: transparent;
+  border-radius: 999px;
+  bottom: 8px;
+  content: '';
+  position: absolute;
+  right: 2px;
+  top: 8px;
+  transition: background 0.12s ease;
+  width: 2px;
+}
+
+.http-client-sidebar-resizer:hover::after,
+.http-client-sidebar.resizing .http-client-sidebar-resizer::after {
+  background: #93c5fd;
+}
+
+.http-client-side-nav {
+  background: #f8fafc;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 8px 4px;
+  width: 44px;
+}
+
+.http-client-side-nav-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  width: 36px;
+}
+
+.http-client-side-nav-item .app-icon {
+  height: 18px;
+  width: 18px;
+}
+
+.http-client-side-nav-item svg {
+  stroke-width: 2.2;
+}
+
+.http-client-side-nav-item:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.http-client-side-nav-item.active {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.http-client-side-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.http-client-side-panel-head,
+.http-client-collections-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.http-client-side-panel-head strong,
+.http-client-collections-head strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.http-client-side-env-picker {
+  border-bottom: 1px solid #eef2f7;
+  display: grid;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.http-client-side-env-picker label {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.http-client-side-env-picker .http-client-env-select {
+  max-width: none;
+  width: 100%;
+}
+
+.http-client-side-env-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.http-client-env-list {
+  border-bottom: 1px solid #eef2f7;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+}
+
+.http-client-env-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  min-height: 34px;
+  padding: 2px 4px;
+  text-align: left;
+  width: 100%;
+}
+
+.http-client-env-item:hover,
+.http-client-env-item.active {
+  background: #eff6ff;
+}
+
+.http-client-env-icon {
+  align-items: center;
+  color: #64748b;
+  display: inline-flex;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.http-client-env-icon .app-icon {
+  height: 14px;
+  width: 14px;
+}
+
+.http-client-env-main {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.http-client-env-name {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.http-client-env-meta {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.http-client-env-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.http-client-env-item:hover .http-client-env-actions,
+.http-client-env-item.active .http-client-env-actions {
+  opacity: 1;
+}
+
+.http-client-env-actions button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #64748b;
+  display: inline-flex;
+  font-size: 12px;
+  height: 22px;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0;
+  width: 22px;
+}
+
+.http-client-env-actions button:hover:not(:disabled) {
+  background: #ffffff;
+  color: #2563eb;
+}
+
+.http-client-env-actions button.danger:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.http-client-env-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.http-client-side-history-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.http-client-side-history-list::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.http-client-side-history-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.http-client-side-history-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.http-client-collections-add,
+.http-client-collections-action {
+  align-items: center;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  color: #2563eb;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+}
+
+.http-client-collections-actions {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.http-client-collections-action:hover,
+.http-client-collections-add:hover {
+  background: #dbeafe;
+}
+
+.http-client-collections-action .app-icon,
+.http-client-collections-add .app-icon {
+  height: 14px;
+  width: 14px;
+}
+
+.http-client-inline-name-form {
+  align-items: center;
+  display: inline-flex;
+  flex: 1;
+  gap: 4px;
+  justify-content: flex-end;
+  max-width: 160px;
+  min-width: 0;
+}
+
+.http-client-inline-name-input {
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  color: #111827;
+  flex: 1;
+  font-size: 12px;
+  height: 28px;
+  min-width: 0;
+  outline: none;
+  padding: 0 8px;
+}
+
+.http-client-inline-name-input:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.http-client-inline-name-ok,
+.http-client-inline-name-cancel {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 12px;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+}
+
+.http-client-inline-name-ok {
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+.http-client-inline-name-ok:hover {
+  background: #eff6ff;
+}
+
+.http-client-collections-search {
+  align-items: center;
+  border-bottom: 1px solid #eef2f7;
+  color: #94a3b8;
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.http-client-collections-search .app-icon {
+  flex-shrink: 0;
+  height: 14px;
+  width: 14px;
+}
+
+.http-client-collections-search input {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: #111827;
+  flex: 1;
+  font-size: 12px;
+  min-height: 24px;
+  outline: none;
+  padding: 0;
+}
+
+.http-client-collections-search input:focus,
+.http-client-collections-search input:focus-visible {
+  border: 0;
+  box-shadow: none;
+  outline: none;
+}
+
+.http-client-collections-search input::-webkit-search-cancel-button,
+.http-client-collections-search input::-webkit-search-decoration,
+.http-client-collections-search input::-webkit-search-results-button,
+.http-client-collections-search input::-webkit-search-results-decoration {
+  appearance: none;
+  display: none;
+}
+
+.http-client-collections-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+  scrollbar-width: thin;
+}
+
+.http-client-collections-list::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.http-client-collections-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.http-client-collection-group {
+  border-radius: 8px;
+}
+
+.http-client-collection-group.drag-over > .http-client-collection-group-head {
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px #93c5fd;
+}
+
+.http-client-collection-group.group-drag-over > .http-client-collection-group-head {
+  background: #f0fdf4;
+  box-shadow: inset 0 0 0 1px #86efac;
+}
+
+.http-client-collection-group.active > .http-client-collection-group-head {
+  background: #f8fafc;
+}
+
+.http-client-collection-group-head {
+  align-items: center;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  min-height: 34px;
+  padding: 2px 4px;
+}
+
+.http-client-collection-group-head:hover {
+  background: #f8fafc;
+}
+
+.http-client-collection-group-head.dragging {
+  opacity: 0.58;
+}
+
+.http-client-collection-toggle,
+.http-client-collection-group-main {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #475569;
+  display: inline-flex;
+  min-height: 28px;
+  padding: 0;
+}
+
+.http-client-collection-toggle {
+  justify-content: center;
+  width: 24px;
+}
+
+.http-client-collection-toggle .app-icon {
+  height: 14px;
+  transition: transform 0.15s ease;
+  width: 14px;
+}
+
+.http-client-collection-toggle .app-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.http-client-collection-group-main {
+  gap: 6px;
+  justify-content: flex-start;
+  min-width: 0;
+  text-align: left;
+}
+
+.http-client-collection-group-main .app-icon {
+  color: #64748b;
+  flex-shrink: 0;
+  height: 14px;
+  width: 14px;
+}
+
+.http-client-collection-group-name {
+  color: #111827;
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.http-client-collection-group-edit {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.http-client-collection-group-edit .http-client-inline-name-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.http-client-delete-hint {
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.http-client-collection-group-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.http-client-collection-group-head:hover .http-client-collection-group-actions,
+.http-client-collection-group.active .http-client-collection-group-actions {
+  opacity: 1;
+}
+
+.http-client-collection-group-actions button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #64748b;
+  display: inline-flex;
+  font-size: 12px;
+  height: 22px;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0;
+  width: 22px;
+}
+
+.http-client-collection-group-actions button:hover:not(:disabled) {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.http-client-collection-group-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.http-client-collection-requests {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 4px 6px 28px;
+}
+
+.http-client-collection-request {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 30px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 4px 6px;
+  text-align: left;
+}
+
+.http-client-collection-request:hover,
+.http-client-collection-request.active {
+  background: #eff6ff;
+}
+
+.http-client-collection-request.dragging {
+  opacity: 0.48;
+}
+
+.http-client-collection-request-main {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.http-client-collection-request-edit {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.http-client-collection-request-edit .http-client-inline-name-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.http-client-collection-method {
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  min-width: 42px;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.http-client-collection-request-name {
+  color: #334155;
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.http-client-collection-request-actions {
+  align-items: center;
+  color: #94a3b8;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 12px;
+  gap: 4px;
+  opacity: 0;
+}
+
+.http-client-collection-request:hover .http-client-collection-request-actions,
+.http-client-collection-request.active .http-client-collection-request-actions {
+  opacity: 1;
+}
+
+.http-client-collection-request-actions button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  height: 22px;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0;
+  width: 22px;
+}
+
+.http-client-collection-request-actions button:hover {
+  background: #ffffff;
+  color: #dc2626;
+}
+
+.http-client-collections-empty {
+  color: #94a3b8;
+  font-size: 11px;
+  margin: 0;
+  padding: 8px 6px;
+  text-align: left;
+}
+
+.http-client-composer {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  display: grid;
+  gap: 8px;
+  padding: 8px 12px 10px;
+}
+
+.http-client-open-tabs {
+  align-items: end;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 4px;
+  min-height: 32px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-left: 2px;
+  scrollbar-width: thin;
+}
+
+.http-client-open-tabs::-webkit-scrollbar {
+  height: 5px;
+}
+
+.http-client-open-tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.http-client-open-tab {
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #dbe4ef;
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  color: #64748b;
+  display: inline-grid;
+  flex: 0 0 auto;
+  gap: 6px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  height: 30px;
+  max-width: 210px;
+  min-width: 118px;
+  padding: 0 7px 0 8px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.http-client-open-tab.active {
+  background: #edf3ff;
+  border: 1px solid #93c5fd;
+  border-bottom: 1px solid #edf3ff;
+  border-top: 2px solid #2563eb;
+  box-shadow: none;
+  color: #1e3a8a;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 1;
+}
+
+.http-client-open-tab:hover:not(.active) {
+  background: #eef3f8;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.http-client-open-tab.active .http-client-open-tab-title {
+  color: #1d4ed8;
+  font-weight: 800;
+}
+
+.http-client-open-tab.active .http-client-open-tab-close {
+  color: #64748b;
+}
+
+.http-client-open-tab.active .http-client-open-tab-close:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.http-client-open-tab-method {
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 3px 4px;
+}
+
+.http-client-open-tab-title {
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.http-client-open-tab-dirty {
+  background: #2563eb;
+  border-radius: 999px;
+  height: 6px;
+  opacity: 0;
+  width: 6px;
+}
+
+.http-client-open-tab.dirty .http-client-open-tab-dirty {
+  opacity: 1;
+}
+
+.http-client-open-tab-close {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #94a3b8;
+  display: inline-flex;
+  font-size: 14px;
+  height: 18px;
+  justify-content: center;
+  padding: 0;
+  width: 18px;
+}
+
+.http-client-open-tab-close:hover {
+  background: #eef2f7;
+  color: #334155;
+}
+
+.http-client-tab-menu {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+  display: grid;
+  gap: 2px;
+  min-width: 128px;
+  padding: 4px;
+  position: absolute;
+  z-index: 120;
+}
+
+.http-client-tab-menu button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  height: 30px;
+  padding: 0 10px;
+  text-align: left;
+}
+
+.http-client-tab-menu button:hover {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.http-client-composer-main {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto auto;
+  gap: 8px;
+}
+
+.http-client-env-select {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  height: 32px;
+  outline: none;
+  padding: 0 8px;
+}
+
+.http-client-method-picker {
+  flex-shrink: 0;
+  position: relative;
+  width: 88px;
+}
+
+.http-client-method-trigger {
+  align-items: center;
+  appearance: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  box-sizing: border-box;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 4px;
+  height: 32px;
+  justify-content: space-between;
+  outline: none;
+  padding: 0 6px 0 8px;
+  width: 100%;
+}
+
+.http-client-method-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.http-client-method-label {
+  line-height: 1;
+}
+
+.http-client-method-chevron {
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 5px solid currentColor;
+  flex-shrink: 0;
+  height: 0;
+  opacity: 0.72;
+  transition: transform 0.15s ease;
+  width: 0;
+}
+
+.http-client-method-picker.open .http-client-method-chevron {
+  transform: rotate(180deg);
+}
+
+.http-client-method-menu {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  display: grid;
+  gap: 2px;
+  left: 0;
+  padding: 4px;
+  position: absolute;
+  top: calc(100% + 4px);
+  width: 100%;
+  z-index: 30;
+}
+
+.http-client-method-option {
+  background: #ffffff;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 30px;
+  padding: 0 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.http-client-method-option:hover {
+  filter: brightness(0.97);
+}
+
+.http-client-method-option.active {
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.http-client-method-get,
+.http-client-method-option.http-client-method-get {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.http-client-method-post,
+.http-client-method-option.http-client-method-post {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.http-client-method-put,
+.http-client-method-option.http-client-method-put {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.http-client-method-patch,
+.http-client-method-option.http-client-method-patch {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+  color: #6d28d9;
+}
+
+.http-client-method-delete,
+.http-client-method-option.http-client-method-delete {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.http-client-method-head,
+.http-client-method-options,
+.http-client-method-option.http-client-method-head,
+.http-client-method-option.http-client-method-options {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.http-client-url {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #0f172a;
+  flex: 1;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  height: 32px;
+  min-width: 160px;
+  outline: none;
+  padding: 0 10px;
+  width: auto;
+}
+
+.http-client-url:focus,
+.http-client-method-trigger:focus,
+.http-client-env-select:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.tool-panel .http-client-send,
+.tool-panel .http-client-save,
+.http-client-send,
+.http-client-save {
+  border-radius: 6px;
+  font-size: 12px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 14px;
+}
+
+.tool-panel .http-client-save,
+.http-client-save {
+  padding: 0 12px;
+}
+
+.http-client-workspace {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(260px, var(--request-pane-width, 1fr)) 8px minmax(260px, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+}
+
+.http-client-pane-resizer {
+  align-self: stretch;
+  cursor: col-resize;
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+}
+
+.http-client-pane-resizer::before {
+  background: #dbe4ef;
+  border-radius: 999px;
+  content: '';
+  display: block;
+  transition:
+    background 0.12s ease,
+    width 0.12s ease;
+  width: 2px;
+}
+
+.http-client-pane-resizer:hover::before,
+.http-client-pane-resizer.dragging::before {
+  background: #93c5fd;
+  width: 3px;
+}
+
+body.http-client-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.http-client-pane {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.http-client-pane-bar {
+  align-items: center;
+  background: linear-gradient(to bottom, #fafbfc, #ffffff);
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 6px 12px;
+}
+
+.http-client-pane-bar strong {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+  margin-right: 2px;
+}
+
+.http-client-pane-bar-left {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.http-client-response-bar {
+  align-items: center;
+}
+
+.http-client-pane-tabs {
+  background: #f1f5f9;
+  border-radius: 6px;
+  display: inline-flex;
+  gap: 1px;
+  padding: 2px;
+}
+
+.http-client-pane-tabs button {
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  min-height: 24px;
+  padding: 0 9px;
+}
+
+.http-client-pane-tabs button.active {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  color: #2563eb;
+}
+
+.http-client-pane-tabs button:hover:not(.active) {
+  color: #334155;
+}
+
+.http-client-kv-table {
+  background: #ffffff;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.http-client-kv-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.http-client-kv-head,
+.http-client-kv-row {
+  align-items: center;
+  display: grid;
+  gap: 0;
+  grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 36px;
+  padding: 0 12px;
+}
+
+.http-client-kv-head.readonly,
+.http-client-kv-row.readonly {
+  gap: 12px;
+  grid-template-columns: minmax(120px, 0.85fr) minmax(0, 1.15fr);
+}
+
+.http-client-kv-head {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  min-height: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.http-client-kv-head span {
+  padding: 0 6px;
+}
+
+.http-client-kv-row {
+  border-bottom: 1px solid #f1f5f9;
+  min-height: 36px;
+  transition: background 0.12s ease;
+}
+
+.http-client-kv-row:hover {
+  background: #f8fafc;
+}
+
+.http-client-kv-row input[type='checkbox'] {
+  accent-color: #2563eb;
+  cursor: pointer;
+  height: 14px;
+  justify-self: center;
+  margin: 0;
+  width: 14px;
+}
+
+.http-client-kv-row input[type='text'] {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #111827;
+  font-size: 12px;
+  height: 28px;
+  margin: 0 4px;
+  outline: none;
+  padding: 0 8px;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+  width: calc(100% - 8px);
+}
+
+.http-client-kv-row input[type='text']::placeholder {
+  color: #cbd5e1;
+}
+
+.http-client-kv-row input[type='text']:focus {
+  background: #ffffff;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.http-client-kv-row span {
+  color: #334155;
+  font-size: 12px;
+  overflow: hidden;
+  padding: 0 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.http-client-kv-row.readonly {
+  min-height: 34px;
+}
+
+.http-client-kv-row.readonly:hover {
+  background: #f8fafc;
+}
+
+.http-client-kv-row button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #cbd5e1;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  justify-self: center;
+  min-height: 28px;
+  opacity: 0;
+  padding: 0;
+  transition:
+    opacity 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease;
+  width: 28px;
+}
+
+.http-client-kv-row:hover button,
+.http-client-kv-row:focus-within button {
+  opacity: 1;
+}
+
+.http-client-kv-row button:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.http-client-kv-add {
+  align-items: center;
+  background: #fafbfc;
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  border-radius: 0;
+  color: #2563eb;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  justify-content: flex-start;
+  min-height: 34px;
+  padding: 0 14px;
+  transition: background 0.12s ease;
+  width: 100%;
+}
+
+.http-client-kv-add:hover {
+  background: #f1f5f9;
+  color: #1d4ed8;
+}
+
+.http-client-kv-add-mark {
+  align-items: center;
+  color: currentColor;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  height: auto;
+  justify-content: center;
+  line-height: 1;
+  width: auto;
+}
+
+.http-client-toolbar-link {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #2563eb;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 8px;
+}
+
+.http-client-toolbar-link:hover {
+  background: #eff6ff;
+}
+
+.http-client-toolbar-link:hover .http-client-kv-add-mark {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.http-client-cookie-toolbar,
+.http-client-env-toolbar {
+  align-items: center;
+  background: #fafbfc;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+
+.http-client-env-toolbar p {
+  color: #64748b;
+  font-size: 12px;
+  margin: 0;
+}
+
+.http-client-cookie-toolbar button,
+.http-client-history-actions button {
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  border-radius: 6px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.http-client-env-toolbar button:hover,
+.http-client-cookie-toolbar button:hover,
+.http-client-history-actions button:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.http-client-checkbox {
+  align-items: center;
+  color: #475569;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.http-client-history-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.http-client-history-item {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #eef2f7;
+  color: inherit;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 10px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.http-client-history-item:hover {
+  background: #eff6ff;
+}
+
+.http-client-history-method {
+  background: #eff6ff;
+  border-radius: 4px;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 800;
+  grid-column: 1;
+  justify-self: start;
+  padding: 2px 6px;
+}
+
+.http-client-history-label {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  grid-column: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.http-client-history-meta {
+  color: #94a3b8;
+  font-size: 11px;
+  grid-column: 1;
+}
+
+.http-client-history-remove {
+  align-items: center;
+  color: #94a3b8;
+  display: inline-flex;
+  font-size: 16px;
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.http-client-body-editor {
+  background: #fafbfc;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px 12px 12px;
+}
+
+.http-client-body-toolbar {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.http-client-body-toolbar select {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  height: 30px;
+  outline: none;
+  padding: 0 10px;
+}
+
+.http-client-body-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.http-client-body-actions button {
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  border-radius: 6px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.http-client-body-actions button:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.http-client-body-actions button:disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.http-client-body-editor textarea,
+.http-client-response-body textarea {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #111827;
+  flex: 1;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  min-height: 0;
+  outline: none;
+  padding: 12px 14px;
+  resize: none;
+  width: 100%;
+}
+
+.http-client-json-editor {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: grid;
+  flex: 1;
+  grid-template-columns: 32px minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.http-client-json-gutter {
+  background: #ffffff;
+  color: #999999;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 6px 12px 0;
+  text-align: right;
+  user-select: none;
+}
+
+.http-client-json-gutter-inner {
+  will-change: transform;
+}
+
+.http-client-json-gutter span {
+  display: block;
+  height: 1.8em;
+}
+
+.http-client-json-code.json-code {
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.http-client-json-code textarea {
+  background: transparent;
+  border: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  caret-color: #111827;
+  color: transparent;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 400;
+  -webkit-text-fill-color: transparent;
+  left: 0;
+  line-height: 1.8;
+  margin: 0;
+  min-height: 100%;
+  min-width: 100%;
+  outline: none;
+  overflow: auto;
+  padding: 12px 14px;
+  position: absolute;
+  resize: none;
+  top: 0;
+  white-space: pre;
+  word-break: normal;
+}
+
+.http-client-json-code .json-highlight {
+  box-sizing: border-box;
+  color: #000000;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 400;
+  left: 0;
+  line-height: 1.8;
+  margin: 0;
+  min-height: 100%;
+  min-width: 100%;
+  overflow: visible;
+  padding: 12px 14px;
+  pointer-events: none;
+  position: absolute;
+  text-rendering: auto;
+  top: 0;
+  -webkit-font-smoothing: auto;
+  white-space: pre;
+  will-change: transform;
+  word-break: normal;
+}
+
+.http-client-json-code textarea::selection {
+  background: rgba(125, 211, 252, 0.28);
+}
+
+.http-client-json-code textarea:disabled {
+  cursor: not-allowed;
+}
+
+.http-client-json-code .json-key { color: #a31515; font-weight: 400; }
+.http-client-json-code .json-string { color: #0451a5; font-weight: 400; }
+.http-client-json-code .json-number { color: #098658; font-weight: 400; }
+.http-client-json-code .json-const { color: #0000ff; font-weight: 400; }
+.http-client-json-code .json-punct { color: #000000; font-weight: 400; }
+
+.http-client-json-editor:focus-within {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.http-client-json-code textarea::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.http-client-json-code textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.http-client-json-code textarea::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  cursor: default;
+}
+
+.http-client-json-code textarea::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  background-clip: padding-box;
+}
+
+.http-client-json-code textarea::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.http-client-body-editor textarea:focus,
+.http-client-response-body textarea:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.http-client-response-meta {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.http-client-meta-chip {
+  background: #f1f5f9;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+}
+
+.http-client-status {
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 4px 10px;
+}
+
+.http-client-status.success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.http-client-status.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.http-client-status.info {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.http-client-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 12px 14px 0;
+  padding: 10px 12px;
+}
+
+.http-client-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  pointer-events: none;
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: fit-content;
+  z-index: 80;
+}
+
+.http-client-response-body {
+  background: #fafbfc;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px 12px 12px;
+}
+
+.http-client-response-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.http-client-response-actions button {
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  border-radius: 6px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.http-client-response-actions button:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.http-client-response-actions button:disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.http-client-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  min-height: 0;
+  padding: 24px;
+  text-align: center;
+}
+
+.http-client-empty-icon {
+  align-items: center;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  border: 1px dashed #bfdbfe;
+  border-radius: 14px;
+  color: #2563eb;
+  display: inline-flex;
+  height: 56px;
+  justify-content: center;
+  width: 56px;
+}
+
+.http-client-empty-icon .app-icon {
+  height: 26px;
+  opacity: 0.8;
+  width: 26px;
+}
+
+.http-client-empty strong {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.http-client-empty p {
+  font-size: 12px;
+  margin: 0;
+}
+
+.http-client-meta-loading {
+  color: #2563eb;
+}
+
+.http-client-empty.is-loading .http-client-empty-icon {
+  animation: http-client-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes http-client-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.http-client-dialog-backdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.36);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 40;
+}
+
+.http-client-dialog {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+  display: grid;
+  gap: 0;
+  grid-template-rows: auto 1fr auto;
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  width: min(400px, 100%);
+}
+
+.http-client-dialog-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 16px;
+}
+
+.http-client-dialog-head h3 {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.http-client-dialog-close {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #64748b;
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0;
+  width: 32px;
+}
+
+.http-client-dialog-close:hover {
+  background: #f1f5f9;
+  color: #111827;
+}
+
+.http-client-dialog-close .app-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.http-client-dialog-body {
+  padding: 16px;
+}
+
+.http-client-dialog-message {
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.http-client-dialog-field {
+  display: grid;
+  gap: 8px;
+}
+
+.http-client-dialog-field span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.http-client-dialog-input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  color: #111827;
+  font-size: 13px;
+  height: 38px;
+  outline: none;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.http-client-dialog-input:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.http-client-dialog-foot {
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 16px 16px;
+}
+
+.http-client-dialog-cancel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 14px;
+}
+
+.http-client-dialog-cancel:hover {
+  background: #f8fafc;
+}
+
+.http-client-dialog-confirm {
+  border: 0;
+  border-radius: 7px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 18px;
+}
+
+.http-client-dialog-confirm.danger {
+  background: #dc2626;
+}
+
+.http-client-dialog-confirm.danger:hover {
+  background: #b91c1c;
+}
+
+
+.http-client-simple-panel { background: #ffffff; border: 1px solid #dbe4ef; border-radius: 10px; display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden; }
+.http-client-simple-card { border: 1px solid #e2e8f0; border-radius: 8px; display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden; }
+
+
+.http-client-request-bar { background: #ffffff; border: 1px solid #dbe4ef; border-radius: 10px; display: grid; gap: 8px; grid-template-columns: 118px minmax(0, 1fr) auto; padding: 12px; }
+.http-client-request-bar select, .http-client-request-bar input { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; color: #111827; height: 38px; outline: none; padding: 0 10px; }
+.http-client-send-button { background: #2563eb; border-radius: 7px; color: #fff; font-weight: 800; min-width: 88px; }
+.http-client-response-layout { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 0; }
+.http-client-panel-body { display: grid; gap: 10px; min-height: 0; overflow: auto; padding: 12px; }
+.http-client-key-value-list { display: grid; gap: 8px; }
+.http-client-key-value-row { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.http-client-key-value-row input, .http-client-panel-body textarea { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; color: #111827; outline: none; padding: 0 10px; }
+.http-client-key-value-row input { height: 34px; }
+.http-client-panel-body textarea { min-height: 130px; padding: 10px; resize: vertical; width: 100%; }
+.http-client-response-meta { align-items: center; display: flex; gap: 8px; }
+.http-client-status-badge { border-radius: 999px; color: #fff; font-size: 12px; font-weight: 900; padding: 4px 8px; }
+.http-client-status-badge.success { background: #059669; }
+.http-client-status-badge.error { background: #dc2626; }
+.http-client-status-badge.idle { background: #64748b; }
+.http-client-error { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 7px; color: #9a3412; font-size: 12px; font-weight: 700; padding: 10px 12px; }
+.http-client-toast { background: rgba(15, 23, 42, .88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; padding: 7px 10px; position: fixed; right: 24px; top: 24px; z-index: 2; }
+.http-client-panel-body pre { background: #0f172a; border-radius: 7px; color: #e5e7eb; margin: 0; min-height: 220px; overflow: auto; padding: 12px; white-space: pre-wrap; word-break: break-word; }
+@media (max-width: 960px) { .http-client-response-layout { grid-template-columns: 1fr; } }
+</style>
+  </head>
+  <body class="tool-panel-fill">
+    <main class="tool-content http-client">
+      <aside id="sidebar" class="http-client-sidebar">
+        <nav class="http-client-side-nav" aria-label="HTTP 请求侧栏">
+          <button id="navCollections" class="http-client-side-nav-item active" type="button" title="集合" aria-label="集合">
+            <span class="app-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+              </svg>
+            </span>
+          </button>
+          <button id="navEnvironment" class="http-client-side-nav-item" type="button" title="环境" aria-label="环境">
+            <span class="app-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.2a2 2 0 0 1-2 0l-.1-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.1.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.1.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.1-.1a2 2 0 0 1 2 0l.4.2a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.2a2 2 0 0 1 2 0l.1.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.1-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.1-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.1.1a2 2 0 0 1-2 0l-.4-.2a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </span>
+          </button>
+          <button id="navHistory" class="http-client-side-nav-item" type="button" title="历史" aria-label="历史">
+            <span class="app-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="7" />
+                <path d="M12 8v4l2.5 1.5" />
+              </svg>
+            </span>
+          </button>
+        </nav>
+        <div id="sidePanel" class="http-client-side-panel"></div>
+        <div id="sidebarResizer" class="http-client-sidebar-resizer" role="separator" aria-orientation="vertical" aria-label="调整侧边栏宽度"></div>
+      </aside>
+
+      <div id="mainArea" class="http-client-main">
+        <div class="http-client-composer">
+          <div id="openRequestTabs" class="http-client-open-tabs" aria-label="打开的请求"></div>
+          <div class="http-client-composer-main">
+            <div id="methodPicker" class="http-client-method-picker">
+              <button id="methodTrigger" type="button" class="http-client-method-trigger http-client-method-get" aria-haspopup="listbox" aria-expanded="false">
+                <span id="methodLabel" class="http-client-method-label">GET</span>
+                <span class="http-client-method-chevron" aria-hidden="true"></span>
+              </button>
+              <div id="methodMenu" class="http-client-method-menu" role="listbox" hidden></div>
+            </div>
+            <input id="url" class="http-client-url" type="text" placeholder="https://api.example.com/path" value="https://" />
+            <button id="send" class="http-client-send tool-primary-button" type="button" title="发送 (Ctrl+Enter)">发送</button>
+            <button id="saveRequest" class="http-client-save secondary-action" type="button" title="保存到当前分组">另存</button>
+          </div>
+        </div>
+
+        <div class="http-client-workspace">
+          <section class="http-client-pane http-client-request">
+            <div class="http-client-pane-bar">
+              <strong>请求</strong>
+              <div class="http-client-pane-tabs">
+                <button id="tabParams" type="button" class="active">Params</button>
+                <button id="tabHeaders" type="button">Headers</button>
+                <button id="tabCookies" type="button">Cookies</button>
+                <button id="tabBody" type="button">Body</button>
+              </div>
+            </div>
+            <div id="requestPanel" class="http-client-kv-table"></div>
+          </section>
+
+          <div id="paneResizer" class="http-client-pane-resizer" role="separator" aria-orientation="vertical" aria-label="调整请求和响应宽度"></div>
+
+          <section class="http-client-pane http-client-response">
+            <div class="http-client-pane-bar http-client-response-bar">
+              <div class="http-client-pane-bar-left">
+                <strong>响应</strong>
+                <div class="http-client-pane-tabs">
+                  <button id="responseBodyTab" type="button" class="active">Body</button>
+                  <button id="responseHeadersTab" type="button">Headers</button>
+                </div>
+              </div>
+              <div id="responseMeta" class="http-client-response-meta" hidden></div>
+            </div>
+            <p id="requestError" class="http-client-error" hidden></p>
+            <div id="responsePanel" class="http-client-response-body"></div>
+          </section>
+        </div>
+
+        <section id="emptyState" class="http-client-empty-state">
+          <strong>暂无打开的请求</strong>
+          <p>从左侧选择已保存请求，或新建一个请求。</p>
+          <button id="newEmptyRequest" type="button">新建请求</button>
+        </section>
+      </div>
+
+      <span id="toast" class="http-client-copy-toast" role="status" hidden></span>
+      <div id="tabContextMenu" class="http-client-tab-menu" hidden>
+        <button data-action="current" type="button">关闭当前</button>
+        <button data-action="others" type="button">关闭其他</button>
+        <button data-action="all" type="button">关闭全部</button>
+      </div>
+      <div id="collectionContextMenu" class="http-client-tab-menu" hidden>
+        <button data-action="import" type="button">导入到集合</button>
+        <button data-action="export" type="button">导出集合</button>
+      </div>
+      <div id="requestContextMenu" class="http-client-tab-menu" hidden>
+        <button data-action="copy" type="button">复制请求</button>
+      </div>
+      <input id="collectionImportFile" type="file" accept="application/json,.json" hidden />
+    </main>
+
+    <div id="dialogBackdrop" class="http-client-dialog-backdrop" role="presentation" hidden>
+      <section class="http-client-dialog" role="dialog" aria-modal="true">
+        <header class="http-client-dialog-head">
+          <h3 id="dialogTitle">新增分组</h3>
+          <button id="dialogClose" class="http-client-dialog-close" type="button" aria-label="关闭">×</button>
+        </header>
+        <div id="dialogBody" class="http-client-dialog-body"></div>
+        <footer class="http-client-dialog-foot">
+          <button id="dialogCancel" class="http-client-dialog-cancel" type="button">取消</button>
+          <button id="dialogConfirm" class="http-client-dialog-confirm tool-primary-button" type="button">确定</button>
+        </footer>
+      </section>
+    </div>
+<script>
+const STORAGE = {
+        collections: 'tooldesk-http-collections',
+        cookies: 'tooldesk-http-cookies',
+        environments: 'tooldesk-http-environments',
+        history: 'tooldesk-http-history',
+        openTabs: 'tooldesk-http-open-tabs'
+      };
+      const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
+      const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+      const MAX_HISTORY = 50;
+      const $ = (id) => document.getElementById(id);
+
+      const state = {
+        activeEnvId: '',
+        bodyType: 'json',
+        collectionSearch: '',
+        collectionContextMenu: null,
+        collections: null,
+        cookieJar: [],
+        cookieRows: [createRow()],
+        dialog: null,
+        draggingRequest: null,
+        dragPointer: null,
+        dragOverGroupId: '',
+        groupDragOverId: '',
+        groupDragPointer: null,
+        environments: [],
+        envRows: [],
+        headerRows: [createRow({ key: 'Accept', value: '*/*' }), createRow()],
+        history: [],
+        isSending: false,
+        method: 'GET',
+        methodMenuOpen: false,
+        activeOpenTabId: '',
+        openRequestTabs: [],
+        openTabsLoadedFromStorage: false,
+        paneRequestPercent: 50,
+        queryRows: [createRow()],
+        requestBody: '{\n  \n}',
+        requestTab: 'params',
+        response: null,
+        responseBody: '',
+        responseTab: 'body',
+        sidebarOpen: true,
+        sidebarPanel: 'collections',
+        sidebarWidth: 328,
+        storageReady: false,
+        tabContextMenu: null,
+        pendingImportGroupId: '',
+        requestContextMenu: null,
+        url: 'https://',
+        useCookieJar: true
+      };
+
+      let api = null;
+      let pluginBoot = null;
+      let pluginConnect = Promise.resolve();
+      let storageLoadPromise = null;
+
+      function getActiveApi() {
+        if (pluginBoot) {
+          api = pluginBoot.api;
+        }
+        return api;
+      }
+
+      function syncPluginApi() {
+        return getActiveApi();
+      }
+
+      function ensureStorageApi() {
+        syncPluginApi();
+        return getActiveApi();
+      }
+
+      function safeParseStorageJson(raw, fallback) {
+        if (!raw) {
+          return fallback;
+        }
+
+        try {
+          return JSON.parse(raw);
+        } catch {
+          try {
+            const cleaned = raw.replace(/[\x00-\x1f]/g, (ch) => {
+              if (ch === '\n') return '\\n';
+              if (ch === '\r') return '\\r';
+              if (ch === '\t') return '\\t';
+              return '';
+            });
+            return JSON.parse(cleaned);
+          } catch {
+            return fallback;
+          }
+        }
+      }
+
+      async function readJson(key, fallback, retryCount = 0) {
+        const activeApi = ensureStorageApi();
+        if (!activeApi) {
+          return fallback;
+        }
+
+        try {
+          const raw = await activeApi.getPluginStorageItem(key);
+          return safeParseStorageJson(raw, fallback);
+        } catch (error) {
+          const shouldRetry = retryCount < 5 && error && typeof error === 'object' && (
+            error.code === 'PLUGIN_SDK_NOT_READY' ||
+            error.code === 'PLUGIN_API_UNAVAILABLE'
+          );
+
+          if (shouldRetry) {
+            await new Promise((resolve) => setTimeout(resolve, 30));
+            return readJson(key, fallback, retryCount + 1);
+          }
+
+          return fallback;
+        }
+      }
+
+      function writeJson(key, value) {
+        if (!state.storageReady) return;
+        const activeApi = getActiveApi();
+        if (!activeApi) return;
+        void activeApi.setPluginStorageItem(key, JSON.stringify(value));
+      }
+
+      function normalizeHistoryList(value) {
+        const list = Array.isArray(value) ? value : [];
+        return list.filter((item) => item && item.id && item.request).slice(0, MAX_HISTORY);
+      }
+
+      function createRow(partial = {}) {
+        return { enabled: true, id: crypto.randomUUID(), key: '', value: '', ...partial };
+      }
+
+      function createCollectionGroup(name, expanded = true) {
+        return { expanded, id: crypto.randomUUID(), name, requests: [] };
+      }
+
+      function createDefaultCollections() {
+        const group = createCollectionGroup('默认分组');
+        return { activeGroupId: group.id, activeRequestId: '', groups: [group] };
+      }
+
+      state.collections = createDefaultCollections();
+
+      function createEnvironment(name) {
+        return { id: crypto.randomUUID(), name, variables: [createRow()] };
+      }
+
+      async function loadState() {
+        state.storageReady = false;
+
+        state.cookieJar = await readJson(STORAGE.cookies, []);
+        state.history = normalizeHistoryList(await readJson(STORAGE.history, []));
+        state.collections = normalizeCollections(await readJson(STORAGE.collections, createDefaultCollections()));
+        const envState = await readJson(STORAGE.environments, null);
+        if (envState && Array.isArray(envState.environments) && envState.environments.length) {
+          state.environments = envState.environments.map(normalizeEnvironment);
+          state.activeEnvId = state.environments.some((item) => item.id === envState.activeEnvId)
+            ? envState.activeEnvId
+            : state.environments[0].id;
+        } else {
+          const environment = createEnvironment('默认环境');
+          state.environments = [environment];
+          state.activeEnvId = environment.id;
+        }
+        syncEnvRows();
+        const openTabsState = normalizeOpenTabsState(await readJson(STORAGE.openTabs, null));
+        if (openTabsState) {
+          state.openRequestTabs = openTabsState.tabs;
+          state.activeOpenTabId = openTabsState.activeOpenTabId;
+          state.openTabsLoadedFromStorage = true;
+          const activeTab = getActiveOpenTab();
+          restoreSnapshot(activeTab ? activeTab.snapshot : createEmptySnapshot(), false);
+          state.collections.activeRequestId = activeTab?.type === 'saved' ? activeTab.requestId : '';
+        } else {
+          restoreActiveSavedRequest();
+        }
+        state.storageReady = true;
+      }
+
+      function normalizeCollections(collections) {
+        const fallback = createDefaultCollections();
+        const groups = Array.isArray(collections.groups)
+          ? collections.groups.filter((item) => item && item.id && item.name).map((group) => ({
+              expanded: group.expanded !== false,
+              id: group.id,
+              name: group.name,
+              requests: Array.isArray(group.requests)
+                ? group.requests.filter((item) => item && item.id && item.request).map((request) => ({
+                    id: request.id,
+                    name: request.name || deriveRequestName(request.request),
+                    request: cloneRequestSnapshot(request.request),
+                    updatedAt: request.updatedAt || Date.now()
+                  }))
+                : []
+            }))
+          : fallback.groups;
+        const nextGroups = groups.length ? groups : fallback.groups;
+        const activeGroupId = nextGroups.some((item) => item.id === collections.activeGroupId)
+          ? collections.activeGroupId
+          : nextGroups[0].id;
+        const activeRequestId = collections.activeRequestId && nextGroups.some((group) => group.requests.some((request) => request.id === collections.activeRequestId))
+          ? collections.activeRequestId
+          : '';
+        return { activeGroupId, activeRequestId, groups: nextGroups };
+      }
+
+      function normalizeEnvironment(environment) {
+        return {
+          id: environment.id || crypto.randomUUID(),
+          name: environment.name || '默认环境',
+          variables: Array.isArray(environment.variables) && environment.variables.length
+            ? environment.variables.map((row) => createRow({ enabled: row.enabled !== false, id: row.id || crypto.randomUUID(), key: row.key || '', value: row.value || '' }))
+            : [createRow()]
+        };
+      }
+
+      function persistCollections() {
+        writeJson(STORAGE.collections, {
+          ...state.collections,
+          groups: state.collections.groups.map((group) => ({
+            ...group,
+            requests: group.requests.map((request) => ({
+              ...request,
+              request: cloneRequestSnapshot(request.request)
+            }))
+          }))
+        });
+      }
+
+      function persistEnvironments() {
+        const active = state.environments.find((item) => item.id === state.activeEnvId);
+        if (active) active.variables = state.envRows.map((row) => ({ ...row }));
+        writeJson(STORAGE.environments, { activeEnvId: state.activeEnvId, environments: state.environments });
+      }
+
+      function persistHistory() {
+        writeJson(STORAGE.history, state.history.slice(0, MAX_HISTORY));
+      }
+
+      function persistCookies() {
+        writeJson(STORAGE.cookies, state.cookieJar);
+      }
+
+      function serializeOpenTabs() {
+        syncActiveOpenTabSnapshot();
+        return {
+          activeOpenTabId: state.activeOpenTabId,
+          tabs: state.openRequestTabs.map((tab) => ({
+            baselineSnapshot: cloneSnapshot(tab.baselineSnapshot || tab.snapshot),
+            groupId: tab.groupId || '',
+            id: tab.id,
+            name: tab.name || deriveRequestName(tab.snapshot),
+            requestId: tab.requestId || '',
+            snapshot: cloneSnapshot(tab.snapshot),
+            type: tab.type || 'scratch'
+          }))
+        };
+      }
+
+      function persistOpenTabs() {
+        writeJson(STORAGE.openTabs, serializeOpenTabs());
+      }
+
+      function schedulePersistOpenTabs() {
+        if (!state.storageReady) return;
+        clearTimeout(schedulePersistOpenTabs.timer);
+        schedulePersistOpenTabs.timer = setTimeout(persistOpenTabs, 250);
+      }
+
+      function normalizeOpenTabsState(openTabsState) {
+        if (!openTabsState || !Array.isArray(openTabsState.tabs)) return null;
+        const tabs = openTabsState.tabs
+          .filter((tab) => tab && tab.id && tab.snapshot)
+          .map((tab) => {
+            const snapshot = cloneSnapshot(tab.snapshot);
+            const baselineSnapshot = cloneSnapshot(tab.baselineSnapshot || tab.snapshot);
+            const saved = tab.type === 'saved' && tab.requestId ? findSavedRequest(tab.requestId) : null;
+            return {
+              baselineSnapshot: tab.type === 'saved' && saved ? cloneSnapshot(saved.request.request) : baselineSnapshot,
+              groupId: saved ? saved.group.id : tab.groupId || '',
+              id: tab.id,
+              name: tab.name || deriveRequestName(snapshot),
+              requestId: saved ? saved.request.id : tab.requestId || '',
+              snapshot,
+              type: tab.type === 'saved' && saved ? 'saved' : tab.type === 'history' ? 'history' : 'scratch'
+            };
+          });
+        const activeOpenTabId = tabs.some((tab) => tab.id === openTabsState.activeOpenTabId)
+          ? openTabsState.activeOpenTabId
+          : tabs[0]?.id || '';
+        return { activeOpenTabId, tabs };
+      }
+
+      function createCollectionsExportPayload(groups) {
+        return {
+          exportedAt: new Date().toISOString(),
+          groups: groups.map((group) => ({
+            name: group.name,
+            requests: group.requests.map((request) => ({
+              name: request.name,
+              request: cloneRequestSnapshot(request.request),
+              updatedAt: request.updatedAt || Date.now()
+            }))
+          })),
+          schemaVersion: 1,
+          type: 'tooldesk-http-collections'
+        };
+      }
+
+      function downloadJson(filename, payload) {
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      function exportCollections(groupId = '') {
+        const groups = groupId
+          ? state.collections.groups.filter((group) => group.id === groupId)
+          : state.collections.groups;
+        if (!groups.length) {
+          showToast('暂无可导出的集合');
+          return;
+        }
+        const safeName = groupId ? groups[0].name.replace(/[\\/:*?"<>|]/g, '_') : 'all';
+        downloadJson(`tooldesk-http-collections-${safeName}.json`, createCollectionsExportPayload(groups));
+      }
+
+      function requestImportCollections(groupId = '') {
+        state.pendingImportGroupId = groupId;
+        const input = $('collectionImportFile');
+        input.value = '';
+        input.click();
+      }
+
+      function normalizeImportedGroups(payload) {
+        const rawGroups = Array.isArray(payload?.groups)
+          ? payload.groups
+          : Array.isArray(payload?.collections?.groups)
+            ? payload.collections.groups
+            : Array.isArray(payload?.requests)
+              ? [{ name: payload.name || '导入集合', requests: payload.requests }]
+              : [];
+        return rawGroups
+          .filter((group) => group && Array.isArray(group.requests))
+          .map((group) => ({
+            expanded: true,
+            id: crypto.randomUUID(),
+            name: String(group.name || '导入集合'),
+            requests: group.requests
+              .filter((request) => request && request.request)
+              .map((request) => ({
+                id: crypto.randomUUID(),
+                name: String(request.name || deriveRequestName(request.request)),
+                request: cloneRequestSnapshot(request.request),
+                updatedAt: Date.now()
+              }))
+          }))
+          .filter((group) => group.requests.length);
+      }
+
+      function uniqueGroupName(name) {
+        const names = new Set(state.collections.groups.map((group) => group.name));
+        if (!names.has(name)) return name;
+        let index = 2;
+        while (names.has(`${name} ${index}`)) index += 1;
+        return `${name} ${index}`;
+      }
+
+      async function importCollectionsFromFile(file) {
+        if (!file) return;
+        try {
+          const payload = JSON.parse(await file.text());
+          const groups = normalizeImportedGroups(payload);
+          if (!groups.length) {
+            showToast('未找到可导入的请求集合');
+            return;
+          }
+          const targetGroupId = state.pendingImportGroupId;
+          if (targetGroupId) {
+            const requests = groups.flatMap((group) => group.requests);
+            state.collections.groups = state.collections.groups.map((group) => group.id === targetGroupId
+              ? { ...group, expanded: true, requests: [...group.requests, ...requests] }
+              : group);
+            state.collections.activeGroupId = targetGroupId;
+          } else {
+            state.collections.groups = [
+              ...state.collections.groups,
+              ...groups.map((group) => ({ ...group, name: uniqueGroupName(group.name) }))
+            ];
+          }
+          persistCollections();
+          renderSidebar();
+          showToast('集合已导入');
+        } catch {
+          showToast('导入失败，请检查 JSON 文件');
+        } finally {
+          state.pendingImportGroupId = '';
+        }
+      }
+
+      function getActiveEnvVariables() {
+        const environment = state.environments.find((item) => item.id === state.activeEnvId);
+        return environment ? environment.variables : [];
+      }
+
+      function applyEnv(text) {
+        const map = getActiveEnvVariables().reduce((record, row) => {
+          if (row.enabled && row.key.trim()) record[row.key.trim()] = row.value;
+          return record;
+        }, {});
+        return String(text || '').replace(/\{\{\s*([^{}\s]+)\s*\}\}/g, (match, name) =>
+          Object.prototype.hasOwnProperty.call(map, name) ? map[name] : match
+        );
+      }
+
+      function rowsToRecord(rows) {
+        return rows.reduce((record, row) => {
+          const key = row.key.trim();
+          if (row.enabled && key) record[key] = row.value;
+          return record;
+        }, {});
+      }
+
+      function appendQueryParams(url, rows) {
+        const trimmed = url.trim();
+        if (!trimmed) return '';
+        const activeRows = rows.filter((row) => row.enabled && row.key.trim());
+        if (!activeRows.length) return trimmed;
+        const parsed = new URL(trimmed);
+        const search = new URLSearchParams(parsed.search);
+        activeRows.forEach((row) => search.append(row.key.trim(), row.value));
+        parsed.search = search.toString();
+        return parsed.toString();
+      }
+
+      function buildSnapshot(syncInputs = true) {
+        if (syncInputs) syncFromInputs();
+        return {
+          bodyType: state.bodyType,
+          cookieRows: state.cookieRows.map((row) => ({ ...row })),
+          headerRows: state.headerRows.map((row) => ({ ...row })),
+          method: state.method,
+          queryRows: state.queryRows.map((row) => ({ ...row })),
+          requestBody: state.requestBody,
+          requestTab: state.requestTab,
+          response: cloneResponse(state.response),
+          responseBody: state.responseBody,
+          responseTab: state.responseTab,
+          url: state.url,
+          useCookieJar: state.useCookieJar
+        };
+      }
+
+      function cloneResponse(response) {
+        if (!response) return null;
+        return {
+          ...response,
+          headers: { ...(response.headers || {}) },
+          setCookies: Array.isArray(response.setCookies) ? response.setCookies.map((cookie) => ({ ...cookie })) : response.setCookies
+        };
+      }
+
+      function cloneSnapshot(snapshot) {
+        const empty = createEmptySnapshot();
+        const source = { ...empty, ...snapshot };
+        return {
+          bodyType: source.bodyType || 'json',
+          cookieRows: Array.isArray(source.cookieRows) && source.cookieRows.length ? source.cookieRows.map((row) => ({ ...row })) : [createRow()],
+          headerRows: Array.isArray(source.headerRows) && source.headerRows.length ? source.headerRows.map((row) => ({ ...row })) : [createRow({ key: 'Accept', value: '*/*' }), createRow()],
+          method: HTTP_METHODS.includes(source.method) ? source.method : 'GET',
+          queryRows: Array.isArray(source.queryRows) && source.queryRows.length ? source.queryRows.map((row) => ({ ...row })) : [createRow()],
+          requestBody: source.requestBody || '',
+          requestTab: ['params', 'headers', 'cookies', 'body'].includes(source.requestTab) ? source.requestTab : 'params',
+          response: cloneResponse(source.response),
+          responseBody: source.responseBody || '',
+          responseTab: ['body', 'headers'].includes(source.responseTab) ? source.responseTab : 'body',
+          url: source.url || 'https://',
+          useCookieJar: source.useCookieJar !== false
+        };
+      }
+
+      function cloneRequestSnapshot(snapshot) {
+        const cloned = cloneSnapshot(snapshot);
+        cloned.response = null;
+        cloned.responseBody = '';
+        cloned.responseTab = 'body';
+        return cloned;
+      }
+
+      function normalizeSnapshotForDirty(snapshot) {
+        const cloned = cloneSnapshot(snapshot);
+        const normalizeRows = (rows) => rows
+          .map((row) => ({
+            enabled: row.enabled !== false,
+            key: String(row.key || ''),
+            value: String(row.value || '')
+          }))
+          .filter((row, index, list) => row.key || row.value || row.enabled === false || index < list.length - 1);
+        return {
+          bodyType: cloned.bodyType,
+          cookieRows: normalizeRows(cloned.cookieRows),
+          headerRows: normalizeRows(cloned.headerRows),
+          method: cloned.method,
+          queryRows: normalizeRows(cloned.queryRows),
+          requestBody: cloned.requestBody,
+          url: cloned.url,
+          useCookieJar: cloned.useCookieJar
+        };
+      }
+
+      function snapshotsEqual(left, right) {
+        return JSON.stringify(normalizeSnapshotForDirty(left)) === JSON.stringify(normalizeSnapshotForDirty(right));
+      }
+
+      function isOpenTabDirty(tab, currentSnapshot = null) {
+        if (!tab) return false;
+        const current = tab.id === state.activeOpenTabId ? (currentSnapshot || buildSnapshot()) : tab.snapshot;
+        return !snapshotsEqual(current, tab.baselineSnapshot || createEmptySnapshot());
+      }
+
+      function createEmptySnapshot() {
+        return {
+          bodyType: 'json',
+          cookieRows: [createRow()],
+          headerRows: [createRow({ key: 'Accept', value: '*/*' }), createRow()],
+          method: 'GET',
+          queryRows: [createRow()],
+          requestBody: '{\n  \n}',
+          requestTab: 'params',
+          response: null,
+          responseBody: '',
+          responseTab: 'body',
+          url: 'https://',
+          useCookieJar: true
+        };
+      }
+
+      function createScratchOpenTab(snapshot = createEmptySnapshot()) {
+        const cloned = cloneSnapshot(snapshot);
+        return {
+          baselineSnapshot: cloneSnapshot(cloned),
+          groupId: '',
+          id: `scratch-${crypto.randomUUID()}`,
+          name: deriveRequestName(cloned),
+          requestId: '',
+          snapshot: cloned,
+          type: 'scratch'
+        };
+      }
+
+      function createSavedOpenTab(groupId, request) {
+        const snapshot = cloneRequestSnapshot(request.request);
+        return {
+          baselineSnapshot: cloneSnapshot(snapshot),
+          groupId,
+          id: `saved-${request.id}`,
+          name: request.name || deriveRequestName(request.request),
+          requestId: request.id,
+          snapshot,
+          type: 'saved'
+        };
+      }
+
+      function createHistoryOpenTab(entry) {
+        const contentType = entry.response?.headers?.['content-type'] || entry.response?.headers?.['Content-Type'] || '';
+        const snapshot = cloneSnapshot({
+          ...entry.request,
+          response: entry.response ? cloneResponse(entry.response) : null,
+          responseBody: entry.responseBody || (entry.response
+            ? formatHttpBody(entry.response.body || '', contentType)
+            : ''),
+          responseTab: 'body'
+        });
+        return {
+          baselineSnapshot: cloneSnapshot(snapshot),
+          groupId: '',
+          id: `history-${entry.id}`,
+          name: entry.label || deriveRequestName(entry.request),
+          requestId: '',
+          snapshot,
+          type: 'history'
+        };
+      }
+
+      function getActiveOpenTab() {
+        return state.openRequestTabs.find((tab) => tab.id === state.activeOpenTabId) || null;
+      }
+
+      function findSavedRequest(requestId) {
+        if (!state.collections?.groups) return null;
+        for (const group of state.collections.groups) {
+          const request = group.requests.find((item) => item.id === requestId);
+          if (request) return { group, request };
+        }
+        return null;
+      }
+
+      function syncActiveOpenTabSnapshot() {
+        const tab = getActiveOpenTab();
+        if (!tab) return;
+        const snapshot = buildSnapshot();
+        tab.snapshot = cloneSnapshot(snapshot);
+        if (tab.type !== 'saved') {
+          tab.name = deriveRequestName(snapshot);
+        }
+      }
+
+      function markActiveRequestChanged() {
+        if (!state.openRequestTabs.length) {
+          const tab = createScratchOpenTab(createEmptySnapshot());
+          tab.snapshot = cloneSnapshot(buildSnapshot(false));
+          state.openRequestTabs = [tab];
+          state.activeOpenTabId = tab.id;
+        }
+        renderOpenRequestTabs();
+      }
+
+      function ensureOpenRequestTabs() {
+        if (state.openRequestTabs.length) return;
+        const activeSaved = state.collections.activeRequestId ? findSavedRequest(state.collections.activeRequestId) : null;
+        const tab = activeSaved
+          ? createSavedOpenTab(activeSaved.group.id, activeSaved.request)
+          : createScratchOpenTab(buildSnapshot(false));
+        state.openRequestTabs = [tab];
+        state.activeOpenTabId = tab.id;
+      }
+
+      function createNewRequestTab() {
+        const tab = createScratchOpenTab(createEmptySnapshot());
+        state.openRequestTabs = [tab];
+        state.activeOpenTabId = tab.id;
+        state.collections.activeRequestId = '';
+        restoreSnapshot(tab.snapshot, 'surface');
+      }
+
+      function openSavedRequestTab(groupId, request) {
+        syncActiveOpenTabSnapshot();
+        const tabId = `saved-${request.id}`;
+        const existing = state.openRequestTabs.find((tab) => tab.id === tabId);
+        if (existing) {
+          existing.groupId = groupId;
+          existing.name = request.name || existing.name || deriveRequestName(existing.snapshot);
+          existing.requestId = request.id;
+          existing.type = 'saved';
+        } else {
+          state.openRequestTabs.push(createSavedOpenTab(groupId, request));
+        }
+        state.activeOpenTabId = tabId;
+        state.collections.activeGroupId = groupId;
+        state.collections.activeRequestId = request.id;
+        persistCollections();
+        restoreSnapshot((existing || state.openRequestTabs.find((tab) => tab.id === tabId)).snapshot, 'surface');
+      }
+
+      function openHistoryRequestTab(entry) {
+        syncActiveOpenTabSnapshot();
+        const tabId = `history-${entry.id}`;
+        const existing = state.openRequestTabs.find((item) => item.id === tabId);
+        if (existing) {
+          existing.snapshot = createHistoryOpenTab(entry).snapshot;
+          state.activeOpenTabId = existing.id;
+          state.collections.activeRequestId = '';
+          restoreSnapshot(existing.snapshot, 'surface');
+          return;
+        }
+        const tab = createHistoryOpenTab(entry);
+        state.openRequestTabs.push(tab);
+        state.activeOpenTabId = tab.id;
+        state.collections.activeRequestId = '';
+        restoreSnapshot(tab.snapshot, 'surface');
+      }
+
+      function activateOpenRequestTab(tabId) {
+        if (state.activeOpenTabId === tabId) return;
+        syncActiveOpenTabSnapshot();
+        const tab = state.openRequestTabs.find((item) => item.id === tabId);
+        if (!tab) return;
+        state.activeOpenTabId = tab.id;
+        state.collections.activeGroupId = tab.groupId || state.collections.activeGroupId;
+        state.collections.activeRequestId = tab.type === 'saved' ? tab.requestId : '';
+        if (tab.type === 'saved') persistCollections();
+        restoreSnapshot(tab.snapshot, 'surface');
+      }
+
+      function closeOpenRequestTab(tabId) {
+        const tab = state.openRequestTabs.find((item) => item.id === tabId);
+        if (tab && isOpenTabDirty(tab)) {
+          openDialog({ type: 'closeDirtyTab', tabId, initialName: tab.name || deriveRequestName(tab.snapshot) });
+          return;
+        }
+        forceCloseOpenRequestTab(tabId);
+      }
+
+      function closeOpenRequestTabs(tabIds, confirmDirty = true) {
+        const ids = tabIds.filter((tabId) => state.openRequestTabs.some((tab) => tab.id === tabId));
+        if (!ids.length) return;
+        const dirtyTabs = ids
+          .map((tabId) => state.openRequestTabs.find((tab) => tab.id === tabId))
+          .filter((tab) => tab && isOpenTabDirty(tab));
+        if (confirmDirty && dirtyTabs.length) {
+          openDialog({
+            initialName: dirtyTabs.length === 1 ? dirtyTabs[0].name || deriveRequestName(dirtyTabs[0].snapshot) : `${dirtyTabs.length} 个请求`,
+            tabIds: ids,
+            type: 'closeDirtyTabs'
+          });
+          return;
+        }
+        forceCloseOpenRequestTabs(ids);
+      }
+
+      function forceCloseOpenRequestTabs(tabIds) {
+        const closeIds = new Set(tabIds);
+        const previousActiveId = state.activeOpenTabId;
+        state.openRequestTabs = state.openRequestTabs.filter((tab) => !closeIds.has(tab.id));
+
+        if (!state.openRequestTabs.length) {
+          state.activeOpenTabId = '';
+          state.collections.activeRequestId = '';
+          restoreSnapshot(createEmptySnapshot(), 'surface');
+          return;
+        }
+
+        if (!state.openRequestTabs.some((tab) => tab.id === previousActiveId)) {
+          const next = state.openRequestTabs[0];
+          state.activeOpenTabId = next.id;
+          state.collections.activeGroupId = next.groupId || state.collections.activeGroupId;
+          state.collections.activeRequestId = next.type === 'saved' ? next.requestId : '';
+          restoreSnapshot(next.snapshot, 'surface');
+          return;
+        }
+
+        state.activeOpenTabId = previousActiveId;
+        const activeTab = getActiveOpenTab();
+        state.collections.activeRequestId = activeTab?.type === 'saved' ? activeTab.requestId : '';
+        renderOpenRequestTabs();
+        updateSidebarSelection();
+      }
+
+      function forceCloseOpenRequestTab(tabId) {
+        const index = state.openRequestTabs.findIndex((tab) => tab.id === tabId);
+        if (index < 0) return;
+        const wasActive = state.activeOpenTabId === tabId;
+        state.openRequestTabs.splice(index, 1);
+        if (!state.openRequestTabs.length) {
+          state.activeOpenTabId = '';
+          state.collections.activeRequestId = '';
+          restoreSnapshot(createEmptySnapshot(), 'surface');
+          return;
+        }
+        if (wasActive) {
+          const next = state.openRequestTabs[Math.max(0, index - 1)];
+          state.activeOpenTabId = next.id;
+          state.collections.activeGroupId = next.groupId || state.collections.activeGroupId;
+          state.collections.activeRequestId = next.type === 'saved' ? next.requestId : '';
+          restoreSnapshot(next.snapshot, 'surface');
+          return;
+        }
+        renderOpenRequestTabs();
+      }
+
+      function restoreSnapshot(snapshot, renderMode = 'all') {
+        const next = cloneSnapshot(snapshot);
+        state.method = next.method;
+        state.url = next.url;
+        state.bodyType = next.bodyType;
+        state.requestBody = next.requestBody;
+        state.queryRows = next.queryRows;
+        state.headerRows = next.headerRows;
+        state.cookieRows = next.cookieRows;
+        state.useCookieJar = next.useCookieJar;
+        state.requestTab = next.requestTab;
+        state.response = cloneResponse(next.response);
+        state.responseBody = next.responseBody || '';
+        state.responseTab = next.responseTab;
+        if (!METHODS_WITH_BODY.has(state.method) && state.requestTab === 'body') state.requestTab = 'params';
+        if (renderMode === false) return;
+        if (renderMode === 'surface') renderRequestSurface();
+        else renderAll();
+      }
+
+      function deriveRequestName(snapshot) {
+        try {
+          const parsed = new URL(snapshot.url.trim());
+          const segments = parsed.pathname.split('/').filter(Boolean);
+          const lastSegment = segments.at(-1);
+          if (lastSegment) return decodeURIComponent(lastSegment).slice(0, 48);
+          if (parsed.hostname) return parsed.hostname.slice(0, 48);
+        } catch {}
+        const trimmed = snapshot.url.trim();
+        return trimmed && trimmed !== 'https://' ? trimmed.slice(0, 48) : '新请求';
+      }
+
+      function syncEnvRows() {
+        const environment = state.environments.find((item) => item.id === state.activeEnvId);
+        state.envRows = environment ? environment.variables.map((row) => ({ ...row })) : [createRow()];
+      }
+
+      function restoreActiveSavedRequest() {
+        const group = state.collections.groups.find((item) => item.id === state.collections.activeGroupId);
+        const request = group && group.requests.find((item) => item.id === state.collections.activeRequestId);
+        if (request) restoreSnapshot(request.request);
+      }
+
+      function filterCollections() {
+        const query = state.collectionSearch.trim().toLowerCase();
+        if (!query) return state.collections.groups;
+        return state.collections.groups.map((group) => {
+          const requests = group.requests.filter((request) =>
+            request.name.toLowerCase().includes(query) ||
+            request.request.method.toLowerCase().includes(query) ||
+            request.request.url.toLowerCase().includes(query)
+          );
+          if (group.name.toLowerCase().includes(query)) return group;
+          return requests.length ? { ...group, expanded: true, requests } : null;
+        }).filter(Boolean);
+      }
+
+      function hasActiveSavedRequest() {
+        return state.collections.groups.some((group) => group.requests.some((request) => request.id === state.collections.activeRequestId));
+      }
+
+      function collectionMethodClass(method) {
+        return `http-client-collection-method http-client-method-${method.toLowerCase()}`;
+      }
+
+      function methodClass(method) {
+        return `http-client-method-${method.toLowerCase()}`;
+      }
+
+      function iconSvg(name, extraClass = '') {
+        const className = `app-icon${extraClass ? ` ${extraClass}` : ''}`;
+        const icons = {
+          chevron: '<path d="m6 9 6 6 6-6" />',
+          download: '<path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" />',
+          folder: '<path d="M3 7.5h6l2 2h10" /><path d="M3 7.5v10A2.5 2.5 0 0 0 5.5 20h13A2.5 2.5 0 0 0 21 17.5v-8" />',
+          search: '<circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />',
+          upload: '<path d="M12 21V9" /><path d="m7 14 5-5 5 5" /><path d="M5 3h14" />'
+        };
+        return `<span class="${className}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${icons[name] || ''}</svg></span>`;
+      }
+
+      function getStatusTone(status) {
+        if (status >= 200 && status < 300) return 'success';
+        if (status >= 400) return 'error';
+        return 'info';
+      }
+
+      function formatBytes(size) {
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / 1024 / 1024).toFixed(1)} MB`;
+      }
+
+      function formatHttpBody(body, contentType = '') {
+        if (!body) return '';
+        if (contentType.toLowerCase().includes('json')) {
+          try { return JSON.stringify(JSON.parse(body), null, 2); } catch { return body; }
+        }
+        try { return JSON.stringify(JSON.parse(body), null, 2); } catch { return body; }
+      }
+
+      function getBodySize(body) {
+        return new TextEncoder().encode(body || '').length;
+      }
+
+      function isResponseJson() {
+        const body = state.responseBody.trim();
+        if (!body) return false;
+        const contentType = state.response ? (state.response.headers['content-type'] || state.response.headers['Content-Type'] || '') : '';
+        if (contentType.toLowerCase().includes('json')) return true;
+        try {
+          JSON.parse(body);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+
+      function buildCookieHeader(url, rows, jar, useCookieJar) {
+        const pairs = new Map();
+        if (useCookieJar) {
+          jar.filter((cookie) => cookieMatchesUrl(cookie, url)).forEach((cookie) => pairs.set(cookie.name, cookie.value));
+        }
+        rows.forEach((row) => {
+          if (row.enabled && row.key.trim()) pairs.set(row.key.trim(), row.value);
+        });
+        return Array.from(pairs.entries()).map(([name, value]) => `${name}=${value}`).join('; ');
+      }
+
+      function cookieMatchesUrl(cookie, url) {
+        if (!cookie || !cookie.name || (cookie.expires && cookie.expires < Date.now())) return false;
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
+        const path = parsed.pathname || '/';
+        const domain = (cookie.domain || host).replace(/^\./, '').toLowerCase();
+        return (host === domain || host.endsWith(`.${domain}`)) && path.startsWith(cookie.path || '/');
+      }
+
+      function parseSetCookieHeader(setCookie) {
+        const parts = String(setCookie || '').split(';').map((part) => part.trim());
+        const [nameValue, ...attributes] = parts;
+        const separator = nameValue.indexOf('=');
+        if (separator <= 0) return null;
+        const cookie = { name: nameValue.slice(0, separator).trim(), value: nameValue.slice(separator + 1).trim() };
+        attributes.forEach((attribute) => {
+          const [rawKey, ...rawValue] = attribute.split('=');
+          const key = rawKey.trim().toLowerCase();
+          const value = rawValue.join('=').trim();
+          if (key === 'domain') cookie.domain = value;
+          if (key === 'path') cookie.path = value;
+          if (key === 'expires') {
+            const expires = Date.parse(value);
+            if (!Number.isNaN(expires)) cookie.expires = expires;
+          }
+          if (key === 'max-age') {
+            const maxAge = Number(value);
+            if (Number.isFinite(maxAge)) cookie.expires = Date.now() + maxAge * 1000;
+          }
+          if (key === 'secure') cookie.secure = true;
+        });
+        return cookie;
+      }
+
+      function upsertCookiesFromResponse(url, setCookies) {
+        const host = new URL(url).hostname.toLowerCase();
+        let next = [...state.cookieJar];
+        setCookies.forEach((value) => {
+          const cookie = parseSetCookieHeader(value);
+          if (!cookie) return;
+          if (!cookie.domain) cookie.domain = host;
+          const domain = cookie.domain.replace(/^\./, '').toLowerCase();
+          next = next.filter((item) => !(item.name === cookie.name && (item.domain || host).replace(/^\./, '').toLowerCase() === domain));
+          next.push(cookie);
+        });
+        state.cookieJar = next.filter((cookie) => cookie.name && (!cookie.expires || cookie.expires >= Date.now()));
+        persistCookies();
+      }
+
+      function clearDomainCookies() {
+        try {
+          const targetUrl = appendQueryParams(applyEnv(state.url.trim()), []);
+          state.cookieJar = state.cookieJar.filter((cookie) => !cookieMatchesUrl(cookie, targetUrl));
+          persistCookies();
+          showToast('当前域名 Cookie 已清除');
+        } catch {
+          showError('请先输入有效 URL');
+        }
+      }
+
+      function renderAll() {
+        renderEmptyState();
+        renderComposer();
+        renderMethod();
+        renderRequestTabs();
+        renderRequestPanel();
+        renderResponse();
+        renderOpenRequestTabs();
+        renderSidebar();
+      }
+
+      function renderRequestSurface() {
+        renderEmptyState();
+        renderComposer();
+        renderMethod();
+        renderRequestTabs();
+        renderRequestPanel();
+        renderResponse();
+        renderOpenRequestTabs();
+        updateSidebarSelection();
+      }
+
+      function renderEmptyState() {
+        $('mainArea').classList.toggle('no-open-tabs', !state.openRequestTabs.length);
+      }
+
+      function renderComposer() {
+        const url = $('url');
+        if (url && url.value !== state.url) {
+          url.value = state.url;
+        }
+      }
+
+      function renderMethod() {
+        $('methodLabel').textContent = state.method;
+        $('methodTrigger').className = `http-client-method-trigger ${methodClass(state.method)}`;
+        $('methodPicker').classList.toggle('open', state.methodMenuOpen);
+        $('methodTrigger').setAttribute('aria-expanded', String(state.methodMenuOpen));
+        $('methodMenu').hidden = !state.methodMenuOpen;
+        $('methodMenu').replaceChildren(...HTTP_METHODS.map((method) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.role = 'option';
+          button.className = `http-client-method-option ${methodClass(method)}${state.method === method ? ' active' : ''}`;
+          button.textContent = method;
+          button.addEventListener('click', () => {
+            state.method = method;
+            state.methodMenuOpen = false;
+            if (!METHODS_WITH_BODY.has(method) && state.requestTab === 'body') state.requestTab = 'params';
+            markActiveRequestChanged();
+            renderAll();
+          });
+          return button;
+        }));
+      }
+
+      function renderOpenRequestTabs() {
+        const container = $('openRequestTabs');
+        if (!state.openRequestTabs.length) {
+          container.replaceChildren();
+          schedulePersistOpenTabs();
+          return;
+        }
+        const activeTab = getActiveOpenTab();
+        const activeSnapshot = activeTab ? buildSnapshot(false) : null;
+        if (activeTab) {
+          activeTab.snapshot = cloneSnapshot(activeSnapshot);
+          if (activeTab.type !== 'saved') activeTab.name = deriveRequestName(activeSnapshot);
+        }
+        container.replaceChildren(...state.openRequestTabs.map((tab) => {
+          const snapshot = tab.id === state.activeOpenTabId ? activeSnapshot : tab.snapshot;
+          const name = tab.type === 'saved'
+            ? (findSavedRequest(tab.requestId)?.request.name || tab.name || deriveRequestName(snapshot))
+            : (tab.name || deriveRequestName(snapshot));
+          const isDirty = isOpenTabDirty(tab, snapshot);
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `http-client-open-tab${tab.id === state.activeOpenTabId ? ' active' : ''}${isDirty ? ' dirty' : ''}`;
+          button.title = name;
+          button.innerHTML = `
+            <span class="http-client-open-tab-method ${methodClass(snapshot.method)}">${escapeHtml(snapshot.method)}</span>
+            <span class="http-client-open-tab-title">${escapeHtml(name)}</span>
+            <span class="http-client-open-tab-dirty" aria-label="未保存修改"></span>
+            <span class="http-client-open-tab-close" title="关闭" aria-label="关闭">×</span>
+          `;
+          button.addEventListener('click', () => activateOpenRequestTab(tab.id));
+          button.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            openTabContextMenu(event, tab.id);
+          });
+          button.querySelector('.http-client-open-tab-close').addEventListener('click', (event) => {
+            event.stopPropagation();
+            closeOpenRequestTab(tab.id);
+          });
+          return button;
+        }));
+        schedulePersistOpenTabs();
+      }
+
+      function openTabContextMenu(event, tabId) {
+        const menu = $('tabContextMenu');
+        const host = document.querySelector('.http-client');
+        if (!menu || !host) return;
+        closeCollectionContextMenu();
+        closeRequestContextMenu();
+        const rect = host.getBoundingClientRect();
+        state.tabContextMenu = { tabId };
+        menu.hidden = false;
+        const maxLeft = Math.max(8, rect.width - menu.offsetWidth - 8);
+        const maxTop = Math.max(8, rect.height - menu.offsetHeight - 8);
+        menu.style.left = `${Math.min(maxLeft, Math.max(8, event.clientX - rect.left))}px`;
+        menu.style.top = `${Math.min(maxTop, Math.max(8, event.clientY - rect.top))}px`;
+      }
+
+      function closeTabContextMenu() {
+        state.tabContextMenu = null;
+        const menu = $('tabContextMenu');
+        if (menu) menu.hidden = true;
+      }
+
+      function openCollectionContextMenu(event, groupId) {
+        const menu = $('collectionContextMenu');
+        const host = document.querySelector('.http-client');
+        if (!menu || !host) return;
+        closeTabContextMenu();
+        closeRequestContextMenu();
+        const rect = host.getBoundingClientRect();
+        state.collectionContextMenu = { groupId };
+        menu.hidden = false;
+        const maxLeft = Math.max(8, rect.width - menu.offsetWidth - 8);
+        const maxTop = Math.max(8, rect.height - menu.offsetHeight - 8);
+        menu.style.left = `${Math.min(maxLeft, Math.max(8, event.clientX - rect.left))}px`;
+        menu.style.top = `${Math.min(maxTop, Math.max(8, event.clientY - rect.top))}px`;
+      }
+
+      function closeCollectionContextMenu() {
+        state.collectionContextMenu = null;
+        const menu = $('collectionContextMenu');
+        if (menu) menu.hidden = true;
+      }
+
+      function openRequestContextMenu(event, groupId, requestId) {
+        const menu = $('requestContextMenu');
+        const host = document.querySelector('.http-client');
+        if (!menu || !host) return;
+        closeTabContextMenu();
+        closeCollectionContextMenu();
+        const rect = host.getBoundingClientRect();
+        state.requestContextMenu = { groupId, requestId };
+        menu.hidden = false;
+        const maxLeft = Math.max(8, rect.width - menu.offsetWidth - 8);
+        const maxTop = Math.max(8, rect.height - menu.offsetHeight - 8);
+        menu.style.left = `${Math.min(maxLeft, Math.max(8, event.clientX - rect.left))}px`;
+        menu.style.top = `${Math.min(maxTop, Math.max(8, event.clientY - rect.top))}px`;
+      }
+
+      function closeRequestContextMenu() {
+        state.requestContextMenu = null;
+        const menu = $('requestContextMenu');
+        if (menu) menu.hidden = true;
+      }
+
+      function uniqueRequestName(groupId, name) {
+        const names = new Set(
+          (state.collections.groups.find((group) => group.id === groupId)?.requests ?? []).map((request) => request.name)
+        );
+        const base = String(name || '请求').trim() || '请求';
+        if (!names.has(base)) return base;
+        let index = 2;
+        while (names.has(`${base} ${index}`)) index += 1;
+        return `${base} ${index}`;
+      }
+
+      function duplicateSavedRequest(groupId, requestId) {
+        const group = state.collections.groups.find((item) => item.id === groupId);
+        const sourceIndex = group?.requests.findIndex((item) => item.id === requestId) ?? -1;
+        const source = sourceIndex >= 0 ? group.requests[sourceIndex] : null;
+        if (!source) {
+          showToast('未找到可复制的请求');
+          return;
+        }
+        const duplicate = {
+          id: crypto.randomUUID(),
+          name: uniqueRequestName(groupId, `${source.name || deriveRequestName(source.request)} 副本`),
+          request: cloneRequestSnapshot(source.request),
+          updatedAt: Date.now()
+        };
+        state.collections.groups = state.collections.groups.map((item) => {
+          if (item.id !== groupId) return item;
+          const requests = [...item.requests];
+          requests.splice(sourceIndex + 1, 0, duplicate);
+          return { ...item, expanded: true, requests };
+        });
+        persistCollections();
+        openSavedRequestTab(groupId, duplicate);
+        renderAll();
+        showToast('已复制请求');
+      }
+
+      function handleCollectionContextMenuAction(action) {
+        const groupId = state.collectionContextMenu?.groupId;
+        closeCollectionContextMenu();
+        if (!groupId) return;
+        if (action === 'import') requestImportCollections(groupId);
+        if (action === 'export') exportCollections(groupId);
+      }
+
+      function handleRequestContextMenuAction(action) {
+        const groupId = state.requestContextMenu?.groupId;
+        const requestId = state.requestContextMenu?.requestId;
+        closeRequestContextMenu();
+        if (!groupId || !requestId) return;
+        if (action === 'copy') duplicateSavedRequest(groupId, requestId);
+      }
+
+      function handleTabContextMenuAction(action) {
+        const tabId = state.tabContextMenu?.tabId;
+        closeTabContextMenu();
+        if (!tabId) return;
+        if (action === 'current') {
+          closeOpenRequestTab(tabId);
+          return;
+        }
+        if (action === 'others') {
+          closeOpenRequestTabs(state.openRequestTabs.filter((tab) => tab.id !== tabId).map((tab) => tab.id));
+          return;
+        }
+        if (action === 'all') {
+          closeOpenRequestTabs(state.openRequestTabs.map((tab) => tab.id));
+        }
+      }
+
+      function renderRequestTabs() {
+        $('tabParams').classList.toggle('active', state.requestTab === 'params');
+        $('tabHeaders').classList.toggle('active', state.requestTab === 'headers');
+        $('tabCookies').classList.toggle('active', state.requestTab === 'cookies');
+        $('tabBody').classList.toggle('active', state.requestTab === 'body');
+        $('tabBody').hidden = !METHODS_WITH_BODY.has(state.method);
+        $('saveRequest').textContent = hasActiveSavedRequest() ? '保存' : '另存';
+      }
+
+      function jsonEditorHtml(id, value, placeholder, readonly = false) {
+        return `
+          <div class="http-client-json-editor">
+            <div class="http-client-json-gutter" aria-hidden="true">
+              <div class="http-client-json-gutter-inner">${jsonLineNumbers(value)}</div>
+            </div>
+            <div class="json-code http-client-json-code">
+              <pre class="json-highlight" aria-hidden="true">${highlightJson(value)}</pre>
+              <textarea id="${id}" ${readonly ? 'readonly' : ''} spellcheck="false" wrap="off" placeholder="${escapeAttr(placeholder)}"></textarea>
+            </div>
+          </div>
+        `;
+      }
+
+      function syncJsonEditorLayers(textarea, highlight, gutterInner, value) {
+        const text = String(value ?? '');
+        if (highlight) {
+          highlight.innerHTML = highlightJson(text);
+          highlight.style.minHeight = `${Math.max(textarea.clientHeight, textarea.scrollHeight)}px`;
+        }
+        if (gutterInner) {
+          gutterInner.innerHTML = jsonLineNumbers(text);
+        }
+      }
+
+      function bindJsonEditor(id, value) {
+        const textarea = $(id);
+        const highlight = textarea.previousElementSibling;
+        const editor = textarea.closest('.http-client-json-editor');
+        const gutterInner = editor ? editor.querySelector('.http-client-json-gutter-inner') : null;
+
+        textarea.value = String(value ?? '');
+        syncJsonEditorLayers(textarea, highlight, gutterInner, textarea.value);
+
+        const syncScroll = () => {
+          if (highlight) {
+            highlight.style.transform = `translate(${-textarea.scrollLeft}px, ${-textarea.scrollTop}px)`;
+          }
+          if (gutterInner) {
+            gutterInner.style.transform = `translateY(${-textarea.scrollTop}px)`;
+          }
+        };
+
+        textarea.addEventListener('scroll', syncScroll);
+        syncScroll();
+      }
+
+      function jsonLineNumbers(text) {
+        const count = Math.max(1, String(text ?? '').split('\n').length);
+        return Array.from({ length: count }, (_, index) => `<span>${index + 1}</span>`).join('');
+      }
+
+      function highlightJson(text) {
+        const lines = String(text ?? '').split('\n');
+
+        return lines
+          .map((line) => {
+            const tokens =
+              line.match(/"(?:\\.|[^"\\])*"|\b-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b|\btrue\b|\bfalse\b|\bnull\b|[{}[\],:]|\s+|./g) ?? [];
+
+            return tokens
+              .map((token, index) => {
+                const escapedToken = escapeHtml(token);
+
+                if (/^\s+$/.test(token)) {
+                  return escapedToken;
+                }
+
+                if (/^"(?:\\.|[^"\\])*"$/.test(token)) {
+                  const nextNonSpace = tokens.slice(index + 1).find((item) => !/^\s+$/.test(item));
+                  const className = nextNonSpace === ':' ? 'json-key' : 'json-string';
+                  return `<span class="${className}">${escapedToken}</span>`;
+                }
+
+                if (/^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(token)) {
+                  return `<span class="json-number">${escapedToken}</span>`;
+                }
+
+                if (/^(true|false|null)$/.test(token)) {
+                  return `<span class="json-const">${escapedToken}</span>`;
+                }
+
+                if (/^[{}[\],:]$/.test(token)) {
+                  return `<span class="json-punct">${escapedToken}</span>`;
+                }
+
+                return escapedToken;
+              })
+              .join('');
+          })
+          .join('\n');
+      }
+
+      function renderRequestPanel() {
+        const panel = $('requestPanel');
+        if (state.requestTab === 'body') {
+          const isJsonBody = state.bodyType === 'json';
+          panel.className = 'http-client-body-editor';
+          panel.innerHTML = `
+            <div class="http-client-body-toolbar">
+              <select id="bodyType">
+                <option value="json">JSON</option>
+                <option value="text">Text</option>
+                <option value="none">无 Body</option>
+              </select>
+              <div class="http-client-body-actions">
+                <button id="formatRequestJson" type="button">格式化 JSON</button>
+              </div>
+            </div>
+            ${isJsonBody ? jsonEditorHtml('requestBody', state.requestBody, '请求体，可使用 {{变量名}}') : '<textarea id="requestBody" spellcheck="false" placeholder="请求体，可使用 {{变量名}}"></textarea>'}
+          `;
+          $('bodyType').value = state.bodyType;
+          if (!isJsonBody) $('requestBody').value = state.requestBody;
+          $('requestBody').disabled = state.bodyType === 'none' || state.isSending;
+          $('formatRequestJson').disabled = state.bodyType !== 'json' || !state.requestBody.trim() || state.isSending;
+          if (isJsonBody) bindJsonEditor('requestBody', state.requestBody);
+          $('bodyType').addEventListener('change', (event) => {
+            state.bodyType = event.target.value;
+            markActiveRequestChanged();
+            renderRequestPanel();
+          });
+          $('requestBody').addEventListener('input', (event) => {
+            state.requestBody = event.target.value;
+            const highlight = event.target.previousElementSibling;
+            const gutterInner = event.target.closest('.http-client-json-editor')?.querySelector('.http-client-json-gutter-inner');
+            syncJsonEditorLayers(event.target, highlight, gutterInner, state.requestBody);
+            $('formatRequestJson').disabled = state.bodyType !== 'json' || !state.requestBody.trim() || state.isSending;
+            markActiveRequestChanged();
+          });
+          $('formatRequestJson').addEventListener('click', () => {
+            state.requestBody = formatHttpBody(state.requestBody, 'application/json');
+            markActiveRequestChanged();
+            renderRequestPanel();
+          });
+          return;
+        }
+
+        panel.className = 'http-client-kv-table';
+        if (state.requestTab === 'cookies') {
+          panel.innerHTML = `
+            <div class="http-client-cookie-toolbar">
+              <label class="http-client-checkbox">
+                <input id="useCookieJar" type="checkbox" />
+                <span>自动附带 Cookie 存储</span>
+              </label>
+              <button id="clearDomainCookies" type="button">清除当前域名 Cookie</button>
+            </div>
+            <div class="http-client-kv-scroll" id="kvScroll"></div>
+            <button class="http-client-kv-add" id="addKvRow" type="button"><span class="http-client-kv-add-mark" aria-hidden="true">+</span>添加 Cookie</button>
+          `;
+          $('useCookieJar').checked = state.useCookieJar;
+          $('useCookieJar').addEventListener('change', (event) => {
+            state.useCookieJar = event.target.checked;
+            markActiveRequestChanged();
+          });
+          $('clearDomainCookies').addEventListener('click', clearDomainCookies);
+          renderKvRows('cookieRows', ['启用', 'Cookie', '值', ''], ['name', 'value 或 {{var}}']);
+          $('addKvRow').addEventListener('click', () => addKvRow('cookieRows'));
+          return;
+        }
+
+        const key = state.requestTab === 'params' ? 'queryRows' : 'headerRows';
+        const addText = state.requestTab === 'params' ? '添加参数' : '添加 Header';
+        const heads = state.requestTab === 'params' ? ['启用', '参数名', '参数值', ''] : ['启用', 'Header', '值', ''];
+        const placeholders = state.requestTab === 'params' ? ['key', 'value 或 {{var}}'] : ['Header', 'value 或 {{var}}'];
+        panel.innerHTML = `
+          <div class="http-client-kv-scroll" id="kvScroll"></div>
+          <button class="http-client-kv-add" id="addKvRow" type="button"><span class="http-client-kv-add-mark" aria-hidden="true">+</span>${addText}</button>
+        `;
+        renderKvRows(key, heads, placeholders);
+        $('addKvRow').addEventListener('click', () => addKvRow(key));
+      }
+
+      function renderKvRows(stateKey, heads, placeholders) {
+        const scroll = $('kvScroll');
+        const head = document.createElement('div');
+        head.className = 'http-client-kv-head';
+        head.innerHTML = heads.map((item) => `<span>${escapeHtml(item)}</span>`).join('');
+        const rows = state[stateKey].map((row) => createKvRow(stateKey, row, placeholders));
+        scroll.replaceChildren(head, ...rows);
+      }
+
+      function createKvRow(stateKey, row, placeholders) {
+        const element = document.createElement('div');
+        element.className = 'http-client-kv-row';
+        element.dataset.rowId = row.id;
+        element.innerHTML = `
+          <input class="kv-enabled" type="checkbox" ${row.enabled ? 'checked' : ''} />
+          <input class="kv-key" type="text" placeholder="${escapeHtml(placeholders[0])}" value="${escapeAttr(row.key)}" />
+          <input class="kv-value" type="text" placeholder="${escapeHtml(placeholders[1])}" value="${escapeAttr(row.value)}" />
+          <button class="kv-remove" type="button" title="删除">×</button>
+        `;
+        element.querySelector('.kv-enabled').addEventListener('change', (event) => {
+          row.enabled = event.target.checked;
+          if (stateKey === 'envRows') persistEnvironments();
+          else markActiveRequestChanged();
+        });
+        element.querySelector('.kv-key').addEventListener('input', (event) => {
+          row.key = event.target.value;
+          if (stateKey === 'envRows') persistEnvironments();
+          else markActiveRequestChanged();
+        });
+        element.querySelector('.kv-value').addEventListener('input', (event) => {
+          row.value = event.target.value;
+          if (stateKey === 'envRows') persistEnvironments();
+          else markActiveRequestChanged();
+        });
+        element.querySelector('.kv-remove').addEventListener('click', () => removeKvRow(stateKey, row.id));
+        return element;
+      }
+
+      function addKvRow(stateKey) {
+        state[stateKey] = [...state[stateKey], createRow()];
+        if (stateKey === 'envRows') persistEnvironments();
+        else markActiveRequestChanged();
+        renderRequestPanel();
+        renderSidebar();
+      }
+
+      function removeKvRow(stateKey, id) {
+        const next = state[stateKey].filter((row) => row.id !== id);
+        state[stateKey] = next.length ? next : [createRow()];
+        if (stateKey === 'envRows') persistEnvironments();
+        else markActiveRequestChanged();
+        renderRequestPanel();
+        renderSidebar();
+      }
+
+      function renderResponse() {
+        $('responseBodyTab').classList.toggle('active', state.responseTab === 'body');
+        $('responseHeadersTab').classList.toggle('active', state.responseTab === 'headers');
+        const meta = $('responseMeta');
+        const panel = $('responsePanel');
+
+        if (state.isSending) {
+          meta.hidden = false;
+          meta.innerHTML = '<span class="http-client-meta-chip http-client-meta-loading">发送中...</span>';
+          if (state.responseTab === 'headers') {
+            panel.className = 'http-client-kv-table http-client-response-headers';
+            panel.innerHTML = `
+              <div class="http-client-empty is-loading">
+                <span class="http-client-empty-icon" aria-hidden="true">…</span>
+                <strong>请求发送中</strong>
+                <p>等待服务器响应</p>
+              </div>
+            `;
+            return;
+          }
+          panel.className = 'http-client-response-body';
+          panel.innerHTML = `
+            <div class="http-client-empty is-loading">
+              <span class="http-client-empty-icon" aria-hidden="true">…</span>
+              <strong>请求发送中</strong>
+              <p>等待服务器响应</p>
+            </div>
+          `;
+          return;
+        }
+
+        if (state.response) {
+          meta.hidden = false;
+          meta.innerHTML = `
+            <span class="http-client-status ${getStatusTone(state.response.status)}">${state.response.status} ${escapeHtml(state.response.statusText || '')}</span>
+            <span class="http-client-meta-chip">${Number(state.response.durationMs || 0)} ms</span>
+            <span class="http-client-meta-chip">${formatBytes(getBodySize(state.response.body || ''))}</span>
+          `;
+        } else {
+          meta.hidden = true;
+          meta.replaceChildren();
+        }
+
+        if (state.responseTab === 'headers') {
+          panel.className = 'http-client-kv-table http-client-response-headers';
+          const headers = state.response ? Object.entries(state.response.headers || {}) : [];
+          if (!headers.length) {
+            panel.innerHTML = '<div class="http-client-empty"><strong>暂无响应</strong></div>';
+            return;
+          }
+          panel.innerHTML = '<div class="http-client-kv-scroll" id="responseHeadersList"></div>';
+          const head = document.createElement('div');
+          head.className = 'http-client-kv-head readonly';
+          head.innerHTML = '<span>Header</span><span>值</span>';
+          const rows = headers.map(([key, value]) => {
+            const row = document.createElement('div');
+            row.className = 'http-client-kv-row readonly';
+            row.innerHTML = `<span title="${escapeAttr(key)}">${escapeHtml(key)}</span><span title="${escapeAttr(value)}">${escapeHtml(value)}</span>`;
+            return row;
+          });
+          $('responseHeadersList').replaceChildren(head, ...rows);
+          return;
+        }
+
+        panel.className = 'http-client-response-body';
+        if (!state.responseBody) {
+          panel.innerHTML = `
+            <div class="http-client-empty">
+              <span class="http-client-empty-icon" aria-hidden="true">HTTP</span>
+              <strong>暂无响应内容</strong>
+              <p>发送请求后在此查看结果</p>
+            </div>
+          `;
+          return;
+        }
+        panel.innerHTML = `
+          <div class="http-client-response-actions">
+            <button id="formatResponseJson" type="button">格式化 JSON</button>
+            <button id="copyResponse" type="button">复制响应</button>
+          </div>
+          ${isResponseJson() ? jsonEditorHtml('responseBodyText', state.responseBody, '发送请求后在此查看响应', true) : '<textarea id="responseBodyText" readonly spellcheck="false" placeholder="发送请求后在此查看响应"></textarea>'}
+        `;
+        if (isResponseJson()) {
+          bindJsonEditor('responseBodyText', state.responseBody);
+        } else {
+          $('responseBodyText').value = state.responseBody;
+        }
+        $('formatResponseJson').disabled = !isResponseJson();
+        $('formatResponseJson').addEventListener('click', () => {
+          state.responseBody = formatHttpBody(state.responseBody, 'application/json');
+          renderResponse();
+        });
+        $('copyResponse').addEventListener('click', () => copyText(state.responseBody, '响应已复制'));
+      }
+
+      function renderSidebar() {
+        const sidebar = $('sidebar');
+        sidebar.style.setProperty('--sidebar-width', `${state.sidebarWidth}px`);
+        sidebar.classList.toggle('collapsed', !state.sidebarOpen);
+        ['Collections', 'Environment', 'History'].forEach((name) => {
+          const key = name.toLowerCase();
+          $(`nav${name}`).classList.toggle('active', state.sidebarOpen && state.sidebarPanel === key);
+        });
+        if (!state.sidebarOpen) {
+          $('sidePanel').replaceChildren();
+          return;
+        }
+        if (state.sidebarPanel === 'collections') renderCollectionsPanel();
+        if (state.sidebarPanel === 'environment') renderEnvironmentPanel();
+        if (state.sidebarPanel === 'history') renderHistoryPanel();
+      }
+
+      function updateSidebarSelection() {
+        if (!state.sidebarOpen || state.sidebarPanel !== 'collections') return;
+        document.querySelectorAll('.http-client-collection-group').forEach((element) => {
+          element.classList.toggle('active', element.dataset.groupId === state.collections.activeGroupId);
+        });
+        document.querySelectorAll('.http-client-collection-request').forEach((element) => {
+          element.classList.toggle('active', element.dataset.requestId === state.collections.activeRequestId);
+        });
+      }
+
+      function renderCollectionsPanel() {
+        const panel = $('sidePanel');
+        panel.innerHTML = `
+          <div class="http-client-collections-head">
+            <strong>请求集合</strong>
+            <div class="http-client-collections-actions">
+              <button id="importCollections" class="http-client-collections-action" type="button" title="导入集合" aria-label="导入集合">${iconSvg('upload')}</button>
+              <button id="exportCollections" class="http-client-collections-action" type="button" title="导出全部集合" aria-label="导出全部集合">${iconSvg('download')}</button>
+              <button id="addGroup" class="http-client-collections-add" type="button" title="新增分组">+</button>
+            </div>
+          </div>
+          <div class="http-client-collections-search">
+            ${iconSvg('search')}
+            <input id="collectionSearch" type="search" placeholder="搜索集合" value="${escapeAttr(state.collectionSearch)}" />
+          </div>
+          <div id="collectionsList" class="http-client-collections-list"></div>
+        `;
+        $('addGroup').addEventListener('click', () => openDialog({ type: 'addGroup', initialName: `分组 ${state.collections.groups.length + 1}` }));
+        $('importCollections').addEventListener('click', () => requestImportCollections());
+        $('exportCollections').addEventListener('click', () => exportCollections());
+        $('collectionSearch').addEventListener('input', (event) => {
+          state.collectionSearch = event.target.value;
+          renderCollectionsPanel();
+        });
+        const groups = filterCollections();
+        const list = $('collectionsList');
+        if (!groups.length) {
+          list.innerHTML = '<p class="http-client-collections-empty">无匹配结果</p>';
+          return;
+        }
+        list.replaceChildren(...groups.map(createCollectionGroupElement));
+      }
+
+      function createCollectionGroupElement(group) {
+        const element = document.createElement('div');
+        const active = group.id === state.collections.activeGroupId;
+        element.className = `http-client-collection-group${active ? ' active' : ''}${state.dragOverGroupId === group.id ? ' drag-over' : ''}${state.groupDragOverId === group.id ? ' group-drag-over' : ''}`;
+        element.dataset.groupId = group.id;
+        const head = document.createElement('div');
+        head.className = 'http-client-collection-group-head';
+        head.innerHTML = `
+          <button class="http-client-collection-toggle" type="button" aria-expanded="${group.expanded}">${iconSvg('chevron', group.expanded ? '' : 'collapsed')}</button>
+          <button class="http-client-collection-group-main" type="button">${iconSvg('folder')}<span class="http-client-collection-group-name" title="${escapeAttr(group.name)}">${escapeHtml(group.name)}</span></button>
+          <div class="http-client-collection-group-actions">
+            <button type="button" title="添加请求">+</button>
+            <button type="button" title="重命名分组">✎</button>
+            <button type="button" title="删除分组" ${state.collections.groups.length <= 1 ? 'disabled' : ''}>×</button>
+          </div>
+        `;
+        const [toggle, main] = head.querySelectorAll('button');
+        const actionButtons = head.querySelectorAll('.http-client-collection-group-actions button');
+        head.addEventListener('pointerdown', (event) => startGroupPointerDrag(event, group.id, head));
+        toggle.addEventListener('click', () => toggleCollectionGroup(group.id));
+        main.addEventListener('click', () => selectCollectionGroup(group.id));
+        main.addEventListener('dblclick', () => toggleCollectionGroup(group.id));
+        actionButtons[0].addEventListener('click', () => addEmptyRequestToGroup(group.id));
+        actionButtons[1].addEventListener('click', () => openDialog({ type: 'renameGroup', groupId: group.id, initialName: group.name }));
+        actionButtons[2].addEventListener('click', () => openDialog({ type: 'deleteGroup', groupId: group.id, initialName: group.name }));
+        element.addEventListener('dragover', (event) => handleRequestDragOver(event, element, group.id));
+        element.addEventListener('dragleave', (event) => handleRequestDragLeave(event, element, group.id));
+        element.addEventListener('drop', (event) => handleRequestDrop(event, group.id));
+        head.addEventListener('contextmenu', (event) => {
+          event.preventDefault();
+          openCollectionContextMenu(event, group.id);
+        });
+        element.appendChild(head);
+        if (group.expanded) {
+          const requests = document.createElement('div');
+          requests.className = 'http-client-collection-requests';
+          if (!group.requests.length) {
+            requests.innerHTML = '<p class="http-client-collections-empty">暂无请求，点击 + 保存</p>';
+          } else {
+            requests.replaceChildren(...group.requests.map((request) => createSavedRequestElement(group.id, request)));
+          }
+          element.appendChild(requests);
+        }
+        return element;
+      }
+
+      function createSavedRequestElement(groupId, request) {
+        const element = document.createElement('div');
+        const isDragging = state.draggingRequest?.requestId === request.id;
+        element.className = `http-client-collection-request${state.collections.activeRequestId === request.id ? ' active' : ''}${isDragging ? ' dragging' : ''}`;
+        element.dataset.groupId = groupId;
+        element.dataset.requestId = request.id;
+        element.innerHTML = `
+          <span class="${collectionMethodClass(request.request.method)}">${escapeHtml(request.request.method)}</span>
+          <button class="http-client-collection-request-main" type="button"><span class="http-client-collection-request-name" title="${escapeAttr(request.name)}">${escapeHtml(request.name)}</span></button>
+          <span class="http-client-collection-request-actions">
+            <button type="button" title="重命名">✎</button>
+            <button type="button" title="删除">×</button>
+          </span>
+        `;
+        element.addEventListener('pointerdown', (event) => startRequestPointerDrag(event, groupId, request.id, element));
+        element.addEventListener('pointerup', (event) => {
+          if (event.button !== 0) return;
+          if (state.dragPointer?.dragging) return;
+          if (event.target instanceof Element && event.target.closest('.http-client-collection-request-actions')) return;
+          selectSavedRequest(groupId, request.id);
+        });
+        element.addEventListener('contextmenu', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          openRequestContextMenu(event, groupId, request.id);
+        });
+        const actions = element.querySelectorAll('.http-client-collection-request-actions button');
+        actions[0].addEventListener('click', (event) => {
+          event.stopPropagation();
+          openDialog({ type: 'renameRequest', groupId, requestId: request.id, initialName: request.name });
+        });
+        actions[1].addEventListener('click', (event) => {
+          event.stopPropagation();
+          openDialog({ type: 'deleteRequest', groupId, requestId: request.id, initialName: request.name });
+        });
+        return element;
+      }
+
+      function beginRequestDrag(groupId, requestId, element) {
+        state.draggingRequest = { groupId, requestId };
+        state.dragOverGroupId = '';
+        element.classList.add('dragging');
+      }
+
+      function startRequestPointerDrag(event, groupId, requestId, element) {
+        if (event.button !== 0) return;
+        if (event.target instanceof Element && event.target.closest('.http-client-collection-request-actions')) return;
+
+        state.dragPointer = {
+          dragging: false,
+          element,
+          groupId,
+          pointerId: event.pointerId,
+          requestId,
+          startX: event.clientX,
+          startY: event.clientY
+        };
+        element.setPointerCapture?.(event.pointerId);
+        element.addEventListener('pointermove', handleRequestPointerMove);
+        element.addEventListener('pointerup', handleRequestPointerUp);
+        element.addEventListener('pointercancel', cancelRequestPointerDrag);
+      }
+
+      function handleRequestDragStart(event, groupId, requestId, element) {
+        beginRequestDrag(groupId, requestId, element);
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('application/x-tooldesk-http-request', JSON.stringify({ groupId, requestId }));
+          event.dataTransfer.setData('text/plain', JSON.stringify({ groupId, requestId }));
+        }
+      }
+
+      function getDraggingRequestFromEvent(event) {
+        if (state.draggingRequest) return state.draggingRequest;
+        if (!event.dataTransfer) return null;
+
+        const payload =
+          event.dataTransfer.getData('application/x-tooldesk-http-request') ||
+          event.dataTransfer.getData('text/plain');
+        if (!payload) return null;
+
+        try {
+          const parsed = JSON.parse(payload);
+          if (parsed?.groupId && parsed?.requestId) {
+            return { groupId: parsed.groupId, requestId: parsed.requestId };
+          }
+        } catch {}
+
+        return null;
+      }
+
+      function handleRequestDragEnd() {
+        state.draggingRequest = null;
+        state.dragOverGroupId = '';
+        state.dragPointer = null;
+        renderCollectionsPanel();
+      }
+
+      function moveCollectionGroup(sourceGroupId, targetGroupId) {
+        if (!sourceGroupId || !targetGroupId || sourceGroupId === targetGroupId) {
+          renderCollectionsPanel();
+          return;
+        }
+
+        const sourceIndex = state.collections.groups.findIndex((group) => group.id === sourceGroupId);
+        const targetIndex = state.collections.groups.findIndex((group) => group.id === targetGroupId);
+        if (sourceIndex < 0 || targetIndex < 0) {
+          renderCollectionsPanel();
+          return;
+        }
+
+        const groups = [...state.collections.groups];
+        const [source] = groups.splice(sourceIndex, 1);
+        const nextTargetIndex = groups.findIndex((group) => group.id === targetGroupId);
+        groups.splice(nextTargetIndex < 0 ? groups.length : nextTargetIndex, 0, source);
+        state.collections.groups = groups;
+        state.collections.activeGroupId = sourceGroupId;
+        persistCollections();
+        renderAll();
+      }
+
+      function groupIdFromPoint(x, y) {
+        const target = document.elementFromPoint(x, y);
+        return target instanceof Element ? target.closest('.http-client-collection-group')?.dataset.groupId || '' : '';
+      }
+
+      function setDragOverGroup(groupId) {
+        if (state.dragOverGroupId === groupId) return;
+        document.querySelectorAll('.http-client-collection-group.drag-over').forEach((item) => item.classList.remove('drag-over'));
+        state.dragOverGroupId = groupId;
+        if (groupId) {
+          document.querySelector(`.http-client-collection-group[data-group-id="${CSS.escape(groupId)}"]`)?.classList.add('drag-over');
+        }
+      }
+
+      function setGroupDragOver(groupId) {
+        if (state.groupDragOverId === groupId) return;
+        document.querySelectorAll('.http-client-collection-group.group-drag-over').forEach((item) => item.classList.remove('group-drag-over'));
+        state.groupDragOverId = groupId;
+        if (groupId) {
+          document.querySelector(`.http-client-collection-group[data-group-id="${CSS.escape(groupId)}"]`)?.classList.add('group-drag-over');
+        }
+      }
+
+      function startGroupPointerDrag(event, groupId, head) {
+        if (event.button !== 0) return;
+        if (event.target instanceof Element && event.target.closest('.http-client-collection-toggle, .http-client-collection-group-actions')) return;
+
+        state.groupDragPointer = {
+          dragging: false,
+          groupId,
+          head,
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY
+        };
+        head.setPointerCapture?.(event.pointerId);
+        head.addEventListener('pointermove', handleGroupPointerMove);
+        head.addEventListener('pointerup', handleGroupPointerUp);
+        head.addEventListener('pointercancel', cancelGroupPointerDrag);
+      }
+
+      function handleGroupPointerMove(event) {
+        const drag = state.groupDragPointer;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+
+        const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+        if (!drag.dragging && distance < 6) return;
+
+        event.preventDefault();
+        if (!drag.dragging) {
+          drag.dragging = true;
+          drag.head.classList.add('dragging');
+        }
+
+        const targetGroupId = groupIdFromPoint(event.clientX, event.clientY);
+        setGroupDragOver(targetGroupId && targetGroupId !== drag.groupId ? targetGroupId : '');
+      }
+
+      function handleGroupPointerUp(event) {
+        const drag = state.groupDragPointer;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+
+        const targetGroupId = groupIdFromPoint(event.clientX, event.clientY);
+        cleanupGroupPointerDrag();
+
+        if (drag.dragging && targetGroupId && targetGroupId !== drag.groupId) {
+          moveCollectionGroup(drag.groupId, targetGroupId);
+        } else {
+          renderCollectionsPanel();
+        }
+      }
+
+      function cancelGroupPointerDrag(event) {
+        const drag = state.groupDragPointer;
+        if (event && drag && drag.pointerId !== event.pointerId) return;
+        cleanupGroupPointerDrag();
+        renderCollectionsPanel();
+      }
+
+      function cleanupGroupPointerDrag() {
+        const drag = state.groupDragPointer;
+        if (!drag) return;
+
+        drag.head.releasePointerCapture?.(drag.pointerId);
+        drag.head.removeEventListener('pointermove', handleGroupPointerMove);
+        drag.head.removeEventListener('pointerup', handleGroupPointerUp);
+        drag.head.removeEventListener('pointercancel', cancelGroupPointerDrag);
+        drag.head.classList.remove('dragging');
+        state.groupDragOverId = '';
+        state.groupDragPointer = null;
+      }
+
+      function handleRequestPointerMove(event) {
+        const drag = state.dragPointer;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+
+        const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+        if (!drag.dragging && distance < 6) return;
+
+        event.preventDefault();
+        if (!drag.dragging) {
+          drag.dragging = true;
+          beginRequestDrag(drag.groupId, drag.requestId, drag.element);
+        }
+
+        const targetGroupId = groupIdFromPoint(event.clientX, event.clientY);
+        setDragOverGroup(targetGroupId && targetGroupId !== drag.groupId ? targetGroupId : '');
+      }
+
+      function handleRequestPointerUp(event) {
+        const drag = state.dragPointer;
+        if (!drag || drag.pointerId !== event.pointerId) return;
+
+        const targetGroupId = groupIdFromPoint(event.clientX, event.clientY);
+        cleanupRequestPointerDrag();
+
+        if (drag.dragging && targetGroupId && targetGroupId !== drag.groupId) {
+          moveSavedRequestToGroup(drag.groupId, drag.requestId, targetGroupId);
+        } else {
+          renderCollectionsPanel();
+        }
+      }
+
+      function cancelRequestPointerDrag(event) {
+        const drag = state.dragPointer;
+        if (event && drag && drag.pointerId !== event.pointerId) return;
+        cleanupRequestPointerDrag();
+        renderCollectionsPanel();
+      }
+
+      function cleanupRequestPointerDrag() {
+        const drag = state.dragPointer;
+        if (!drag) return;
+
+        drag.element.releasePointerCapture?.(drag.pointerId);
+        drag.element.removeEventListener('pointermove', handleRequestPointerMove);
+        drag.element.removeEventListener('pointerup', handleRequestPointerUp);
+        drag.element.removeEventListener('pointercancel', cancelRequestPointerDrag);
+        state.draggingRequest = null;
+        state.dragOverGroupId = '';
+        state.dragPointer = null;
+      }
+
+      function handleRequestDragOver(event, element, groupId) {
+        const draggingRequest = state.draggingRequest;
+        if (!draggingRequest || draggingRequest.groupId === groupId) {
+          return;
+        }
+
+        event.preventDefault();
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = 'move';
+        }
+
+        if (state.dragOverGroupId !== groupId) {
+          document.querySelectorAll('.http-client-collection-group.drag-over').forEach((item) => item.classList.remove('drag-over'));
+          state.dragOverGroupId = groupId;
+          element.classList.add('drag-over');
+        }
+      }
+
+      function handleRequestDragLeave(event, element, groupId) {
+        if (!state.draggingRequest || state.dragOverGroupId !== groupId) {
+          return;
+        }
+
+        const relatedTarget = event.relatedTarget;
+        if (relatedTarget instanceof Node && element.contains(relatedTarget)) {
+          return;
+        }
+
+        state.dragOverGroupId = '';
+        element.classList.remove('drag-over');
+      }
+
+      function handleRequestDrop(event, targetGroupId) {
+        const draggingRequest = getDraggingRequestFromEvent(event);
+        if (!draggingRequest) {
+          return;
+        }
+
+        event.preventDefault();
+        moveSavedRequestToGroup(draggingRequest.groupId, draggingRequest.requestId, targetGroupId);
+        state.draggingRequest = null;
+        state.dragOverGroupId = '';
+      }
+
+      function renderEnvironmentPanel() {
+        const panel = $('sidePanel');
+        panel.innerHTML = `
+          <div class="http-client-side-panel-head">
+            <strong>环境</strong>
+            <button id="addEnvironment" class="http-client-toolbar-link" type="button"><span class="http-client-kv-add-mark" aria-hidden="true">+</span>新建</button>
+          </div>
+          <div id="environmentList" class="http-client-env-list"></div>
+          <div class="http-client-side-env-body http-client-kv-table">
+            <div class="http-client-env-toolbar"><p>使用 {{变量名}} 引用，发送时自动替换。</p></div>
+            <div class="http-client-kv-scroll" id="envRows"></div>
+            <button class="http-client-kv-add" id="addEnvRow" type="button"><span class="http-client-kv-add-mark" aria-hidden="true">+</span>添加变量</button>
+          </div>
+        `;
+        $('addEnvironment').addEventListener('click', () => {
+          persistEnvironments();
+          const env = createEnvironment(`环境 ${state.environments.length + 1}`);
+          state.environments.push(env);
+          state.activeEnvId = env.id;
+          syncEnvRows();
+          persistEnvironments();
+          renderEnvironmentPanel();
+        });
+        $('environmentList').replaceChildren(...state.environments.map(createEnvironmentElement));
+        const head = document.createElement('div');
+        head.className = 'http-client-kv-head';
+        head.innerHTML = '<span>启用</span><span>变量名</span><span>变量值</span><span></span>';
+        $('envRows').replaceChildren(head, ...state.envRows.map((row) => createKvRow('envRows', row, ['baseUrl', 'https://api.example.com'])));
+        $('addEnvRow').addEventListener('click', () => {
+          state.envRows.push(createRow());
+          persistEnvironments();
+          renderEnvironmentPanel();
+        });
+      }
+
+      function createEnvironmentElement(environment) {
+        const active = environment.id === state.activeEnvId;
+        const enabledCount = environment.variables.filter((row) => row.enabled && row.key.trim()).length;
+        const element = document.createElement('div');
+        element.className = `http-client-env-item${active ? ' active' : ''}`;
+        element.innerHTML = `
+          <span class="http-client-env-icon">${iconSvg('folder')}</span>
+          <span class="http-client-env-main">
+            <span class="http-client-env-name" title="${escapeAttr(environment.name)}">${escapeHtml(environment.name)}</span>
+            <span class="http-client-env-meta">${enabledCount} 个启用变量</span>
+          </span>
+          <span class="http-client-env-actions">
+            <button type="button" title="重命名环境">✎</button>
+            <button class="danger" type="button" title="删除环境" ${state.environments.length <= 1 ? 'disabled' : ''}>×</button>
+          </span>
+        `;
+        const [renameButton, deleteButton] = element.querySelectorAll('.http-client-env-actions button');
+        element.addEventListener('click', () => {
+          if (environment.id === state.activeEnvId) return;
+          persistEnvironments();
+          state.activeEnvId = environment.id;
+          syncEnvRows();
+          persistEnvironments();
+          renderEnvironmentPanel();
+        });
+        renameButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          openDialog({ type: 'renameEnvironment', envId: environment.id, initialName: environment.name });
+        });
+        deleteButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          if (state.environments.length <= 1) {
+            showToast('至少保留一个环境');
+            return;
+          }
+          openDialog({ type: 'deleteEnvironment', envId: environment.id, initialName: environment.name });
+        });
+        return element;
+      }
+
+      function renderHistoryPanel() {
+        const panel = $('sidePanel');
+        panel.innerHTML = `
+          <div class="http-client-side-panel-head">
+            <strong>历史记录</strong>
+            <div class="http-client-history-actions">
+              <button id="resetRequest" type="button">新建</button>
+              <button id="clearHistory" type="button" ${state.history.length ? '' : 'disabled'}>清空</button>
+            </div>
+          </div>
+          <div id="historyList" class="http-client-side-history-list"></div>
+        `;
+        $('resetRequest').addEventListener('click', () => restoreSnapshot(createEmptySnapshot()));
+        $('clearHistory').addEventListener('click', () => {
+          state.history = [];
+          persistHistory();
+          renderHistoryPanel();
+        });
+        const list = $('historyList');
+        if (!state.history.length) {
+          list.innerHTML = '<div class="http-client-collections-empty">暂无历史</div>';
+          return;
+        }
+        list.replaceChildren(...state.history.map(createHistoryElement));
+      }
+
+      function createHistoryElement(entry) {
+        const button = document.createElement('button');
+        button.className = 'http-client-history-item';
+        button.type = 'button';
+        const statusText = entry.responseStatus ? ` · ${entry.responseStatus}` : '';
+        button.innerHTML = `
+          <span class="http-client-history-method">${escapeHtml(entry.request.method)}</span>
+          <span class="http-client-history-label" title="${escapeAttr(entry.label)}">${escapeHtml(entry.label)}</span>
+          <span class="http-client-history-meta">${escapeHtml(formatHistoryTime(entry.createdAt))}${statusText}</span>
+          <span class="http-client-history-remove" title="删除">×</span>
+        `;
+        button.addEventListener('click', () => restoreHistory(entry));
+        button.querySelector('.http-client-history-remove').addEventListener('click', (event) => {
+          event.stopPropagation();
+          state.history = state.history.filter((item) => item.id !== entry.id);
+          persistHistory();
+          renderHistoryPanel();
+        });
+        return button;
+      }
+
+      function syncFromInputs() {
+        const url = $('url');
+        if (url) state.url = url.value;
+        const requestBody = $('requestBody');
+        if (requestBody) state.requestBody = requestBody.value;
+      }
+
+      function selectCollectionGroup(groupId) {
+        state.collections.activeGroupId = groupId;
+        persistCollections();
+        renderSidebar();
+      }
+
+      function toggleCollectionGroup(groupId) {
+        state.collections.activeGroupId = groupId;
+        state.collections.groups = state.collections.groups.map((group) => group.id === groupId ? { ...group, expanded: !group.expanded } : group);
+        persistCollections();
+        renderSidebar();
+      }
+
+      function addRequestToGroup(groupId, snapshot = buildSnapshot(), bindActiveTab = true) {
+        const request = { id: crypto.randomUUID(), name: deriveRequestName(snapshot), request: cloneRequestSnapshot(snapshot), updatedAt: Date.now() };
+        state.collections.activeGroupId = groupId;
+        state.collections.activeRequestId = request.id;
+        state.collections.groups = state.collections.groups.map((group) => group.id === groupId ? { ...group, expanded: true, requests: [...group.requests, request] } : group);
+        const activeTab = getActiveOpenTab();
+        if (activeTab && bindActiveTab) {
+          activeTab.groupId = groupId;
+          activeTab.id = `saved-${request.id}`;
+          activeTab.name = request.name;
+          activeTab.requestId = request.id;
+          activeTab.snapshot = cloneSnapshot(snapshot);
+          activeTab.baselineSnapshot = cloneSnapshot(snapshot);
+          activeTab.type = 'saved';
+          state.activeOpenTabId = activeTab.id;
+        } else {
+          const tab = createSavedOpenTab(groupId, request);
+          state.openRequestTabs.push(tab);
+          state.activeOpenTabId = tab.id;
+        }
+        restoreSnapshot(snapshot, false);
+        persistCollections();
+        renderAll();
+      }
+
+      function addEmptyRequestToGroup(groupId) {
+        syncActiveOpenTabSnapshot();
+        addRequestToGroup(groupId, createEmptySnapshot(), false);
+      }
+
+      function saveCurrentToCollection() {
+        if (!state.openRequestTabs.length) return;
+        const snapshot = buildSnapshot();
+        if (hasActiveSavedRequest()) {
+          state.collections.groups = state.collections.groups.map((group) => ({
+            ...group,
+            requests: group.requests.map((request) => request.id === state.collections.activeRequestId
+              ? { ...request, name: request.name || deriveRequestName(snapshot), request: cloneRequestSnapshot(snapshot), updatedAt: Date.now() }
+              : request)
+          }));
+          const activeTab = getActiveOpenTab();
+          if (activeTab) {
+            const saved = findSavedRequest(state.collections.activeRequestId);
+            activeTab.name = saved?.request.name || deriveRequestName(snapshot);
+            activeTab.snapshot = cloneSnapshot(snapshot);
+            activeTab.baselineSnapshot = cloneSnapshot(snapshot);
+          }
+          persistCollections();
+          renderAll();
+          showToast('请求已保存');
+          return;
+        }
+        addRequestToGroup(state.collections.activeGroupId || state.collections.groups[0].id, snapshot);
+        showToast('请求已另存');
+      }
+
+      function selectSavedRequest(groupId, requestId) {
+        const group = state.collections.groups.find((item) => item.id === groupId);
+        const request = group && group.requests.find((item) => item.id === requestId);
+        if (!request) return;
+        openSavedRequestTab(groupId, request);
+      }
+
+      function removeSavedRequest(groupId, requestId) {
+        state.collections.groups = state.collections.groups.map((group) => group.id === groupId ? { ...group, requests: group.requests.filter((request) => request.id !== requestId) } : group);
+        if (state.collections.activeRequestId === requestId) state.collections.activeRequestId = '';
+        state.openRequestTabs = state.openRequestTabs.filter((tab) => !(tab.type === 'saved' && tab.requestId === requestId));
+        if (state.activeOpenTabId === `saved-${requestId}`) {
+          const nextTab = state.openRequestTabs[0] || createScratchOpenTab();
+          if (!state.openRequestTabs.length) state.openRequestTabs = [nextTab];
+          state.activeOpenTabId = nextTab.id;
+          state.collections.activeRequestId = nextTab.type === 'saved' ? nextTab.requestId : '';
+          restoreSnapshot(nextTab.snapshot);
+        }
+        persistCollections();
+        renderAll();
+      }
+
+      function moveSavedRequestToGroup(sourceGroupId, requestId, targetGroupId) {
+        if (!sourceGroupId || !requestId || !targetGroupId || sourceGroupId === targetGroupId) {
+          renderCollectionsPanel();
+          return;
+        }
+
+        const sourceGroup = state.collections.groups.find((group) => group.id === sourceGroupId);
+        const targetGroup = state.collections.groups.find((group) => group.id === targetGroupId);
+        const request = sourceGroup?.requests.find((item) => item.id === requestId);
+
+        if (!sourceGroup || !targetGroup || !request) {
+          renderCollectionsPanel();
+          return;
+        }
+
+        state.collections.groups = state.collections.groups.map((group) => {
+          if (group.id === sourceGroupId) {
+            return { ...group, requests: group.requests.filter((item) => item.id !== requestId) };
+          }
+
+          if (group.id === targetGroupId) {
+            return { ...group, expanded: true, requests: [...group.requests, request] };
+          }
+
+          return group;
+        });
+        state.collections.activeGroupId = targetGroupId;
+        state.openRequestTabs.forEach((tab) => {
+          if (tab.type === 'saved' && tab.requestId === requestId) tab.groupId = targetGroupId;
+        });
+        persistCollections();
+        renderAll();
+      }
+
+      function restoreHistory(entry) {
+        openHistoryRequestTab(entry);
+        showError(entry.response?.error || '');
+        renderOpenRequestTabs();
+        renderResponse();
+      }
+
+      function createHistoryEntry(snapshot, response) {
+        const body = response && response.body ? truncateBody(response.body) : '';
+        const contentType = response?.headers?.['content-type'] || response?.headers?.['Content-Type'] || '';
+        return {
+          createdAt: Date.now(),
+          durationMs: response?.durationMs,
+          id: crypto.randomUUID(),
+          label: `${snapshot.method} ${snapshot.url}`.slice(0, 120),
+          request: cloneRequestSnapshot(snapshot),
+          response: response ? { ...response, body } : undefined,
+          responseBody: response ? formatHttpBody(body, contentType) : '',
+          responseStatus: response?.status
+        };
+      }
+
+      function truncateBody(body) {
+        const bytes = new TextEncoder().encode(body);
+        if (bytes.length <= 128 * 1024) return body;
+        return `${new TextDecoder().decode(bytes.slice(0, 128 * 1024))}\n\n...（响应体已截断以节省存储空间）`;
+      }
+
+      async function sendRequest() {
+        await pluginConnect;
+        const activeApi = syncPluginApi();
+        if (!activeApi || typeof activeApi.sendHttpRequest !== 'function') {
+          showError('插件 SDK 未就绪，请重启 Tooldesk');
+          return;
+        }
+        syncFromInputs();
+        const requestTabId = state.activeOpenTabId;
+        let targetUrl = '';
+        try {
+          const resolvedUrl = applyEnv(state.url.trim());
+          const queryRows = state.queryRows.map((row) => ({ ...row, key: applyEnv(row.key), value: applyEnv(row.value) }));
+          targetUrl = appendQueryParams(resolvedUrl, queryRows);
+        } catch {
+          showError('URL 格式不正确');
+          return;
+        }
+        if (!targetUrl) {
+          showError('请输入请求 URL');
+          return;
+        }
+
+        const snapshot = buildSnapshot();
+        const headers = rowsToRecord(state.headerRows.map((row) => ({ ...row, key: applyEnv(row.key), value: applyEnv(row.value) })));
+        let body;
+        if (METHODS_WITH_BODY.has(state.method) && state.bodyType !== 'none') {
+          body = applyEnv(state.requestBody);
+          if (!Object.keys(headers).some((key) => key.toLowerCase() === 'content-type')) {
+            headers['Content-Type'] = state.bodyType === 'json' ? 'application/json' : 'text/plain';
+          }
+        }
+        const cookieHeader = buildCookieHeader(
+          targetUrl,
+          state.cookieRows.map((row) => ({ ...row, key: applyEnv(row.key), value: applyEnv(row.value) })),
+          state.cookieJar,
+          state.useCookieJar
+        );
+        if (cookieHeader) headers.Cookie = cookieHeader;
+
+        state.isSending = true;
+        state.response = null;
+        state.responseBody = '';
+        const startedTab = state.openRequestTabs.find((tab) => tab.id === requestTabId);
+        if (startedTab) {
+          startedTab.snapshot = cloneSnapshot({ ...snapshot, response: null, responseBody: '', responseTab: 'body' });
+        }
+        showError('');
+        $('send').disabled = true;
+        $('send').textContent = '发送中...';
+        if (state.activeOpenTabId === requestTabId) {
+          renderResponse();
+        }
+        try {
+          const result = await activeApi.sendHttpRequest({ body, headers, method: state.method, timeoutMs: 30000, url: targetUrl });
+          if (Array.isArray(result.setCookies) && result.setCookies.length) upsertCookiesFromResponse(targetUrl, result.setCookies);
+          state.history = [createHistoryEntry(snapshot, result), ...state.history].slice(0, MAX_HISTORY);
+          persistHistory();
+          const contentType = result.headers?.['content-type'] || result.headers?.['Content-Type'] || '';
+          const responseBody = formatHttpBody(result.body || '', contentType);
+          const targetTab = state.openRequestTabs.find((tab) => tab.id === requestTabId);
+          if (targetTab) {
+            targetTab.snapshot = cloneSnapshot({
+              ...targetTab.snapshot,
+              response: result,
+              responseBody,
+              responseTab: 'body'
+            });
+          }
+          if (state.activeOpenTabId === requestTabId) {
+            state.response = cloneResponse(result);
+            state.responseBody = responseBody;
+            state.responseTab = 'body';
+            if (result.error) showError(result.error);
+          }
+        } catch (error) {
+          if (state.activeOpenTabId === requestTabId) {
+            showError(error instanceof Error ? error.message : '请求失败');
+          }
+        } finally {
+          state.isSending = false;
+          const sendButton = $('send');
+          if (sendButton) {
+            sendButton.disabled = false;
+            sendButton.textContent = '发送';
+          }
+          renderAll();
+        }
+      }
+
+      function isSameRequest(left, right) {
+        return left.method === right.method && left.url === right.url && left.requestBody === right.requestBody && left.bodyType === right.bodyType && left.useCookieJar === right.useCookieJar;
+      }
+
+      function showError(message) {
+        $('requestError').hidden = !message;
+        $('requestError').textContent = message || '';
+      }
+
+      function showToast(message) {
+        $('toast').textContent = message;
+        $('toast').hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600);
+      }
+
+      function updatePaneLayout() {
+        const workspace = document.querySelector('.http-client-workspace');
+        if (workspace) workspace.style.setProperty('--request-pane-width', `${state.paneRequestPercent}%`);
+      }
+
+      function startSidebarResize(event) {
+        if (!state.sidebarOpen) return;
+        const sidebar = $('sidebar');
+        if (!sidebar) return;
+        event.preventDefault();
+        const startX = event.clientX;
+        const startWidth = state.sidebarWidth;
+        const onMove = (moveEvent) => {
+          state.sidebarWidth = Math.min(520, Math.max(260, startWidth + moveEvent.clientX - startX));
+          sidebar.style.setProperty('--sidebar-width', `${state.sidebarWidth}px`);
+        };
+        const onUp = () => {
+          document.body.classList.remove('http-client-resizing');
+          sidebar.classList.remove('resizing');
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+        };
+        document.body.classList.add('http-client-resizing');
+        sidebar.classList.add('resizing');
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp, { once: true });
+      }
+
+      function startPaneResize(event) {
+        const workspace = document.querySelector('.http-client-workspace');
+        if (!workspace) return;
+        event.preventDefault();
+        const resizer = $('paneResizer');
+        const rect = workspace.getBoundingClientRect();
+        const onMove = (moveEvent) => {
+          const percent = ((moveEvent.clientX - rect.left) / rect.width) * 100;
+          state.paneRequestPercent = Math.min(72, Math.max(28, percent));
+          updatePaneLayout();
+        };
+        const onUp = () => {
+          document.body.classList.remove('http-client-resizing');
+          resizer.classList.remove('dragging');
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+        };
+        document.body.classList.add('http-client-resizing');
+        resizer.classList.add('dragging');
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp, { once: true });
+      }
+
+      async function copyText(text, message) {
+        if (!text) return;
+        await pluginConnect;
+        const activeApi = syncPluginApi();
+        if (!activeApi) return;
+        try {
+          await activeApi.copyText(text);
+        } catch {
+          await api.copyText(text);
+        }
+        showToast(message || '已复制');
+      }
+
+      function openDialog(dialog) {
+        state.dialog = dialog;
+        const isDelete = dialog.type === 'deleteGroup' || dialog.type === 'deleteRequest' || dialog.type === 'deleteEnvironment';
+        const isMessage = ['deleteGroup', 'deleteRequest', 'deleteEnvironment', 'closeDirtyTab', 'closeDirtyTabs'].includes(dialog.type);
+        const titles = {
+          addGroup: '新增分组',
+          closeDirtyTab: '关闭请求',
+          closeDirtyTabs: '关闭请求',
+          deleteEnvironment: '删除环境',
+          deleteGroup: '删除分组',
+          deleteRequest: '删除请求',
+          renameEnvironment: '重命名环境',
+          renameGroup: '重命名分组',
+          renameRequest: '重命名请求'
+        };
+        $('dialogTitle').textContent = titles[dialog.type] || '';
+        $('dialogConfirm').textContent = isDelete ? '删除' : ['closeDirtyTab', 'closeDirtyTabs'].includes(dialog.type) ? '关闭' : '确定';
+        $('dialogConfirm').classList.toggle('danger', isDelete);
+        $('dialogBody').innerHTML = isMessage
+          ? `<p class="http-client-dialog-message">${
+              dialog.type === 'deleteGroup'
+                ? `确定删除「${escapeHtml(dialog.initialName)}」及其所有请求？此操作不可恢复。`
+                : dialog.type === 'deleteRequest'
+                  ? `确定删除请求「${escapeHtml(dialog.initialName)}」？此操作不可恢复。`
+                  : dialog.type === 'deleteEnvironment'
+                    ? `确定删除环境「${escapeHtml(dialog.initialName)}」及其所有变量？此操作不可恢复。`
+                    : dialog.type === 'closeDirtyTabs'
+                      ? `将关闭「${escapeHtml(dialog.initialName)}」中未保存的内容，确定关闭？`
+                      : `请求「${escapeHtml(dialog.initialName)}」有未保存内容，确定关闭？`
+            }</p>`
+          : `<label class="http-client-dialog-field"><span>${
+              dialog.type === 'renameRequest'
+                ? '请求名称'
+                : dialog.type === 'renameEnvironment'
+                  ? '环境名称'
+                  : '分组名称'
+            }</span><input id="dialogInput" class="http-client-dialog-input" type="text" value="${escapeAttr(dialog.initialName || '')}" /></label>`;
+        $('dialogBackdrop').hidden = false;
+        setTimeout(() => {
+          const input = $('dialogInput');
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        }, 0);
+      }
+
+      function closeDialog() {
+        state.dialog = null;
+        $('dialogBackdrop').hidden = true;
+      }
+
+      function confirmDialog() {
+        const dialog = state.dialog;
+        if (!dialog) return;
+        if (dialog.type === 'deleteGroup') {
+          if (state.collections.groups.length > 1) {
+            const removedGroup = state.collections.groups.find((group) => group.id === dialog.groupId);
+            const removedRequestIds = new Set((removedGroup?.requests || []).map((request) => request.id));
+            state.collections.groups = state.collections.groups.filter((group) => group.id !== dialog.groupId);
+            if (state.collections.activeGroupId === dialog.groupId) state.collections.activeGroupId = state.collections.groups[0].id;
+            if (!state.collections.groups.some((group) => group.requests.some((request) => request.id === state.collections.activeRequestId))) {
+              state.collections.activeRequestId = '';
+            }
+            state.openRequestTabs = state.openRequestTabs.filter((tab) => tab.type !== 'saved' || !removedRequestIds.has(tab.requestId));
+            if (!state.openRequestTabs.some((tab) => tab.id === state.activeOpenTabId)) {
+              const nextTab = state.openRequestTabs[0] || createScratchOpenTab();
+              if (!state.openRequestTabs.length) state.openRequestTabs = [nextTab];
+              state.activeOpenTabId = nextTab.id;
+              state.collections.activeRequestId = nextTab.type === 'saved' ? nextTab.requestId : '';
+              restoreSnapshot(nextTab.snapshot, false);
+            }
+            persistCollections();
+          }
+          closeDialog();
+          renderAll();
+          return;
+        }
+        if (dialog.type === 'deleteRequest') {
+          removeSavedRequest(dialog.groupId, dialog.requestId);
+          closeDialog();
+          return;
+        }
+        if (dialog.type === 'deleteEnvironment') {
+          if (state.environments.length > 1) {
+            state.environments = state.environments.filter((environment) => environment.id !== dialog.envId);
+            if (state.activeEnvId === dialog.envId) {
+              state.activeEnvId = state.environments[0].id;
+              syncEnvRows();
+            }
+            persistEnvironments();
+          }
+          closeDialog();
+          renderEnvironmentPanel();
+          return;
+        }
+        if (dialog.type === 'closeDirtyTab') {
+          forceCloseOpenRequestTab(dialog.tabId);
+          closeDialog();
+          return;
+        }
+        if (dialog.type === 'closeDirtyTabs') {
+          closeOpenRequestTabs(dialog.tabIds || [], false);
+          closeDialog();
+          return;
+        }
+        const input = $('dialogInput');
+        const name = input ? input.value.trim() : '';
+        if (!name) {
+          closeDialog();
+          return;
+        }
+        if (dialog.type === 'addGroup') {
+          const group = createCollectionGroup(name);
+          state.collections.groups.push(group);
+          state.collections.activeGroupId = group.id;
+        }
+        if (dialog.type === 'renameGroup') {
+          state.collections.groups = state.collections.groups.map((group) => group.id === dialog.groupId ? { ...group, name } : group);
+        }
+        if (dialog.type === 'renameRequest') {
+          state.collections.groups = state.collections.groups.map((group) => group.id === dialog.groupId
+            ? { ...group, requests: group.requests.map((request) => request.id === dialog.requestId ? { ...request, name, updatedAt: Date.now() } : request) }
+            : group);
+          state.openRequestTabs.forEach((tab) => {
+            if (tab.type === 'saved' && tab.requestId === dialog.requestId) tab.name = name;
+          });
+        }
+        if (dialog.type === 'renameEnvironment') {
+          const environment = state.environments.find((item) => item.id === dialog.envId);
+          if (environment) {
+            environment.name = name;
+            persistEnvironments();
+          }
+          closeDialog();
+          renderEnvironmentPanel();
+          return;
+        }
+        persistCollections();
+        closeDialog();
+        renderAll();
+      }
+
+      function formatHistoryTime(timestamp) {
+        const date = new Date(timestamp);
+        return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value).replace(/`/g, '&#96;');
+      }
+
+      window.addEventListener('beforeunload', () => {
+        if (!state.storageReady) return;
+        clearTimeout(schedulePersistOpenTabs.timer);
+        persistOpenTabs();
+      });
+
+      document.addEventListener('pointerdown', (event) => {
+        const menu = $('tabContextMenu');
+        if (menu && !menu.hidden && !menu.contains(event.target)) closeTabContextMenu();
+        const collectionMenu = $('collectionContextMenu');
+        if (collectionMenu && !collectionMenu.hidden && !collectionMenu.contains(event.target)) closeCollectionContextMenu();
+        const requestMenu = $('requestContextMenu');
+        if (requestMenu && !requestMenu.hidden && !requestMenu.contains(event.target)) closeRequestContextMenu();
+        const methodPicker = $('methodPicker');
+        if (methodPicker && !methodPicker.contains(event.target) && state.methodMenuOpen) {
+          state.methodMenuOpen = false;
+          renderMethod();
+        }
+      });
+
+      $('methodTrigger').addEventListener('click', () => {
+        state.methodMenuOpen = !state.methodMenuOpen;
+        renderMethod();
+      });
+      $('url').addEventListener('input', (event) => {
+        state.url = event.target.value;
+        markActiveRequestChanged();
+      });
+      $('url').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          sendRequest();
+        }
+      });
+      $('send').addEventListener('click', sendRequest);
+      $('saveRequest').addEventListener('click', saveCurrentToCollection);
+      $('newEmptyRequest').addEventListener('click', createNewRequestTab);
+      $('tabParams').addEventListener('click', () => { state.requestTab = 'params'; renderRequestTabs(); renderRequestPanel(); renderOpenRequestTabs(); });
+      $('tabHeaders').addEventListener('click', () => { state.requestTab = 'headers'; renderRequestTabs(); renderRequestPanel(); renderOpenRequestTabs(); });
+      $('tabCookies').addEventListener('click', () => { state.requestTab = 'cookies'; renderRequestTabs(); renderRequestPanel(); renderOpenRequestTabs(); });
+      $('tabBody').addEventListener('click', () => { state.requestTab = 'body'; renderRequestTabs(); renderRequestPanel(); renderOpenRequestTabs(); });
+      $('responseBodyTab').addEventListener('click', () => { state.responseTab = 'body'; renderResponse(); });
+      $('responseHeadersTab').addEventListener('click', () => { state.responseTab = 'headers'; renderResponse(); });
+      $('sidebarResizer').addEventListener('pointerdown', startSidebarResize);
+      $('paneResizer').addEventListener('pointerdown', startPaneResize);
+      $('navCollections').addEventListener('click', () => toggleSidebarPanel('collections'));
+      $('navEnvironment').addEventListener('click', () => toggleSidebarPanel('environment'));
+      $('navHistory').addEventListener('click', () => toggleSidebarPanel('history'));
+      $('dialogClose').addEventListener('click', closeDialog);
+      $('dialogCancel').addEventListener('click', closeDialog);
+      $('dialogConfirm').addEventListener('click', confirmDialog);
+      $('tabContextMenu').addEventListener('click', (event) => {
+        const action = event.target instanceof HTMLElement ? event.target.dataset.action : '';
+        if (action) handleTabContextMenuAction(action);
+      });
+      $('collectionContextMenu').addEventListener('click', (event) => {
+        const action = event.target instanceof HTMLElement ? event.target.dataset.action : '';
+        if (action) handleCollectionContextMenuAction(action);
+      });
+      $('requestContextMenu').addEventListener('click', (event) => {
+        const action = event.target instanceof HTMLElement ? event.target.dataset.action : '';
+        if (action) handleRequestContextMenuAction(action);
+      });
+      $('collectionImportFile').addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        void importCollectionsFromFile(file);
+      });
+      document.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+          event.preventDefault();
+          if ($('dialogBackdrop').hidden) saveCurrentToCollection();
+          return;
+        }
+        if (event.key === 'Escape') {
+          closeTabContextMenu();
+          closeCollectionContextMenu();
+          closeRequestContextMenu();
+        }
+        if ($('dialogBackdrop').hidden) return;
+        if (event.key === 'Escape') closeDialog();
+        if (event.key === 'Enter' && $('dialogInput')) confirmDialog();
+      });
+
+      function toggleSidebarPanel(panel) {
+        if (state.sidebarPanel === panel && state.sidebarOpen) {
+          state.sidebarOpen = false;
+        } else {
+          state.sidebarPanel = panel;
+          state.sidebarOpen = true;
+        }
+        renderSidebar();
+      }
+
+      async function init() {
+        if (storageLoadPromise) {
+          await storageLoadPromise;
+          return;
+        }
+
+        renderAll();
+
+        storageLoadPromise = (async () => {
+          await loadState();
+          if (!state.openTabsLoadedFromStorage) ensureOpenRequestTabs();
+          updatePaneLayout();
+          renderAll();
+        })();
+
+        try {
+          await storageLoadPromise;
+        } finally {
+          storageLoadPromise = null;
+        }
+      }
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+
+        function startPlugin() {
+          const plugin = TooldeskPlugin.create({
+            id: 'tooldesk-http-client',
+            capabilities: ['copyText', 'getPluginStorageItem', 'sendHttpRequest', 'setPluginStorageItem'],
+            onLaunchContext(context) {
+              const content = typeof context?.content === 'string' ? context.content.trim() : '';
+              if (!/^https?:\/\//i.test(content)) {
+                return;
+              }
+
+              state.url = content;
+              $('url').value = content;
+              syncActiveOpenTabSnapshot();
+              renderOpenRequestTabs();
+            }
+          });
+          pluginBoot = { api: plugin.api };
+          syncPluginApi();
+          pluginConnect = plugin.connect().then((result) => {
+            syncPluginApi();
+            if (result && result.ready === false) {
+              return init();
+            }
+            return init();
+          });
+          void pluginConnect;
+        }
+
+        startPlugin();
+      })();
+    </script>
+</html>

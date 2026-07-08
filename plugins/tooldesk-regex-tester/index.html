@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>正则测试</title>
+<style>
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{--brand:#2563eb;--panel-bg:#fff;--panel-border:#dbe4ef;--tool-surface-border:#dbe4ef;--tool-secondary-btn-bg:#f8fafc;--tool-hover-bg:#eef4ff;--tool-active-border:#bfdbfe;--text-main:#111827;--text-muted:#64748b;--shadow:none;background:#eef3f8;color:#111827;font-family:"Microsoft YaHei","Segoe UI",Arial,sans-serif;font-size:13px}button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}.tool-panel{background:var(--panel-bg);border: 0;border-radius:0;min-height:100%;overflow:hidden;padding:0}.tool-panel-fill{display:flex;flex-direction:column;height:100%}.tool-panel-head{align-items:center;border-bottom:1px solid var(--panel-border);display:flex;justify-content:flex-end;min-height:48px;padding:0 18px;position:relative}.tool-actions{display:flex;gap:16px}.tool-content{padding:18px}.tool-primary-button,.secondary-action{background:var(--brand);border-radius:7px;color:#fff;font-weight:800;min-height:34px;padding:0 14px}.tool-primary-button:hover,.secondary-action:hover{background:#1d4ed8}.tool-inline-error{color:#dc2626;font-size:12px;margin:8px 0 0}.app-icon{display:inline-flex;align-items:center;justify-content:center;height:18px;width:18px}.copy-toast{background:rgba(15,23,42,.88);border-radius:6px;color:#fff;font-size:12px;font-weight:700;line-height:1;padding:7px 10px;position:absolute;right:14px;top:56px;z-index:5}[hidden]{display:none!important}
+textarea,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+  color: var(--text-main);
+  outline: none;
+  padding: 12px;
+}
+
+textarea:focus,
+textarea:focus-visible,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus-visible {
+  border-color: rgba(96, 165, 250, 0.68);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  outline: none;
+}
+
+.field.small input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  min-height: 40px;
+}
+
+
+.regex-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.regex-layout {
+  display: grid;
+  flex: 1;
+  gap: 12px;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.regex-expression-row,
+.regex-pane {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+}
+
+.regex-expression-row {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 12px;
+}
+
+.regex-expression-row .tool-inline-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.regex-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.regex-field-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.regex-expression-actions {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.regex-field span,
+.regex-pane-head strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.regex-workspace {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.9fr);
+  height: 100%;
+  align-items: stretch;
+  min-height: 0;
+  padding: 0;
+}
+
+.regex-side {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.regex-pane {
+  display: grid;
+  gap: 8px;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  padding: 12px;
+}
+
+.regex-pane-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.regex-pane textarea {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #111827;
+  font:
+    500 14px/1.65 'Segoe UI',
+    system-ui,
+    sans-serif;
+  height: 100%;
+  min-height: 0;
+  outline: none;
+  padding: 14px;
+  resize: none;
+  width: 100%;
+}
+
+.regex-pane textarea[readonly] {
+  background: #fcfdff;
+}
+
+.regex-flag-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.regex-flag-group label {
+  align-items: center;
+  color: #64748b;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+}
+
+.regex-meta {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.regex-expression-row input[type='text'] {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #111827;
+  font:
+    500 14px/1.5 'Cascadia Code',
+    Consolas,
+    monospace;
+  min-height: 40px;
+  outline: none;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.regex-preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.regex-preset-list button {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 28px;
+  padding: 0 10px;
+}
+
+.regex-preset-list button:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.regex-empty {
+  align-items: center;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #94a3b8;
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  justify-content: center;
+  height: 100%;
+  min-height: 0;
+}
+
+.regex-match-list {
+  height: 100%;
+  list-style: none;
+  margin: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
+}
+
+.regex-match-list li {
+  align-items: flex-start;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+}
+
+.regex-match-list li:last-child {
+  margin-bottom: 0;
+}
+
+.regex-match-index {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  min-width: 28px;
+}
+
+.regex-match-list strong {
+  color: #111827;
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.regex-match-list small {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.regex-match-list p {
+  color: #475569;
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+@media (width <= 560px) {
+  .regex-layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  .regex-expression-row,
+  .regex-workspace,
+  .regex-side {
+    grid-template-columns: 1fr;
+  }
+
+  .regex-workspace,
+  .regex-side {
+    grid-template-rows: auto;
+    overflow: visible;
+  }
+
+  .regex-pane textarea {
+    min-height: 180px;
+  }
+}
+
+</style>
+</head>
+<body>
+<main class="tool-panel regex-panel">
+  <div class="tool-content regex-layout">
+    <section class="regex-expression-row">
+      <div class="regex-field">
+        <span class="regex-field-head">
+          <span>正则表达式</span>
+          <span class="regex-expression-actions">
+            <span class="regex-flag-group"><label><input id="flagG" type="checkbox" checked />g</label><label><input id="flagI" type="checkbox" />i</label><label><input id="flagM" type="checkbox" />m</label><label><input id="flagS" type="checkbox" />s</label></span>
+          </span>
+        </span>
+        <input id="pattern" type="text" spellcheck="false" placeholder="例如 \\d+ 或 [A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+"/>
+        <div id="regexPresetList" class="regex-preset-list" aria-label="常用正则表达式"></div>
+      </div>
+      <p id="regexError" class="tool-inline-error" role="alert"></p>
+    </section>
+    <div class="regex-workspace">
+      <section class="regex-pane">
+        <div class="regex-pane-head"><strong>测试文本</strong><span id="regexMeta" class="regex-meta">0 个匹配</span></div>
+        <textarea id="testText" spellcheck="false" placeholder="输入要匹配的文本">Hello tooldesk 2026
+Email: dev@example.com</textarea>
+      </section>
+      <div class="regex-side">
+        <section class="regex-pane">
+          <div class="regex-pane-head"><strong>匹配结果</strong></div>
+          <div id="regexEmpty" class="regex-empty">输入正则表达式后开始匹配</div>
+          <ul id="matchList" class="regex-match-list"></ul>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+const plugin=TooldeskPlugin.create({id:'tooldesk-regex-tester',capabilities:[]});
+
+function byId(id){return document.getElementById(id)}
+function escapeHtml(value){return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function applyLaunchContent(_plugin,_api,fn){window.addEventListener('message',event=>{const context=event.data||{};if(context.source==='tooldesk-host'&&context.type==='launch-context'){const content=typeof context.content==='string'?context.content:'';if(content)fn(content)}})}
+
+function flags(){return ['G','I','M','S'].map(k=>byId('flag'+k).checked?k.toLowerCase():'').join('')||'g'}
+function normalizedFlags(){const f=flags();return f.includes('g')?f:f+'g'}
+function runRegex(){const pattern=byId('pattern').value;const text=byId('testText').value;const list=byId('matchList');const empty=byId('regexEmpty');const err=byId('regexError');list.innerHTML='';err.textContent='';if(!pattern.trim()){empty.textContent='输入正则表达式后开始匹配';empty.hidden=false;byId('regexMeta').textContent='0 个匹配';return}try{const re=new RegExp(pattern,normalizedFlags());const matches=[...text.matchAll(re)];byId('regexMeta').textContent=matches.length+' 个匹配';if(!matches.length){empty.textContent='没有匹配项';empty.hidden=false;return}empty.hidden=true;list.innerHTML=matches.map((match,index)=>'<li><span class="regex-match-index">#'+(index+1)+'</span><div><strong>'+escapeHtml(match[0])+'</strong><small>@ '+(match.index||0)+'</small>'+(match.slice(1).some(Boolean)?'<p>分组：'+escapeHtml(match.slice(1).filter(Boolean).join(' · '))+'</p>':'')+'</div></li>').join('')}catch(e){err.textContent=e.message||'正则表达式无效';empty.textContent='表达式无效';empty.hidden=false;byId('regexMeta').textContent='0 个匹配'}}
+const regexPresets=[['中文字符','[\\u4e00-\\u9fa5]+'],['整数','-?\\d+'],['数字','-?(?:\\d+\\.?\\d*|\\.\\d+)'],['日期','\\d{4}[-/](?:0?[1-9]|1[0-2])[-/](?:0?[1-9]|[12]\\d|3[01])'],['手机号','1[3-9]\\d{9}'],['网址','https?:\\/\\/[^\\s]+'],['邮箱','[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}'],['邮政编码','[1-9]\\d{5}']];
+function renderPresets(){byId('regexPresetList').innerHTML=regexPresets.map(([label,pattern])=>'<button type="button" data-pattern="'+escapeHtml(pattern)+'">'+escapeHtml(label)+'</button>').join('');byId('regexPresetList').querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>{byId('pattern').value=button.dataset.pattern||'';runRegex();byId('pattern').focus({preventScroll:true})}))}
+['pattern','testText','flagG','flagI','flagM','flagS'].forEach(id=>byId(id).addEventListener('input',runRegex));['flagG','flagI','flagM','flagS'].forEach(id=>byId(id).addEventListener('change',runRegex));renderPresets();runRegex();void plugin.connect().then(() => {});
+</script>
+</body>
+</html>

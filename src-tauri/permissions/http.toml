@@ -1,0 +1,277 @@
+[[permission]]
+identifier = "allow-http-request"
+description = "Allows the frontend bridge to send HTTP requests for Tooldesk plugin APIs."
+commands.allow = ["send_http_request"]
+
+[[permission]]
+identifier = "allow-ping"
+description = "Allows the frontend to verify the Tauri command bridge during migration."
+commands.allow = ["ping", "log_app_debug", "show_main_window_ready"]
+
+[[permission]]
+identifier = "allow-clipboard-ops"
+description = "Allows the frontend bridge to read native clipboard formats not exposed by the JS clipboard plugin."
+commands.allow = [
+  "clipboard_watcher_supports_sequence",
+  "configure_super_clipboard_watcher",
+  "get_clipboard_change_count",
+  "read_clipboard_html"
+]
+
+[[permission]]
+identifier = "allow-storage-directories"
+description = "Allows the frontend bridge to manage Tooldesk storage directory configuration."
+commands.allow = [
+  "clear_app_cache",
+  "get_storage_directories",
+  "reset_storage_directory",
+  "set_storage_directory"
+]
+
+[[permission]]
+identifier = "allow-app-settings"
+description = "Allows the frontend bridge to read and persist Tooldesk app settings in the configured data directory."
+commands.allow = [
+  "get_app_settings",
+  "get_service_gateway_config",
+  "set_app_settings",
+  "sign_service_gateway_request"
+]
+
+[[permission]]
+identifier = "allow-plugin-storage"
+description = "Allows plugin SDK storage APIs to persist values in the configured data directory."
+commands.allow = [
+  "get_plugin_storage_item",
+  "remove_plugin_storage_item",
+  "set_plugin_storage_item"
+]
+
+[[permission]]
+identifier = "allow-plugin-management"
+description = "Allows the frontend bridge to list, install and uninstall local plugins in the configured data directory."
+commands.allow = [
+  "install_local_plugin",
+  "install_market_plugin",
+  "list_plugin_market",
+  "list_installed_plugin_tools",
+  "uninstall_plugin"
+]
+
+[[permission]]
+identifier = "allow-quick-tool-window"
+description = "Allows the frontend bridge to open quick tool windows with the configured Tauri data directory."
+commands.allow = ["get_last_content", "open_quick_tool"]
+
+[[permission]]
+identifier = "allow-file-ops"
+description = "Allows the frontend bridge to read/write files, export text and manage the hosts file."
+commands.allow = [
+  "append_text_export",
+  "create_text_export",
+  "finish_text_export",
+  "get_hosts_folder",
+  "get_sync_manifest",
+  "open_path",
+  "read_binary_file",
+  "read_hosts_file",
+  "read_text_file",
+  "remove_file",
+  "update_hosts_entry",
+  "write_binary_file",
+  "write_hosts_file",
+  "write_text_file"
+]
+
+[[permission]]
+identifier = "allow-docker-ops"
+description = "Allows the frontend bridge to call the local Docker CLI."
+commands.allow = [
+  "check_docker_available",
+  "docker_image_exists",
+  "docker_pull_image",
+  "docker_tag_image",
+  "run_docker_compose"
+]
+
+[[permission]]
+identifier = "allow-browser-bookmarks"
+description = "Allows the frontend bridge to read local Chromium browser bookmark files."
+commands.allow = ["list_browser_bookmarks"]
+
+[[permission]]
+identifier = "allow-local-library"
+description = "Allows the frontend bridge to search and open configured local library files."
+commands.allow = [
+  "get_local_libraries",
+  "open_local_library_file",
+  "search_local_library"
+]
+
+[[permission]]
+identifier = "allow-music-player"
+description = "Allows the frontend bridge to scan, persist and play local/cloud/online music."
+commands.allow = [
+  "aliyun_check_qrcode",
+  "aliyun_generate_qrcode",
+  "aliyun_get_download_url",
+  "aliyun_list_files",
+  "aliyun_refresh_token",
+  "aliyun_scan_all_music",
+  "clear_music_cache",
+  "clear_music_recent",
+  "download_cloud_music",
+  "download_music_cloud_storage_file",
+  "download_online_music",
+  "get_music_cache_stats",
+  "get_music_downloads",
+  "get_music_favorites",
+  "get_music_player_settings",
+  "get_music_playlists",
+  "get_music_recent",
+  "invalidate_cloud_cache",
+  "probe_tracks_metadata",
+  "resolve_cloud_play_url",
+  "resolve_music_cloud_storage_play_url",
+  "resolve_online_play_url",
+  "resolve_track_lyrics",
+  "save_music_downloads",
+  "save_music_favorites",
+  "save_music_player_settings",
+  "save_music_playlists",
+  "save_music_recent",
+  "scan_music_files",
+  "search_online_music",
+  "upload_music_cloud_storage_file",
+  "validate_music_cloud_storage"
+]
+
+[[permission]]
+identifier = "allow-ssh-ops"
+description = "Allows the frontend bridge to test SSH connections and execute remote commands."
+commands.allow = [
+  "ssh_exec",
+  "ssh_exec_stream",
+  "test_ssh_connection"
+]
+
+[[permission]]
+identifier = "allow-mail-ops"
+description = "Allows the frontend bridge to fetch IMAP mail message summaries."
+commands.allow = [
+  "delete_mail_message",
+  "download_mail_attachment",
+  "fetch_mail_messages",
+  "list_mail_folders",
+  "send_mail_message",
+  "set_mail_message_seen"
+]
+
+[[permission]]
+identifier = "allow-plugin-native-tools"
+description = "Allows plugins to run declared native tools from their own plugin package."
+commands.allow = [
+  "run_plugin_tool"
+]
+
+[[permission]]
+identifier = "allow-keepass-ops"
+description = "Allows the frontend bridge to unlock KeePass databases and manage the in-memory KeePass session."
+commands.allow = [
+  "get_keepass_session",
+  "lock_keepass_database",
+  "unlock_keepass_database"
+]
+
+[[permission]]
+identifier = "allow-global-shortcuts"
+description = "Allows the frontend bridge to sync, suspend and resume migrated global shortcuts."
+commands.allow = [
+  "resume_global_shortcuts",
+  "suspend_global_shortcuts",
+  "sync_global_shortcuts"
+]
+
+[[permission]]
+identifier = "allow-super-clipboard"
+description = "Allows the frontend bridge to store, query and copy local encrypted super clipboard history."
+commands.allow = [
+  "capture_super_clipboard",
+  "capture_super_clipboard_text",
+  "clear_super_clipboard",
+  "delete_super_clipboard_item",
+  "get_super_clipboard_detail",
+  "get_super_clipboard_payload",
+  "get_super_clipboard_stats",
+  "query_super_clipboard"
+]
+
+[[permission]]
+identifier = "allow-screenshot"
+description = "Allows the frontend bridge and screenshot overlay windows to capture, finish, cancel, pin and read screenshots."
+commands.allow = [
+  "cancel_screenshot_selection",
+  "capture_screenshot_selection_frame",
+  "close_pin_screenshot_window",
+  "copy_pin_screenshot",
+  "copy_screenshot_text",
+  "dismiss_stale_screenshot_overlay",
+  "focus_pin_screenshot_window",
+  "finish_screenshot_overlay_image",
+  "finish_screenshot_selection",
+  "finish_screenshot_selection_image",
+  "get_last_screenshot",
+  "get_pin_screenshot_payload",
+  "get_screenshot_cursor_position",
+  "get_screenshot_color_frames",
+  "log_screenshot_debug",
+  "move_pin_screenshot_window",
+  "open_region_recording_playback",
+  "open_region_screen_recorder",
+  "open_scroll_screenshot_selection",
+  "open_screenshot_selection",
+  "pin_screenshot",
+  "recognize_screenshot_overlay_region",
+  "reveal_pin_screenshot_window",
+  "resize_pin_screenshot_window",
+  "sample_screenshot_color",
+  "scroll_screenshot_overlay_target",
+  "show_pin_screenshot_menu",
+  "show_screenshot_overlay",
+  "start_screenshot_overlay_scroll_capture",
+  "translate_screenshot_overlay_text",
+  "start_screenshot"
+]
+
+[[permission]]
+identifier = "allow-screen-recorder"
+description = "Allows the frontend bridge to save and transcode screen recordings."
+commands.allow = [
+  "close_screen_recording_region_frame",
+  "notify_region_recording_capture_started",
+  "save_screen_recording"
+]
+
+[[permission]]
+identifier = "allow-update-check"
+description = "Allows the settings page to check, download and launch app updates."
+commands.allow = ["check_for_updates", "download_update", "install_downloaded_update"]
+
+[[permission]]
+identifier = "allow-tray-menu"
+description = "Allows the custom Tauri tray menu window to resize itself and run tray actions."
+commands.allow = ["resize_tray_menu", "run_tray_menu_action"]
+
+[[permission]]
+identifier = "allow-taskbar-calendar"
+description = "Allows the Windows taskbar calendar hotzone to keep its position and toggle the compact calendar popup."
+commands.allow = ["open_taskbar_calendar_hotzone", "refresh_taskbar_calendar_hotzone"]
+
+[[permission]]
+identifier = "allow-static-server"
+description = "Allows the static file server tool to start, stop and query local preview status."
+commands.allow = [
+  "get_static_server_status",
+  "start_static_server",
+  "stop_static_server"
+]

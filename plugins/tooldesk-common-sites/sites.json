@@ -1,0 +1,128 @@
+[
+  {
+    "id": "baidu",
+    "name": "百度",
+    "domain": "www.baidu.com",
+    "openUrl": "https://www.baidu.com/",
+    "searchUrl": "https://www.baidu.com/s?wd={query}",
+    "aliases": ["baidu", "bd", "百度"],
+    "tags": ["搜索"]
+  },
+  {
+    "id": "taobao",
+    "name": "淘宝",
+    "domain": "www.taobao.com",
+    "openUrl": "https://www.taobao.com/",
+    "searchUrl": "https://s.taobao.com/search?q={query}",
+    "aliases": ["taobao", "tb", "淘宝"],
+    "tags": ["购物"]
+  },
+  {
+    "id": "jd",
+    "name": "京东",
+    "domain": "www.jd.com",
+    "openUrl": "https://www.jd.com/",
+    "searchUrl": "https://search.jd.com/Search?keyword={query}",
+    "aliases": ["jd", "jingdong", "京东"],
+    "tags": ["购物"]
+  },
+  {
+    "id": "bilibili",
+    "name": "哔哩哔哩",
+    "domain": "www.bilibili.com",
+    "openUrl": "https://www.bilibili.com/",
+    "searchUrl": "https://search.bilibili.com/all?keyword={query}",
+    "aliases": ["bilibili", "bili", "bl", "b站", "哔哩哔哩"],
+    "tags": ["视频"]
+  },
+  {
+    "id": "zhihu",
+    "name": "知乎",
+    "domain": "www.zhihu.com",
+    "openUrl": "https://www.zhihu.com/",
+    "searchUrl": "https://www.zhihu.com/search?type=content&q={query}",
+    "aliases": ["zhihu", "zh", "知乎"],
+    "tags": ["内容"]
+  },
+  {
+    "id": "github",
+    "name": "GitHub",
+    "domain": "github.com",
+    "openUrl": "https://github.com/",
+    "searchUrl": "https://github.com/search?q={query}",
+    "aliases": ["github", "gh"],
+    "tags": ["开发"]
+  },
+  {
+    "id": "aliyun",
+    "name": "阿里云",
+    "domain": "www.aliyun.com",
+    "openUrl": "https://www.aliyun.com/",
+    "searchUrl": "https://www.aliyun.com/search?searchKey={query}",
+    "aliases": ["aliyun", "ali", "al", "aliyuncloud", "阿里云"],
+    "tags": ["开发", "云服务"]
+  },
+  {
+    "id": "tencent-cloud",
+    "name": "腾讯云",
+    "domain": "cloud.tencent.com",
+    "openUrl": "https://cloud.tencent.com/",
+    "searchUrl": "https://cloud.tencent.com/search?keyword={query}",
+    "aliases": ["tencentcloud", "qcloud", "txcloud", "txy", "腾讯云"],
+    "tags": ["开发", "云服务"]
+  },
+  {
+    "id": "juejin",
+    "name": "掘金",
+    "domain": "juejin.cn",
+    "openUrl": "https://juejin.cn/",
+    "searchUrl": "https://juejin.cn/search?query={query}",
+    "aliases": ["juejin", "稀土掘金", "掘金"],
+    "tags": ["开发"]
+  },
+  {
+    "id": "weibo",
+    "name": "微博",
+    "domain": "weibo.com",
+    "openUrl": "https://weibo.com/",
+    "searchUrl": "https://s.weibo.com/weibo?q={query}",
+    "aliases": ["weibo", "wb", "微博"],
+    "tags": ["内容"]
+  },
+  {
+    "id": "weread",
+    "name": "微信读书",
+    "domain": "weread.qq.com",
+    "openUrl": "https://weread.qq.com/",
+    "searchUrl": "https://weread.qq.com/web/search/books?keyword={query}",
+    "aliases": ["weread", "wxds", "微信读书"],
+    "tags": ["阅读"]
+  },
+  {
+    "id": "docsqq",
+    "name": "腾讯文档",
+    "domain": "docs.qq.com",
+    "openUrl": "https://docs.qq.com/",
+    "searchUrl": "https://docs.qq.com/desktop/search?keyword={query}",
+    "aliases": ["docsqq", "txwd", "腾讯文档"],
+    "tags": ["办公"]
+  },
+  {
+    "id": "chatgpt",
+    "name": "ChatGPT",
+    "domain": "chatgpt.com",
+    "openUrl": "https://chatgpt.com/",
+    "searchUrl": "https://chatgpt.com/?q={query}",
+    "aliases": ["gpt", "chatgpt", "openai", "GPT"],
+    "tags": ["AI"]
+  },
+  {
+    "id": "deepseek",
+    "name": "DeepSeek",
+    "domain": "chat.deepseek.com",
+    "openUrl": "https://chat.deepseek.com/",
+    "searchUrl": "https://chat.deepseek.com/",
+    "aliases": ["deepseek", "ds", "深度求索"],
+    "tags": ["AI"]
+  }
+]

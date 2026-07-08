@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>银行卡号查询</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+[hidden] { display: none !important; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #2563eb; color: #fff; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+
+
+
+.bank-bin-query-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.bank-bin-query-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.bank-bin-query-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.bank-bin-query-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bank-bin-query-icon-badge {
+  align-items: center;
+  background: #fffbeb;
+  border-radius: 6px;
+  color: #d97706;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.bank-bin-query-icon-badge .app-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.bank-bin-query-loading {
+  color: #d97706;
+  font-size: 12px;
+  font-weight: 800;
+  margin-left: auto;
+}
+
+.bank-bin-query-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.bank-bin-query-field {
+  display: grid;
+  gap: 8px;
+}
+
+.bank-bin-query-field input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  height: 38px;
+  outline: none;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.bank-bin-query-field input:focus {
+  border-color: #fcd34d;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+}
+
+.bank-bin-query-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.tool-panel .bank-bin-query-primary-button,
+.tool-panel .bank-bin-query-secondary-button,
+.bank-bin-query-primary-button,
+.bank-bin-query-secondary-button {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.tool-panel .bank-bin-query-secondary-button,
+.tool-panel .bank-bin-query-copy-button,
+.bank-bin-query-secondary-button,
+.bank-bin-query-copy-button {
+  background: #ffffff;
+  border: 1px solid #fde68a;
+  color: #d97706;
+}
+
+.tool-panel .bank-bin-query-secondary-button:hover,
+.tool-panel .bank-bin-query-copy-button:hover,
+.bank-bin-query-secondary-button:hover,
+.bank-bin-query-copy-button:hover {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.tool-panel .bank-bin-query-primary-button:disabled,
+.tool-panel .bank-bin-query-secondary-button:disabled,
+.tool-panel .bank-bin-query-copy-button:disabled,
+.bank-bin-query-primary-button:disabled,
+.bank-bin-query-secondary-button:disabled,
+.bank-bin-query-copy-button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.tool-panel .bank-bin-query-copy-button,
+.bank-bin-query-copy-button {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  margin-left: auto;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.bank-bin-query-info-grid {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.bank-bin-query-info-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.bank-bin-query-info-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bank-bin-query-info-row strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bank-bin-query-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 220px;
+  padding: 24px 20px;
+}
+
+.bank-bin-query-empty-icon {
+  align-items: center;
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  border: 1px dashed #fde68a;
+  border-radius: 14px;
+  color: #d97706;
+  display: inline-flex;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.bank-bin-query-empty-icon .app-icon {
+  height: 28px;
+  opacity: 0.72;
+  width: 28px;
+}
+
+.bank-bin-query-empty strong {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.bank-bin-query-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 14px;
+  padding: 10px 12px;
+}
+
+.bank-bin-query-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 2;
+}
+
+.bank-bin-query-copy-toast::before {
+  border-bottom: 5px solid rgba(15, 23, 42, 0.88);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: -5px;
+}
+
+
+.bank-bin-query-disclaimer { background: #fffbeb; border: 1px solid #fde68a; border-radius: 7px; color: #92400e; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 16px 16px; padding: 10px 12px; }
+
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content bank-bin-query-layout">
+      <section class="bank-bin-query-card bank-bin-query-hero">
+        <div class="bank-bin-query-card-head"><span class="bank-bin-query-icon-badge">卡</span><strong>银行卡号查询</strong><span id="loading" class="bank-bin-query-loading" hidden>查询中</span></div>
+        <div class="bank-bin-query-form">
+          <label class="field small bank-bin-query-field">银行卡号<input id="cardInput" type="text" inputmode="numeric" autocomplete="off" placeholder="输入银行卡号" /></label>
+          <button id="query" class="bank-bin-query-primary-button tool-primary-button">查询</button>
+        </div>
+        <p class="bank-bin-query-disclaimer">免责声明：银行卡号数据会随银行和卡组织规则变化，查询结果仅供开发测试、信息参考，不作为支付、风控、开户或合规判断依据。</p>
+      </section>
+      <section class="bank-bin-query-card bank-bin-query-result">
+        <div class="bank-bin-query-card-head"><span class="bank-bin-query-icon-badge">卡</span><strong>查询结果</strong><button id="copy" class="bank-bin-query-copy-button" disabled>复制结果</button></div>
+        <span id="toast" class="bank-bin-query-copy-toast" hidden></span>
+        <p id="error" class="bank-bin-query-error" hidden></p>
+        <div id="result" class="bank-bin-query-info-grid"></div>
+        <div id="empty" class="bank-bin-query-empty"><span class="bank-bin-query-empty-icon">卡</span><strong>暂无查询结果</strong></div>
+      </section>
+    </main>
+    <!-- TOOLDESK_INLINE_PLUGIN_DATA -->
+<script>
+const MAX_BIN_LENGTH = 11;
+      let binMapPromise = null;
+      let lookupResult = null;
+      const $ = (id) => document.getElementById(id);
+
+      function applyLaunchContent(content) {
+        const digits = normalizeCardNumber(content);
+        if (!/^\d{13,19}$/.test(digits)) return;
+        $('cardInput').value = digits;
+        queryCard();
+      }
+
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function normalizeCardNumber(value) { return String(value || '').replace(/\D/g, ''); }
+      function formatCardType(value) { return value === 'C' ? '信用卡' : value === 'D' ? '储蓄卡' : (String(value || '').trim() || '未知'); }
+      function setError(message) { $('error').textContent = message; $('error').hidden = !message; }
+      function setLoading(value) { $('loading').hidden = !value; $('query').disabled = value; }
+      function showToast(text) { $('toast').textContent = text; $('toast').hidden = false; clearTimeout(showToast.timer); showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600); }
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      async function loadBinDatabase() {
+        if (window.__TOOLDESK_BANK_BIN_DATA__) {
+          return window.__TOOLDESK_BANK_BIN_DATA__;
+        }
+
+        const response = await fetch('./bank_info_bin.json', { cache: 'no-cache' });
+
+        if (!response.ok) {
+          throw new Error('银行卡 BIN 数据加载失败');
+        }
+
+        return response.json();
+      }
+
+      async function loadBankBinMap() {
+        if (!binMapPromise) {
+          binMapPromise = loadBinDatabase().then((database) => {
+            return new Map((database.RECORDS || []).map((record) => [record.BANK_CARD_BIN, record]));
+          }).catch((error) => { binMapPromise = null; throw error; });
+        }
+        return binMapPromise;
+      }
+
+      function lookupBankBin(cardNumber, binMap) {
+        const digits = normalizeCardNumber(cardNumber);
+        const maxLength = Math.min(MAX_BIN_LENGTH, digits.length);
+        for (let length = maxLength; length >= 1; length -= 1) {
+          const prefix = digits.slice(0, length);
+          const record = binMap.get(prefix);
+          if (record) return { cardNumber: digits, matchedBin: prefix, record };
+        }
+        return null;
+      }
+
+      function render() {
+        const rows = lookupResult ? [
+          ['卡号', lookupResult.cardNumber],
+          ['匹配前缀', lookupResult.matchedBin],
+          ['发卡行', lookupResult.record.BANK_NAME || '-'],
+          ['银行代码', lookupResult.record.BANK_CODE || '-'],
+          ['卡类型', formatCardType(lookupResult.record.CARD_TYPE)]
+        ] : [];
+        $('copy').disabled = rows.length === 0;
+        $('empty').hidden = rows.length > 0 || !$('error').hidden;
+        $('result').replaceChildren(...rows.map(([label, value]) => {
+          const row = document.createElement('div');
+          row.className = 'bank-bin-query-info-row';
+          row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+          return row;
+        }));
+      }
+
+      async function queryCard() {
+        const digits = normalizeCardNumber($('cardInput').value);
+        if (!digits) { lookupResult = null; setError('请输入银行卡号'); render(); return; }
+        if (digits.length < 6) { lookupResult = null; setError('卡号长度过短，请至少输入 6 位数字'); render(); return; }
+        setLoading(true); setError('');
+        try {
+          const result = lookupBankBin(digits, await loadBankBinMap());
+          if (!result) { lookupResult = null; setError('未匹配到银行卡号信息'); return; }
+          lookupResult = result;
+          $('cardInput').value = digits;
+        } catch (error) {
+          lookupResult = null;
+          setError(error instanceof Error ? error.message : '查询失败');
+        } finally {
+          setLoading(false);
+          render();
+        }
+      }
+
+      $('query').addEventListener('click', queryCard);
+      $('cardInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') queryCard(); });
+      $('copy').addEventListener('click', () => {
+        if (!lookupResult) return;
+        const { record, matchedBin, cardNumber } = lookupResult;
+        copyText([`卡号: ${cardNumber}`, `BIN: ${matchedBin}`, `发卡行: ${record.BANK_NAME || '-'}`, `银行代码: ${record.BANK_CODE || '-'}`, `卡类型: ${formatCardType(record.CARD_TYPE)}`].join('\n'), '查询结果已复制');
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-bank-bin-query', capabilities: ['copyText'],
+                onLaunchContext(context) {
+                  applyLaunchContent(context.content || '');
+                }
+              };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

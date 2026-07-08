@@ -1,0 +1,32 @@
+{
+  "accent": "blue",
+  "caption": "生成符合校验位规则的测试身份证号码，仅用于测试数据场景。",
+  "category": "dev",
+  "defaultAlias": "sfzsc",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-id-card-generator",
+  "keywords": [
+    "sfz",
+    "id",
+    "shenfenzhengshengcheng",
+    "card",
+    "identity",
+    "身份证",
+    "证件号",
+    "测试证件"
+  ],
+  "name": "身份证生成器",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

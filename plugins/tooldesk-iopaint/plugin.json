@@ -1,0 +1,47 @@
+{
+  "accent": "purple",
+  "caption": "基于 IOPaint 的图片擦除、去水印和局部修复。",
+  "category": "image",
+  "defaultAlias": "qsy",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-iopaint",
+  "keywords": [
+    "aiqsy",
+    "iopaint",
+    "qushuiyin",
+    "lama",
+    "lama cleaner",
+    "inpaint",
+    "erase",
+    "cleanup",
+    "remove",
+    "ai去水印",
+    "去水印",
+    "ai消除笔",
+    "消除笔",
+    "图片擦除",
+    "图片修复",
+    "去物体",
+    "局部重绘"
+  ],
+  "name": "AI 去水印",
+  "permissions": [
+    "clipboard",
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "sync": {
+    "localStorageKeys": [
+      "tooldesk-iopaint-settings"
+    ]
+  },
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "sendHttpRequest"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

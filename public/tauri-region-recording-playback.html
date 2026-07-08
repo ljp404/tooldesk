@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>区域录屏预览</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #111827;
+        color: #f9fafb;
+        font-family:
+          "Microsoft YaHei",
+          "Segoe UI",
+          Arial,
+          sans-serif;
+      }
+
+      .playback-window {
+        display: grid;
+        grid-template-rows: 32px minmax(0, 1fr) 44px;
+        width: 100vw;
+        height: 100vh;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: #0f172a;
+      }
+
+      .titlebar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 0;
+        padding: 0 8px 0 12px;
+        user-select: none;
+        -webkit-app-region: drag;
+        background: rgba(15, 23, 42, 0.94);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .title {
+        overflow: hidden;
+        color: rgba(249, 250, 251, 0.88);
+        font-size: 12px;
+        line-height: 1;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .close-btn {
+        display: grid;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        color: rgba(249, 250, 251, 0.82);
+        cursor: default;
+        -webkit-app-region: no-drag;
+      }
+
+      .close-btn:hover {
+        background: #dc2626;
+        color: #ffffff;
+      }
+
+      .video-wrap {
+        display: grid;
+        min-height: 0;
+        place-items: center;
+        background:
+          linear-gradient(45deg, rgba(255, 255, 255, 0.04) 25%, transparent 25%),
+          linear-gradient(-45deg, rgba(255, 255, 255, 0.04) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.04) 75%),
+          linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.04) 75%);
+        background-position:
+          0 0,
+          0 8px,
+          8px -8px,
+          -8px 0;
+        background-size: 16px 16px;
+      }
+
+      video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #000000;
+        object-fit: contain;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 32px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px;
+        background: rgba(15, 23, 42, 0.96);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .play-btn {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        cursor: default;
+      }
+
+      .play-btn:hover {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .seek {
+        width: 100%;
+        accent-color: #3b82f6;
+      }
+
+      .time {
+        min-width: 86px;
+        color: rgba(249, 250, 251, 0.72);
+        font-size: 12px;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="playback-window">
+      <header class="titlebar">
+        <span class="title">区域录屏预览</span>
+        <button id="closeBtn" class="close-btn" type="button" aria-label="关闭">×</button>
+      </header>
+      <section class="video-wrap">
+        <video id="video" playsinline preload="auto"></video>
+      </section>
+      <footer class="controls">
+        <button id="playBtn" class="play-btn" type="button" aria-label="播放">▶</button>
+        <input id="seek" class="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="播放进度" />
+        <span id="time" class="time">00:00 / 00:00</span>
+      </footer>
+    </main>
+    <script src="./tauri-region-recording-playback.js"></script>
+  </body>
+</html>

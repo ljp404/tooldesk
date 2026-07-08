@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="录屏" fill="none">
+  <rect x="32" y="56" width="142" height="144" rx="34" fill="#e11d48"/>
+  <rect x="67" y="91" width="72" height="72" rx="16" fill="#ffffff"/>
+  <path d="M174 98 232 64c8-5 18 1 18 11v106c0 10-10 16-18 11l-58-34V98Z" fill="#e11d48"/>
+  <circle cx="103" cy="127" r="24" fill="#fb7185"/>
+  <circle cx="103" cy="127" r="11" fill="#ffffff"/>
+</svg>

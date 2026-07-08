@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>人民币大小写</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #16a34a; color: #fff; }
+
+.rmb-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.rmb-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.rmb-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.rmb-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.rmb-icon-badge {
+  align-items: center;
+  background: #ecfdf5;
+  border-radius: 6px;
+  color: #16a34a;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.rmb-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.rmb-field {
+  display: grid;
+  gap: 8px;
+}
+
+.rmb-field input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  height: 42px;
+  outline: none;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.rmb-field input:focus {
+  border-color: #86efac;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+.rmb-hint {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.rmb-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rmb-preset {
+  background: #ffffff;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.rmb-preset:hover { background: #ecfdf5; }
+
+.rmb-copy-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #bbf7d0;
+  border-radius: 7px;
+  color: #16a34a;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  margin-left: auto;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.rmb-copy-button:hover { background: #ecfdf5; color: #15803d; }
+.rmb-copy-button:disabled { color: #94a3b8; opacity: .62; }
+
+.rmb-result-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #111827;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.8;
+  margin: 14px;
+  min-height: 120px;
+  padding: 18px 16px;
+  word-break: break-all;
+}
+
+.rmb-info-grid {
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.rmb-info-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.rmb-info-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rmb-info-row strong {
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rmb-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 220px;
+  padding: 24px 20px;
+}
+
+.rmb-empty-icon {
+  align-items: center;
+  background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+  border: 1px dashed #bbf7d0;
+  border-radius: 14px;
+  color: #16a34a;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.rmb-empty strong {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.rmb-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 16px;
+  padding: 10px 12px;
+}
+
+.rmb-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 2;
+}
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content,
+  .rmb-layout {
+    height: auto;
+    min-height: calc(100dvh - 20px);
+    overflow: visible;
+  }
+  .rmb-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .rmb-card {
+    overflow: visible;
+  }
+  .rmb-card-head {
+    flex-wrap: wrap;
+  }
+  .rmb-copy-button {
+    margin-left: 0;
+  }
+  .rmb-info-row {
+    grid-template-columns: 1fr;
+    padding: 10px 12px;
+  }
+  .rmb-info-row strong {
+    overflow: visible;
+    white-space: normal;
+  }
+  .rmb-result-box {
+    font-size: 18px;
+    margin: 12px;
+  }
+}
+    </style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content rmb-layout">
+      <section class="rmb-card">
+        <div class="rmb-card-head">
+          <span class="rmb-icon-badge">¥</span>
+          <strong>金额输入</strong>
+        </div>
+        <div class="rmb-form">
+          <label class="field small rmb-field">
+            阿拉伯数字
+            <input id="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="例如 1234.56" />
+          </label>
+          <p class="rmb-hint">支持整数与小数，最多两位小数；可输入负号表示负数金额。</p>
+          <div class="rmb-presets" id="presets"></div>
+        </div>
+        <p id="error" class="rmb-error" hidden></p>
+      </section>
+      <section class="rmb-card">
+        <div class="rmb-card-head">
+          <span class="rmb-icon-badge">¥</span>
+          <strong>大写金额</strong>
+          <button id="copy" class="rmb-copy-button" disabled>复制大写</button>
+        </div>
+        <span id="toast" class="rmb-toast" hidden></span>
+        <div id="uppercase" class="rmb-result-box" hidden></div>
+        <div id="info" class="rmb-info-grid" hidden></div>
+        <div id="empty" class="rmb-empty">
+          <span class="rmb-empty-icon">¥</span>
+          <strong>输入金额后自动转换</strong>
+        </div>
+      </section>
+    </main>
+<script>
+const CN_NUMS = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+      const CN_RADICE = ['', '拾', '佰', '仟'];
+      const CN_SECTIONS = ['', '万', '亿', '兆'];
+      const presets = ['0', '12.34', '1000', '1234.56', '100010001', '100000000.05'];
+      const $ = (id) => document.getElementById(id);
+      let convertResult = null;
+
+      function applyLaunchContent(content) {
+        const value = String(content || '').trim().replace(/,/g, '');
+        if (!/^-?\d+(\.\d+)?$/.test(value)) return;
+        $('amount').value = value;
+        render();
+      }
+
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function showToast(text) {
+        $('toast').textContent = text;
+        $('toast').hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600);
+      }
+
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      function normalizeAmountInput(raw) {
+        return String(raw || '').trim().replace(/,/g, '').replace(/[^\d.-]/g, '');
+      }
+
+      function parseAmount(raw) {
+        const normalized = normalizeAmountInput(raw);
+        if (!normalized) {
+          return { valid: false, error: '请输入金额' };
+        }
+        if (!/^-?\d+(\.\d+)?$/.test(normalized)) {
+          return { valid: false, error: '金额格式无效' };
+        }
+        if ((normalized.match(/\./g) || []).length > 1) {
+          return { valid: false, error: '金额格式无效' };
+        }
+
+        const negative = normalized.startsWith('-');
+        const unsigned = negative ? normalized.slice(1) : normalized;
+        const [integerPart, decimalPart = ''] = unsigned.split('.');
+
+        if (decimalPart.length > 2) {
+          return { valid: false, error: '最多支持两位小数' };
+        }
+
+        if (integerPart.length > 16) {
+          return { valid: false, error: '整数部分过长' };
+        }
+
+        const normalizedDecimal = decimalPart.padEnd(2, '0').slice(0, 2);
+        const displayAmount = `${negative ? '-' : ''}${integerPart || '0'}${decimalPart ? `.${decimalPart}` : ''}`;
+
+        return {
+          valid: true,
+          negative,
+          integerPart: integerPart.replace(/^0+(?=\d)/, '') || '0',
+          decimalPart: normalizedDecimal,
+          displayAmount
+        };
+      }
+
+      function convertSection(section) {
+        const text = String(section).padStart(4, '0');
+        let result = '';
+        let zeroPending = false;
+
+        for (let index = 0; index < 4; index += 1) {
+          const digit = Number(text[index]);
+          const unitIndex = 3 - index;
+
+          if (digit === 0) {
+            zeroPending = true;
+            continue;
+          }
+
+          if (zeroPending && result) {
+            result += '零';
+          }
+
+          zeroPending = false;
+          result += CN_NUMS[digit] + CN_RADICE[unitIndex];
+        }
+
+        return result;
+      }
+
+      function convertInteger(integerPart) {
+        if (integerPart === '0') {
+          return '零';
+        }
+
+        const sections = [];
+        let value = integerPart;
+
+        while (value.length > 0) {
+          sections.unshift(value.slice(-4));
+          value = value.slice(0, -4);
+        }
+
+        let result = '';
+        let zeroSection = false;
+
+        for (let index = 0; index < sections.length; index += 1) {
+          const sectionValue = Number(sections[index]);
+          const unitIndex = sections.length - 1 - index;
+
+          if (sectionValue === 0) {
+            zeroSection = true;
+            continue;
+          }
+
+          if (result && (zeroSection || sectionValue < 1000)) {
+            result += '零';
+          }
+
+          result += convertSection(sectionValue) + CN_SECTIONS[unitIndex];
+          zeroSection = false;
+        }
+
+        return result;
+      }
+
+      function convertToUppercase(parsed) {
+        const jiao = Number(parsed.decimalPart[0]);
+        const fen = Number(parsed.decimalPart[1]);
+        const integerText = convertInteger(parsed.integerPart);
+        let result = parsed.negative ? '负' : '';
+
+        if (parsed.integerPart !== '0') {
+          result += `${integerText}元`;
+        } else if (jiao === 0 && fen === 0) {
+          return `${result}零元整`;
+        } else {
+          result += '零元';
+        }
+
+        if (jiao === 0 && fen === 0) {
+          result += '整';
+        } else {
+          if (jiao > 0) {
+            result += `${CN_NUMS[jiao]}角`;
+          } else if (fen > 0) {
+            result += '零';
+          }
+
+          if (fen > 0) {
+            result += `${CN_NUMS[fen]}分`;
+          } else if (jiao > 0) {
+            result += '整';
+          }
+        }
+
+        return result;
+      }
+
+      function convertAmount(raw) {
+        const parsed = parseAmount(raw);
+        if (!parsed.valid) {
+          return parsed;
+        }
+
+        return {
+          valid: true,
+          displayAmount: parsed.displayAmount,
+          uppercase: convertToUppercase(parsed),
+          integerPart: parsed.integerPart,
+          decimalPart: parsed.decimalPart
+        };
+      }
+
+      function render() {
+        const raw = $('amount').value;
+        convertResult = convertAmount(raw);
+
+        if (!raw.trim()) {
+          $('error').hidden = true;
+          $('copy').disabled = true;
+          $('uppercase').hidden = true;
+          $('info').hidden = true;
+          $('empty').hidden = false;
+          return;
+        }
+
+        if (!convertResult.valid) {
+          $('error').textContent = convertResult.error;
+          $('error').hidden = false;
+          $('copy').disabled = true;
+          $('uppercase').hidden = true;
+          $('info').hidden = true;
+          $('empty').hidden = true;
+          return;
+        }
+
+        $('error').hidden = true;
+        $('copy').disabled = false;
+        $('empty').hidden = true;
+        $('uppercase').hidden = false;
+        $('uppercase').textContent = convertResult.uppercase;
+        $('info').hidden = false;
+        $('info').replaceChildren(
+          ...[
+            ['数字金额', convertResult.displayAmount],
+            ['整数部分', convertResult.integerPart],
+            ['小数部分', convertResult.decimalPart]
+          ].map(([label, value]) => {
+            const row = document.createElement('div');
+            row.className = 'rmb-info-row';
+            row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+            return row;
+          })
+        );
+      }
+
+      $('presets').replaceChildren(...presets.map((amount) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'rmb-preset';
+        button.textContent = amount;
+        button.addEventListener('click', () => {
+          $('amount').value = amount;
+          render();
+        });
+        return button;
+      }));
+
+      $('amount').addEventListener('input', render);
+      $('copy').addEventListener('click', () => {
+        if (!convertResult?.valid) return;
+        copyText(convertResult.uppercase, '大写金额已复制');
+      });
+      $('amount').value = '1234.56';
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-rmb-uppercase', capabilities: ['copyText'],
+                onLaunchContext(context) {
+                  applyLaunchContent(context.content || '');
+                }
+              };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

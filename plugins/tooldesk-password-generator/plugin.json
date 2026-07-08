@@ -1,0 +1,35 @@
+{
+  "accent": "orange",
+  "caption": "按规则批量生成随机密码，适用于测试账号与临时凭证。",
+  "category": "dev",
+  "defaultAlias": "mm",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-password-generator",
+  "keywords": [
+    "sjmm",
+    "pwd",
+    "mima",
+    "suijimima",
+    "password",
+    "pass",
+    "密码",
+    "随机",
+    "生成",
+    "安全",
+    "密钥"
+  ],
+  "name": "随机密码生成器",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

@@ -1,0 +1,40 @@
+{
+  "accent": "green",
+  "caption": "解锁并搜索 KeePassXC 数据库中的账号条目。",
+  "category": "document",
+  "defaultAlias": "mmk",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-keepassxc",
+  "keywords": [
+    "kp",
+    "keepass",
+    "mimaku",
+    "keepassxc",
+    "kdbx",
+    "password",
+    "mima"
+  ],
+  "name": "KeePassXC",
+  "permissions": [
+    "keepass",
+    "filesystem",
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText",
+    "getAppSettings",
+    "getKeePassSession",
+    "lockKeePassDatabase",
+    "openPath",
+    "setAppSettings",
+    "showOpenDialog",
+    "unlockKeePassDatabase"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

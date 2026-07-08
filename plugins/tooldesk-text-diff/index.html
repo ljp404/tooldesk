@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文本对比</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: #eef3f8;
+        color: #111827;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
+      }
+      button, input, textarea, select { font: inherit; }
+      [hidden] { display: none !important; }
+      .tool-content {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        height: 100%;
+        min-height: 0;
+        padding: 12px;
+      }
+      .diff-editor-pane {
+        display: grid;
+        gap: 8px;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-width: 0;
+      }
+      .diff-pane-head {
+        color: #111827;
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .diff-editor {
+        background: #fff;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        display: grid;
+        grid-template-columns: 52px minmax(0, 1fr);
+        min-height: 0;
+        overflow: hidden;
+      }
+      .diff-gutter {
+        background: #fff;
+        border-right: 1px solid #e5e7eb;
+        color: #237893;
+        font-family: "Cascadia Code", Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.8;
+        min-height: 0;
+        overflow: hidden;
+        padding: 12px 8px 12px 0;
+        text-align: right;
+        user-select: none;
+      }
+      .diff-gutter-inner { will-change: transform; }
+      .diff-gutter span {
+        display: block;
+        height: 1.8em;
+      }
+      .diff-code {
+        min-width: 0;
+        overflow: hidden;
+        position: relative;
+      }
+      .diff-highlight,
+      .diff-code textarea {
+        font-family: "Cascadia Code", Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.8;
+        margin: 0;
+        min-height: 100%;
+        padding: 12px 14px;
+        white-space: pre;
+        word-break: normal;
+      }
+      .diff-highlight {
+        color: #1f2328;
+        inset: 0;
+        pointer-events: none;
+        position: absolute;
+        will-change: transform;
+      }
+      .diff-highlight-line {
+        display: block;
+        min-height: 1.8em;
+        min-width: 100%;
+      }
+      .diff-highlight-line.add { background: rgba(34, 197, 94, .14); }
+      .diff-highlight-line.remove { background: rgba(248, 113, 113, .16); }
+      .diff-highlight-segment { border-radius: 3px; }
+      .diff-highlight-segment.add {
+        background: rgba(34, 197, 94, .34);
+        color: #166534;
+      }
+      .diff-highlight-segment.remove {
+        background: rgba(248, 113, 113, .36);
+        color: #991b1b;
+      }
+      .diff-highlight-segment.missing-add,
+      .diff-highlight-segment.missing-remove {
+        box-shadow: inset 0 0 0 1px currentColor;
+        opacity: .78;
+      }
+      .diff-highlight-segment.missing-add {
+        background: rgba(34, 197, 94, .12);
+        color: #15803d;
+      }
+      .diff-highlight-segment.missing-remove {
+        background: rgba(248, 113, 113, .14);
+        color: #b91c1c;
+      }
+      .diff-code textarea {
+        background: transparent;
+        border: 0;
+        caret-color: #111827;
+        color: transparent;
+        height: 100%;
+        outline: none;
+        resize: none;
+        width: 100%;
+      }
+      .diff-code textarea::selection { background: rgba(125, 211, 252, .28); }
+      @media (max-width: 820px) {
+        .tool-content { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="tool-content">
+      <section class="diff-editor-pane">
+        <div class="diff-pane-head">原文本</div>
+        <div class="diff-editor">
+          <div class="diff-gutter" aria-hidden="true">
+            <div id="leftGutter" class="diff-gutter-inner"><span>1</span></div>
+          </div>
+          <div class="diff-code">
+            <pre id="leftHighlight" class="diff-highlight" aria-hidden="true"></pre>
+            <textarea id="leftText" spellcheck="false" wrap="off" aria-label="原文本"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="diff-editor-pane">
+        <div class="diff-pane-head">新文本</div>
+        <div class="diff-editor">
+          <div class="diff-gutter" aria-hidden="true">
+            <div id="rightGutter" class="diff-gutter-inner"><span>1</span></div>
+          </div>
+          <div class="diff-code">
+            <pre id="rightHighlight" class="diff-highlight" aria-hidden="true"></pre>
+            <textarea id="rightText" spellcheck="false" wrap="off" aria-label="新文本"></textarea>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const leftText = document.getElementById('leftText');
+      const rightText = document.getElementById('rightText');
+      const leftGutter = document.getElementById('leftGutter');
+      const rightGutter = document.getElementById('rightGutter');
+      const leftHighlight = document.getElementById('leftHighlight');
+      const rightHighlight = document.getElementById('rightHighlight');
+
+      const plugin = TooldeskPlugin.create({
+        id: 'tooldesk-text-diff',
+        capabilities: [],
+        onLaunchContext(context) {
+          applyLaunchContent(context?.content || '');
+        }
+      });
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function buildLineDiff(left, right) {
+        const leftLines = left.split('\n');
+        const rightLines = right.split('\n');
+        const max = Math.max(leftLines.length, rightLines.length);
+        const rows = [];
+
+        for (let index = 0; index < max; index += 1) {
+          const leftLine = leftLines[index] ?? '';
+          const rightLine = rightLines[index] ?? '';
+
+          if (leftLine === rightLine) {
+            rows.push({ line: index + 1, text: leftLine, type: 'same' });
+          } else {
+            if (leftLine) {
+              rows.push({ line: index + 1, text: leftLine, type: 'remove' });
+            }
+            if (rightLine) {
+              rows.push({ line: index + 1, text: rightLine, type: 'add' });
+            }
+          }
+        }
+
+        return rows;
+      }
+
+      function getMissingPlaceholder(char) {
+        return (char.codePointAt(0) ?? 0) > 0xff ? '  ' : ' ';
+      }
+
+      function buildInlineSegments(source, target, side) {
+        if (source === target) {
+          return [{ status: 'same', text: source || ' ' }];
+        }
+
+        if (!target) {
+          return [{ status: side === 'left' ? 'remove' : 'add', text: source || ' ' }];
+        }
+
+        const sourceChars = Array.from(source);
+        const targetChars = Array.from(target);
+        const dp = Array.from({ length: sourceChars.length + 1 }, () => Array(targetChars.length + 1).fill(0));
+
+        for (let i = sourceChars.length - 1; i >= 0; i -= 1) {
+          for (let j = targetChars.length - 1; j >= 0; j -= 1) {
+            dp[i][j] = sourceChars[i] === targetChars[j]
+              ? dp[i + 1][j + 1] + 1
+              : Math.max(dp[i + 1][j], dp[i][j + 1]);
+          }
+        }
+
+        const segments = [];
+
+        function pushSegment(status, text) {
+          const lastSegment = segments.at(-1);
+          if (lastSegment?.status === status) {
+            lastSegment.text += text;
+            return;
+          }
+          segments.push({ status, text });
+        }
+
+        let i = 0;
+        let j = 0;
+
+        while (i < sourceChars.length && j < targetChars.length) {
+          if (sourceChars[i] === targetChars[j]) {
+            pushSegment('same', sourceChars[i]);
+            i += 1;
+            j += 1;
+          } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+            pushSegment(side === 'left' ? 'remove' : 'add', sourceChars[i]);
+            i += 1;
+          } else {
+            pushSegment(side === 'left' ? 'missing-add' : 'missing-remove', getMissingPlaceholder(targetChars[j]));
+            j += 1;
+          }
+        }
+
+        while (i < sourceChars.length) {
+          pushSegment(side === 'left' ? 'remove' : 'add', sourceChars[i]);
+          i += 1;
+        }
+
+        while (j < targetChars.length) {
+          pushSegment(side === 'left' ? 'missing-add' : 'missing-remove', getMissingPlaceholder(targetChars[j]));
+          j += 1;
+        }
+
+        return segments.length > 0 ? segments : [{ status: 'same', text: ' ' }];
+      }
+
+      function buildSideLines(source, target, side) {
+        const lines = source.split('\n');
+        const targetLines = target.split('\n');
+        const statuses = lines.map(() => 'same');
+        const targetType = side === 'left' ? 'remove' : 'add';
+
+        buildLineDiff(leftText.value, rightText.value).forEach((row) => {
+          if (row.type === targetType) {
+            statuses[row.line - 1] = targetType;
+          }
+        });
+
+        return lines.map((text, index) => ({
+          line: index + 1,
+          segments: buildInlineSegments(text, targetLines[index] ?? '', side),
+          status: statuses[index],
+          text
+        }));
+      }
+
+      function renderSide(lines, gutterEl, highlightEl) {
+        gutterEl.innerHTML = lines.map((line) => `<span>${line.line}</span>`).join('');
+        highlightEl.innerHTML = lines
+          .map((line) => (
+            `<span class="diff-highlight-line ${line.status}">` +
+            line.segments
+              .map((segment) => `<span class="diff-highlight-segment ${segment.status}">${escapeHtml(segment.text)}</span>`)
+              .join('') +
+            '</span>'
+          ))
+          .join('');
+      }
+
+      function renderDiff() {
+        renderSide(buildSideLines(leftText.value, rightText.value, 'left'), leftGutter, leftHighlight);
+        renderSide(buildSideLines(rightText.value, leftText.value, 'right'), rightGutter, rightHighlight);
+        syncScroll(leftText, leftGutter, leftHighlight);
+        syncScroll(rightText, rightGutter, rightHighlight);
+      }
+
+      function syncScroll(textarea, gutterEl, highlightEl) {
+        gutterEl.style.transform = `translateY(-${textarea.scrollTop}px)`;
+        highlightEl.style.transform = `translate(${-textarea.scrollLeft}px, -${textarea.scrollTop}px)`;
+      }
+
+      function applyLaunchContent(content) {
+        const text = String(content || '');
+
+        if (!text.trim()) {
+          return;
+        }
+
+        if (!leftText.value.trim() || rightText.value.trim()) {
+          leftText.value = text;
+        } else {
+          rightText.value = text;
+        }
+
+        renderDiff();
+      }
+
+      function focusDefaultInput() {
+        window.requestAnimationFrame(() => {
+          leftText.focus({ preventScroll: true });
+        });
+      }
+
+      leftText.addEventListener('input', renderDiff);
+      rightText.addEventListener('input', renderDiff);
+      leftText.addEventListener('scroll', () => syncScroll(leftText, leftGutter, leftHighlight));
+      rightText.addEventListener('scroll', () => syncScroll(rightText, rightGutter, rightHighlight));
+
+      renderDiff();
+      focusDefaultInput();
+      void plugin.connect().then(() => {
+        focusDefaultInput();
+      });
+    </script>
+  </body>
+</html>

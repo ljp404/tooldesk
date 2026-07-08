@@ -1,0 +1,44 @@
+{
+  "accent": "green",
+  "caption": "基于 IOPaint RemoveBG 生成透明背景 PNG。",
+  "category": "image",
+  "defaultAlias": "qbj",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-background-remover",
+  "keywords": [
+    "kt",
+    "bg",
+    "qubeijing",
+    "koutu",
+    "remove background",
+    "background remover",
+    "rembg",
+    "removebg",
+    "透明背景",
+    "去背景",
+    "抠图",
+    "ai抠图",
+    "ai去背景",
+    "图片去背景"
+  ],
+  "name": "AI 去背景",
+  "permissions": [
+    "clipboard",
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "sync": {
+    "localStorageKeys": [
+      "tooldesk-background-remover-settings"
+    ]
+  },
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "sendHttpRequest"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

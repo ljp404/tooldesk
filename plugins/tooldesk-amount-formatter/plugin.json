@@ -1,0 +1,43 @@
+{
+  "accent": "purple",
+  "caption": "批量清洗并格式化金额，支持千分位与小数位统一。",
+  "category": "finance",
+  "clipboardMatch": [
+    {
+      "type": "amount-lines",
+      "priority": 79
+    },
+    {
+      "type": "decimal-amount",
+      "priority": 81
+    }
+  ],
+  "defaultAlias": "jegsh",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-amount-formatter",
+  "keywords": [
+    "je",
+    "amt",
+    "jinegeshihua",
+    "amount",
+    "format",
+    "金额",
+    "格式化",
+    "千分位",
+    "小数"
+  ],
+  "name": "金额格式化",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

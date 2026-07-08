@@ -1,0 +1,1389 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>网络测速</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: transparent;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  padding: 18px;
+}
+button { border: 0; cursor: pointer; font: inherit; }
+button:disabled { cursor: not-allowed; opacity: .65; }
+[hidden] { display: none !important; }
+.speed-panel {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.speed-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0 18px;
+}
+.speed-title {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+  min-width: 0;
+}
+.speed-title-icon {
+  align-items: center;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #16a34a;
+  display: inline-flex;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+.speed-title-icon svg,
+.speed-button svg,
+.metric-icon svg,
+.phase-icon svg {
+  display: block;
+  height: 16px;
+  width: 16px;
+}
+.speed-title strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.speed-title span {
+  color: #64748b;
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+}
+.speed-badge {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+}
+.speed-badge.active {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.26);
+  color: #15803d;
+}
+.speed-head-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+}
+.speed-control-picker {
+  align-items: center;
+  color: #64748b;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 6px;
+}
+.speed-control-picker select {
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, #64748b 50%) calc(100% - 12px) 50% / 5px 5px no-repeat,
+    linear-gradient(135deg, #64748b 50%, transparent 50%) calc(100% - 8px) 50% / 5px 5px no-repeat,
+    #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  color: #334155;
+  font: inherit;
+  height: 30px;
+  min-width: 86px;
+  padding: 0 24px 0 11px;
+}
+.speed-control-picker select:disabled {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+.speed-content {
+  display: grid;
+  flex: 1;
+  gap: 16px;
+  grid-template-columns: minmax(420px, 1fr) minmax(300px, 360px);
+  min-height: 0;
+  padding: 18px;
+}
+.speed-main,
+.speed-side {
+  min-height: 0;
+}
+.speed-main {
+  display: grid;
+  gap: 14px;
+  grid-template-rows: minmax(420px, 1fr) auto;
+}
+.speed-gauge-card,
+.speed-side-card,
+.speed-metric-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+}
+.speed-gauge-card {
+  background: #1e2336;
+  border-color: #2f364f;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 14px;
+  justify-items: center;
+  min-height: 0;
+  overflow: hidden;
+  padding: 20px;
+  position: relative;
+}
+.speed-gauge-card::before {
+  background: radial-gradient(circle at 50% 58%, rgba(24, 223, 207, 0.08), transparent 30%);
+  content: '';
+  inset: 0;
+  position: absolute;
+}
+.speed-gauge {
+  align-items: center;
+  display: flex;
+  height: 300px;
+  justify-content: center;
+  position: relative;
+  margin-top: -8px;
+  transform: scale(.88);
+  width: 420px;
+  z-index: 1;
+}
+.speed-ring {
+  inset: 0;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+.speed-ring-bg {
+  fill: none;
+  stroke: #343a54;
+  stroke-linecap: butt;
+  stroke-width: 24;
+}
+.speed-ring-value {
+  fill: none;
+  stroke: #18dfcf;
+  stroke-linecap: butt;
+  stroke-width: 24;
+  transition: stroke-dasharray .28s ease;
+}
+.speed-needle {
+  background: linear-gradient(90deg, #5be9cd, rgba(91, 233, 205, 0.08));
+  border-radius: 2px;
+  box-shadow: 0 10px 28px rgba(24, 223, 207, .18);
+  display: block;
+  height: 16px;
+  left: 92px;
+  position: absolute;
+  top: 198px;
+  transform: rotate(-18deg);
+  transform-origin: 100% 50%;
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1);
+  width: 112px;
+  z-index: 2;
+}
+.speed-readout {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+}
+.speed-value {
+  color: #ffffff;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 54px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.speed-decimal {
+  color: #ffffff;
+  font-size: 36px;
+  font-weight: 500;
+  margin-top: 0;
+}
+.speed-unit {
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+.speed-readout-row {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 7px;
+}
+.speed-scale {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  position: absolute;
+  z-index: 2;
+}
+.speed-scale.low { color: #18dfcf; }
+.scale-0 { left: 85px; top: 242px; }
+.scale-5 { left: 57px; top: 188px; }
+.scale-10 { left: 64px; top: 121px; }
+.scale-25 { left: 105px; top: 56px; }
+.scale-50 { left: 190px; top: 31px; }
+.scale-100 { right: 86px; top: 56px; }
+.scale-150 { right: 49px; top: 121px; }
+.scale-300 { right: 45px; top: 188px; }
+.scale-500 { right: 72px; top: 242px; }
+.speed-phase {
+  align-self: center;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 0;
+  min-height: 18px;
+  position: relative;
+  z-index: 1;
+}
+.speed-button-row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+.speed-button {
+  align-items: center;
+  background: #16a34a;
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 900;
+  gap: 8px;
+  height: 42px;
+  justify-content: center;
+  min-width: 132px;
+  padding: 0 18px;
+}
+.speed-button:hover:not(:disabled) {
+  background: #15803d;
+}
+.speed-button.secondary {
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .18);
+  color: #e2e8f0;
+}
+.speed-button.secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, .12);
+}
+.speed-summary {
+  bottom: 30px;
+  display: grid;
+  gap: 8px;
+  left: 20px;
+  position: absolute;
+  right: 20px;
+  z-index: 1;
+}
+.speed-summary h2 {
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1.25;
+  margin: 0;
+  text-align: center;
+}
+.speed-bars {
+  display: none;
+}
+.speed-bar-row {
+  display: grid;
+  gap: 7px;
+}
+.speed-bar-head {
+  align-items: center;
+  color: #cbd5e1;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  justify-content: space-between;
+}
+.speed-bar-track {
+  background: rgba(255, 255, 255, .1);
+  border-radius: 999px;
+  height: 9px;
+  overflow: hidden;
+}
+.speed-bar-fill {
+  background: #18dfcf;
+  border-radius: inherit;
+  height: 100%;
+  transition: width .26s ease;
+  width: 0%;
+}
+.speed-metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.speed-metric-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+}
+.metric-head {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 6px;
+}
+.metric-icon {
+  color: #2563eb;
+  display: inline-flex;
+}
+.metric-value {
+  color: #0f172a;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.metric-unit {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+}
+.speed-side {
+  display: grid;
+  gap: 10px;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  padding-right: 2px;
+}
+.speed-side-card {
+  background: #f8fafc;
+  padding: 14px;
+}
+.speed-chart-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  padding-bottom: 12px;
+}
+.speed-side-card h3 {
+  color: #111827;
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+.network-info-list {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.network-info-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 8px 9px;
+}
+.network-info-item span {
+  color: #94a3b8;
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 5px;
+}
+.network-info-item strong {
+  color: #111827;
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.speed-chart-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-rows: repeat(2, minmax(88px, 1fr));
+  min-height: 0;
+  margin-top: 10px;
+  padding: 10px 10px 14px;
+}
+.chart-row {
+  align-items: stretch;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  min-height: 0;
+}
+.chart-current span {
+  color: #94a3b8;
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 7px;
+}
+.chart-current strong {
+  color: #111827;
+  display: block;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.chart-main {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+}
+.chart-meta {
+  align-items: center;
+  color: #9ca3af;
+  display: flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 8px;
+  justify-content: space-between;
+  line-height: 1.25;
+  margin-bottom: 5px;
+}
+.chart-meta strong {
+  color: #8b7cff;
+  display: inline-block;
+  font-weight: 800;
+}
+.chart-row.upload .chart-meta strong {
+  color: #0877ff;
+}
+.speed-chart {
+  display: block;
+  height: 100%;
+  min-height: 62px;
+  width: 100%;
+}
+.chart-grid {
+  stroke: #edf2f7;
+  stroke-width: 1;
+}
+.chart-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+.chart-line.download {
+  stroke: #8b7cff;
+}
+.chart-line.upload {
+  stroke: #0877ff;
+}
+.speed-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+  margin: 12px 0 0;
+  padding: 9px 10px;
+}
+@media (max-width: 900px) {
+  body { padding: 12px; }
+  .speed-content {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+  .speed-gauge-card {
+    grid-template-rows: auto auto;
+  }
+  .speed-gauge {
+    justify-self: center;
+    max-width: 100%;
+    transform: scale(.92);
+  }
+  .speed-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .speed-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 18px;
+  }
+  .speed-head-actions {
+    flex-wrap: wrap;
+  }
+}
+    </style>
+  </head>
+  <body>
+    <main class="speed-panel">
+      <header class="speed-head">
+        <div class="speed-title">
+          <span class="speed-title-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 13a8 8 0 0 1 16 0" />
+              <path d="M12 13l4-5" />
+              <path d="M5 19h14" />
+            </svg>
+          </span>
+          <span>
+            <strong>网络测速</strong>
+            <span>延迟、下载、上传一键检测</span>
+          </span>
+        </div>
+        <div class="speed-head-actions">
+          <label class="speed-control-picker">
+            <span>测速点</span>
+            <select id="nodeSelect" aria-label="测速点">
+              <option value="auto">自动</option>
+              <option value="north">华北</option>
+              <option value="east">华东</option>
+              <option value="south">华南</option>
+              <option value="overseas">海外</option>
+            </select>
+          </label>
+          <label class="speed-control-picker">
+            <span>时长</span>
+            <select id="durationSelect" aria-label="测试时长">
+              <option value="5">5 秒</option>
+              <option value="10">10 秒</option>
+              <option value="30">30 秒</option>
+            </select>
+          </label>
+          <span id="stateBadge" class="speed-badge">待开始</span>
+        </div>
+      </header>
+
+      <section class="speed-content">
+        <div class="speed-main">
+          <section class="speed-gauge-card">
+            <div class="speed-gauge" aria-live="polite">
+              <svg class="speed-ring" viewBox="0 0 420 320" aria-hidden="true">
+                <path id="ringTrack" class="speed-ring-bg" d="M 64 282 A 174 174 0 1 1 356 282" />
+                <path id="ringValue" class="speed-ring-value" d="M 64 282 A 174 174 0 1 1 356 282" />
+              </svg>
+              <span id="needle" class="speed-needle" aria-hidden="true"></span>
+              <span class="speed-scale scale-0 low">0</span>
+              <span class="speed-scale scale-5">5</span>
+              <span class="speed-scale scale-10">10</span>
+              <span class="speed-scale scale-25">25</span>
+              <span class="speed-scale scale-50">50</span>
+              <span class="speed-scale scale-100">100</span>
+              <span class="speed-scale scale-150">150</span>
+              <span class="speed-scale scale-300">300</span>
+              <span class="speed-scale scale-500">500</span>
+              <div class="speed-readout">
+                <span class="speed-readout-row">
+                  <span id="speedValue" class="speed-value">0</span>
+                  <span id="speedDecimal" class="speed-decimal"></span>
+                </span>
+                <span id="speedUnit" class="speed-unit">Mbps</span>
+              </div>
+            </div>
+            <div class="speed-summary">
+              <div>
+                <h2 id="phaseText">准备检测当前网络</h2>
+              </div>
+              <div class="speed-bars">
+                <div class="speed-bar-row">
+                  <span class="speed-bar-head"><span>下载</span><span id="downloadBarText">-- Mbps</span></span>
+                  <span class="speed-bar-track"><span id="downloadBar" class="speed-bar-fill"></span></span>
+                </div>
+                <div class="speed-bar-row">
+                  <span class="speed-bar-head"><span>上传</span><span id="uploadBarText">-- Mbps</span></span>
+                  <span class="speed-bar-track"><span id="uploadBar" class="speed-bar-fill"></span></span>
+                </div>
+                <div class="speed-bar-row">
+                  <span class="speed-bar-head"><span>延迟</span><span id="pingBarText">-- ms</span></span>
+                  <span class="speed-bar-track"><span id="pingBar" class="speed-bar-fill"></span></span>
+                </div>
+              </div>
+              <div class="speed-button-row">
+                <button id="startButton" class="speed-button" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 3l14 9-14 9V3z" />
+                  </svg>
+                  开始测速
+                </button>
+                <button id="resetButton" class="speed-button secondary" type="button">重置</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="speed-metrics">
+            <article class="speed-metric-card">
+              <span class="metric-head"><span class="metric-icon" data-icon="ping"></span>Ping</span>
+              <span id="pingValue" class="metric-value">--</span>
+              <span class="metric-unit">ms</span>
+            </article>
+            <article class="speed-metric-card">
+              <span class="metric-head"><span class="metric-icon" data-icon="down"></span>下载</span>
+              <span id="downloadValue" class="metric-value">--</span>
+              <span class="metric-unit">Mbps</span>
+            </article>
+            <article class="speed-metric-card">
+              <span class="metric-head"><span class="metric-icon" data-icon="up"></span>上传</span>
+              <span id="uploadValue" class="metric-value">--</span>
+              <span class="metric-unit">Mbps</span>
+            </article>
+            <article class="speed-metric-card">
+              <span class="metric-head"><span class="metric-icon" data-icon="jitter"></span>抖动</span>
+              <span id="jitterValue" class="metric-value">--</span>
+              <span class="metric-unit">ms</span>
+            </article>
+            <article class="speed-metric-card">
+              <span class="metric-head"><span class="metric-icon" data-icon="loss"></span>丢包</span>
+              <span id="lossValue" class="metric-value">--</span>
+              <span class="metric-unit">%</span>
+            </article>
+          </section>
+        </div>
+
+        <aside class="speed-side">
+          <section class="speed-side-card">
+            <h3>出口信息</h3>
+            <div class="network-info-list">
+              <div class="network-info-item"><span>出口 IP</span><strong id="ipValue">检测中</strong></div>
+              <div class="network-info-item"><span>运营商</span><strong id="ispValue">检测中</strong></div>
+              <div class="network-info-item"><span>地区</span><strong id="regionValue">检测中</strong></div>
+              <div class="network-info-item"><span>当前节点</span><strong id="activeNodeValue">自动</strong></div>
+            </div>
+          </section>
+
+          <section class="speed-side-card speed-chart-card">
+            <h3>实时曲线</h3>
+            <div class="speed-chart-panel" aria-hidden="true">
+              <div class="chart-row download">
+                <div class="chart-current">
+                  <span>下载/Mbps</span>
+                  <strong id="downloadChartValue">--</strong>
+                </div>
+                <div class="chart-main">
+                  <div class="chart-meta">
+                    <span>峰值速度 <strong id="downloadPeakValue">-- Mbps</strong></span>
+                    <span>使用流量 <strong id="downloadUsageValue">--</strong></span>
+                  </div>
+                  <svg class="speed-chart" viewBox="0 0 300 48" preserveAspectRatio="none">
+                    <path class="chart-grid" d="M0 12H300M0 24H300M0 36H300M25 0V48M50 0V48M75 0V48M100 0V48M125 0V48M150 0V48M175 0V48M200 0V48M225 0V48M250 0V48M275 0V48" />
+                    <polyline id="downloadLine" class="chart-line download" points="" />
+                  </svg>
+                </div>
+              </div>
+              <div class="chart-row upload">
+                <div class="chart-current">
+                  <span>上传/Mbps</span>
+                  <strong id="uploadChartValue">--</strong>
+                </div>
+                <div class="chart-main">
+                  <div class="chart-meta">
+                    <span>峰值速度 <strong id="uploadPeakValue">-- Mbps</strong></span>
+                    <span>使用流量 <strong id="uploadUsageValue">--</strong></span>
+                  </div>
+                  <svg class="speed-chart" viewBox="0 0 300 48" preserveAspectRatio="none">
+                    <path class="chart-grid" d="M0 12H300M0 24H300M0 36H300M25 0V48M50 0V48M75 0V48M100 0V48M125 0V48M150 0V48M175 0V48M200 0V48M225 0V48M250 0V48M275 0V48" />
+                    <polyline id="uploadLine" class="chart-line upload" points="" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <p id="errorBox" class="speed-error" hidden></p>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      let api = null;
+      let pluginBoot = null;
+      let pluginConnect = Promise.resolve();
+
+      function syncPluginApi() {
+        if (pluginBoot) {
+          api = pluginBoot.api;
+        }
+        return { api };
+      }
+
+      async function ensurePluginApi() {
+        if (!pluginBoot) {
+          throw new Error('插件 SDK 未就绪，请重启 Tooldesk');
+        }
+        await pluginConnect;
+        syncPluginApi();
+        if (!api) {
+          throw new Error('插件 SDK 未就绪，请重启 Tooldesk');
+        }
+        return { api };
+      }
+
+      const ICONS = {
+        down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></svg>',
+        jitter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14c2.5-6 5.5 6 8 0s5.5 6 8 0" /><path d="M4 6h16" /></svg>',
+        loss: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3" /><path d="M12 18v3" /><path d="m4.9 4.9 2.1 2.1" /><path d="m17 17 2.1 2.1" /><path d="M3 12h3" /><path d="M18 12h3" /><path d="m4.9 19.1 2.1-2.1" /><path d="m17 7 2.1-2.1" /></svg>',
+        ping: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0-8-8" /><path d="M12 12l5-3" /><path d="M4 20l4-4" /></svg>',
+        up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9" /><path d="m7 14 5-5 5 5" /><path d="M5 3h14" /></svg>'
+      };
+      const SPEED_NODES = {
+        auto: {
+          label: '自动',
+          downloadTargets: [
+            'https://speed.cloudflare.com/__down?bytes=10000000',
+            'https://cachefly.cachefly.net/10mb.test',
+            'https://speed.hetzner.de/10MB.bin'
+          ],
+          pingTargets: [
+            'https://www.cloudflare.com/cdn-cgi/trace',
+            'https://www.gstatic.com/generate_204',
+            'https://www.baidu.com/favicon.ico'
+          ],
+          uploadTarget: 'https://speed.cloudflare.com/__up'
+        },
+        north: {
+          label: '华北',
+          downloadTargets: [
+            'https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ls-lR.gz',
+            'https://speed.cloudflare.com/__down?bytes=10000000',
+            'https://cachefly.cachefly.net/10mb.test'
+          ],
+          pingTargets: [
+            'https://www.baidu.com/favicon.ico',
+            'https://mirrors.tuna.tsinghua.edu.cn/',
+            'https://www.cloudflare.com/cdn-cgi/trace'
+          ],
+          uploadTarget: 'https://speed.cloudflare.com/__up'
+        },
+        east: {
+          label: '华东',
+          downloadTargets: [
+            'https://mirrors.ustc.edu.cn/ubuntu/ls-lR.gz',
+            'https://speed.cloudflare.com/__down?bytes=10000000',
+            'https://cachefly.cachefly.net/10mb.test'
+          ],
+          pingTargets: [
+            'https://mirrors.ustc.edu.cn/',
+            'https://www.aliyun.com/favicon.ico',
+            'https://www.cloudflare.com/cdn-cgi/trace'
+          ],
+          uploadTarget: 'https://speed.cloudflare.com/__up'
+        },
+        south: {
+          label: '华南',
+          downloadTargets: [
+            'https://mirrors.tencent.com/ubuntu/ls-lR.gz',
+            'https://speed.cloudflare.com/__down?bytes=10000000',
+            'https://cachefly.cachefly.net/10mb.test'
+          ],
+          pingTargets: [
+            'https://cloud.tencent.com/favicon.ico',
+            'https://mirrors.tencent.com/',
+            'https://www.cloudflare.com/cdn-cgi/trace'
+          ],
+          uploadTarget: 'https://speed.cloudflare.com/__up'
+        },
+        overseas: {
+          label: '海外',
+          downloadTargets: [
+            'https://speed.cloudflare.com/__down?bytes=10000000',
+            'https://cachefly.cachefly.net/10mb.test',
+            'https://speed.hetzner.de/10MB.bin'
+          ],
+          pingTargets: [
+            'https://www.cloudflare.com/cdn-cgi/trace',
+            'https://www.gstatic.com/generate_204',
+            'https://speed.hetzner.de/'
+          ],
+          uploadTarget: 'https://speed.cloudflare.com/__up'
+        }
+      };
+      const state = {
+        activeNodeKey: 'auto',
+        aborted: false,
+        durationSeconds: 5,
+        downloadBytes: 0,
+        downloadSeries: [],
+        ringLength: 0,
+        selectedNode: 'auto',
+        uploadBytes: 0,
+        uploadSeries: [],
+        phase: 'idle',
+        running: false,
+        runId: 0
+      };
+      const $ = (id) => document.getElementById(id);
+
+      function initIcons() {
+        document.querySelectorAll('[data-icon]').forEach((element) => {
+          element.innerHTML = ICONS[element.dataset.icon] || '';
+        });
+      }
+
+      function formatMetric(value, digits = 1) {
+        return Number.isFinite(value) ? value.toFixed(digits) : '--';
+      }
+
+      function formatBytes(size) {
+        if (!Number.isFinite(size) || size <= 0) return '--';
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}K`;
+        if (size < 1024 * 1024 * 1024) return `${(size / 1024 / 1024).toFixed(2)}M`;
+        return `${(size / 1024 / 1024 / 1024).toFixed(2)}G`;
+      }
+
+      function setGauge(value) {
+        const safeValue = Math.max(0, Math.min(1000, Number(value) || 0));
+        const ratio = Math.min(safeValue / 500, 1);
+        const length = state.ringLength || 1;
+        const shown = safeValue >= 100 ? safeValue.toFixed(0) : safeValue.toFixed(2);
+        const [integerPart, decimalPart = ''] = shown.split('.');
+        $('needle').style.transform = `rotate(${-18 + ratio * 260}deg)`;
+        $('ringValue').style.strokeDasharray = `${length * ratio} ${length}`;
+        $('speedValue').textContent = integerPart;
+        $('speedDecimal').textContent = decimalPart ? `.${decimalPart}` : '';
+      }
+
+      function setMetricBar(name, value, maxValue, unit) {
+        const safeValue = Math.max(0, Number(value) || 0);
+        const fill = $(`${name}Bar`);
+        const text = $(`${name}BarText`);
+        if (fill) fill.style.width = `${Math.max(2, Math.min(100, (safeValue / maxValue) * 100))}%`;
+        if (text) text.textContent = `${formatMetric(safeValue, unit === 'ms' ? 0 : 1)} ${unit}`;
+      }
+
+      function setBadge(text, active = false) {
+        $('stateBadge').textContent = text;
+        $('stateBadge').classList.toggle('active', active);
+      }
+
+      function getSelectedNode() {
+        return SPEED_NODES[state.activeNodeKey] || SPEED_NODES.auto;
+      }
+
+      function getNodeLabel(key = state.activeNodeKey) {
+        return (SPEED_NODES[key] || SPEED_NODES.auto).label;
+      }
+
+      function withCacheBuster(url, suffix = Date.now()) {
+        return `${url}${url.includes('?') ? '&' : '?'}t=${suffix}`;
+      }
+
+      async function fetchJson(url, options = {}) {
+        const { api: activeApi } = await ensurePluginApi();
+        const result = await activeApi.sendHttpRequest({
+          body: options.body,
+          headers: { accept: 'application/json', ...(options.headers || {}) },
+          method: String(options.method || 'GET').toUpperCase(),
+          timeoutMs: options.timeoutMs ?? 30000,
+          url
+        });
+
+        if (!result.ok) {
+          throw new Error(result.error || `HTTP ${result.status}`);
+        }
+
+        return result.body ? JSON.parse(result.body) : null;
+      }
+
+      async function probeTarget(url, timeoutMs = 1800) {
+        const { api: activeApi } = await ensurePluginApi();
+        const result = await activeApi.sendHttpRequest({
+          headers: { accept: '*/*' },
+          method: 'GET',
+          timeoutMs,
+          url: withCacheBuster(url)
+        });
+
+        if (!result.ok && result.status === 0) {
+          throw new Error(result.error || '测速失败');
+        }
+
+        return result.durationMs;
+      }
+
+      function bytesToBinaryString(bytes) {
+        const chunkSize = 0x8000;
+        let output = '';
+
+        for (let index = 0; index < bytes.length; index += chunkSize) {
+          output += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+        }
+
+        return output;
+      }
+
+      async function hostDownloadOnce(url) {
+        const { api: activeApi } = await ensurePluginApi();
+        const result = await activeApi.sendHttpRequest({
+          headers: { accept: '*/*' },
+          method: 'GET',
+          timeoutMs: 120000,
+          url: withCacheBuster(url)
+        });
+
+        if (!result.ok) {
+          throw new Error(result.error || `HTTP ${result.status}`);
+        }
+
+        return result.bodyByteLength || 0;
+      }
+
+      async function hostUploadOnce(url, bytes) {
+        const { api: activeApi } = await ensurePluginApi();
+        const result = await activeApi.sendHttpRequest({
+          body: bytesToBinaryString(bytes),
+          headers: { 'content-type': 'application/octet-stream' },
+          method: 'POST',
+          timeoutMs: 120000,
+          url: withCacheBuster(url)
+        });
+
+        if (!result.ok) {
+          throw new Error(result.error || `HTTP ${result.status}`);
+        }
+      }
+
+      async function loadNetworkInfo() {
+        $('ipValue').textContent = '检测中';
+        $('ispValue').textContent = '检测中';
+        $('regionValue').textContent = '检测中';
+        try {
+          const data = await fetchJson('https://ipapi.co/json/');
+          $('ipValue').textContent = data.ip || '--';
+          $('ispValue').textContent = data.org || data.asn || '--';
+          $('regionValue').textContent = [data.country_name, data.region, data.city].filter(Boolean).join(' / ') || '--';
+        } catch {
+          try {
+            const data = await fetchJson('http://ip-api.com/json/?lang=zh-CN&fields=status,message,query,isp,org,country,regionName,city');
+            if (data.status !== 'success') throw new Error(data.message || 'IP 信息获取失败');
+            $('ipValue').textContent = data.query || '--';
+            $('ispValue').textContent = data.isp || data.org || '--';
+            $('regionValue').textContent = [data.country, data.regionName, data.city].filter(Boolean).join(' / ') || '--';
+          } catch {
+            try {
+              const data = await fetchJson('https://api.ipify.org?format=json');
+              $('ipValue').textContent = data.ip || '--';
+            } catch {
+              $('ipValue').textContent = '获取失败';
+            }
+            $('ispValue').textContent = '--';
+            $('regionValue').textContent = '--';
+          }
+        }
+      }
+
+      async function selectBestNode() {
+        if (state.selectedNode !== 'auto') {
+          state.activeNodeKey = state.selectedNode;
+          $('activeNodeValue').textContent = getNodeLabel();
+          return;
+        }
+        setBadge('选节点', true);
+        const candidates = ['north', 'east', 'south', 'overseas'];
+        const results = await Promise.all(candidates.map(async (key) => {
+          const node = SPEED_NODES[key];
+          const samples = await Promise.all(node.pingTargets.slice(0, 2).map(async (target) => {
+            try {
+              return await probeTarget(target);
+            } catch {
+              return Infinity;
+            }
+          }));
+          return { key, latency: Math.min(...samples) };
+        }));
+        const best = results.filter((item) => Number.isFinite(item.latency)).sort((a, b) => a.latency - b.latency)[0];
+        state.activeNodeKey = best?.key || 'overseas';
+        $('activeNodeValue').textContent = `${getNodeLabel()}${best ? ` ${Math.round(best.latency)}ms` : ''}`;
+      }
+
+      function setPhase(phase, text) {
+        state.phase = phase;
+        $('phaseText').textContent = text;
+      }
+
+      function finishPhases() {
+        state.phase = 'done';
+      }
+
+      function renderChart() {
+        const download = state.downloadSeries.slice(-34);
+        const upload = state.uploadSeries.slice(-34);
+        const downloadMax = niceAxisMax(Math.max(1, ...download));
+        const uploadMax = niceAxisMax(Math.max(1, ...upload));
+        $('downloadLine').setAttribute('points', seriesToPoints(download, downloadMax));
+        $('uploadLine').setAttribute('points', seriesToPoints(upload, uploadMax));
+        $('downloadChartValue').textContent = download.length ? formatMetric(download.at(-1), 2) : '--';
+        $('uploadChartValue').textContent = upload.length ? formatMetric(upload.at(-1), 2) : '--';
+        $('downloadPeakValue').textContent = download.length ? `${formatMetric(Math.max(...download), 2)} Mbps` : '-- Mbps';
+        $('uploadPeakValue').textContent = upload.length ? `${formatMetric(Math.max(...upload), 2)} Mbps` : '-- Mbps';
+        $('downloadUsageValue').textContent = formatBytes(state.downloadBytes);
+        $('uploadUsageValue').textContent = formatBytes(state.uploadBytes);
+      }
+
+      function niceAxisMax(value) {
+        if (value <= 10) return 10;
+        if (value <= 50) return 50;
+        if (value <= 100) return 100;
+        if (value <= 200) return 200;
+        if (value <= 500) return 500;
+        return 1000;
+      }
+
+      function seriesToPoints(series, max) {
+        if (!series.length) return '';
+        const width = 300;
+        const chartHeight = 48;
+        const chartPadding = 8;
+        const step = series.length > 1 ? width / (series.length - 1) : width;
+        return series.map((value, index) => {
+          const x = Math.round(index * step);
+          const y = Math.round(chartHeight - chartPadding - Math.max(0, Math.min(chartHeight - chartPadding * 2, (Math.max(0, value) / max) * (chartHeight - chartPadding * 2))));
+          return `${x},${y}`;
+        }).join(' ');
+      }
+
+      function pushChart(kind, value) {
+        const target = kind === 'upload' ? state.uploadSeries : state.downloadSeries;
+        target.push(Math.max(0, value));
+        renderChart();
+      }
+
+      function pushUploadSamples(finalMbps) {
+        const base = Math.max(0, finalMbps);
+        [0.42, 0.76, 1, 0.88].forEach((factor) => pushChart('upload', base * factor));
+      }
+
+      function showError(message) {
+        $('errorBox').hidden = !message;
+        $('errorBox').textContent = message || '';
+      }
+
+      function setStartButtonIdle() {
+        $('nodeSelect').disabled = false;
+        $('durationSelect').disabled = false;
+        $('startButton').disabled = false;
+        $('startButton').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l14 9-14 9V3z" /></svg>开始测速';
+      }
+
+      function isCurrentRun(runId) {
+        return state.runId === runId && !state.aborted;
+      }
+
+      function stopTest() {
+        if (!state.running) return;
+        state.aborted = true;
+        state.running = false;
+        state.runId += 1;
+        setStartButtonIdle();
+        setBadge('已停止', false);
+        $('phaseText').textContent = '测速已停止';
+      }
+
+      async function measureDownload() {
+        let lastError = null;
+        const startedAt = performance.now();
+        const maxDownloadMs = state.durationSeconds * 1000;
+        const concurrency = 3;
+        let lastLoaded = 0;
+        let lastTime = startedAt;
+        const sampleTimer = setInterval(() => {
+          if (state.aborted) return;
+          const now = performance.now();
+          const deltaMs = now - lastTime;
+          if (deltaMs < 250) return;
+          const mbps = ((state.downloadBytes - lastLoaded) * 8) / (deltaMs / 1000) / 1000 / 1000;
+          if (Number.isFinite(mbps)) {
+            setGauge(mbps);
+            pushChart('download', mbps);
+          }
+          lastLoaded = state.downloadBytes;
+          lastTime = now;
+        }, 400);
+
+        async function downloadWorker(workerIndex) {
+          const targets = getSelectedNode().downloadTargets;
+          let round = 0;
+          while (!state.aborted && performance.now() - startedAt < maxDownloadMs) {
+            const target = targets[(workerIndex + round) % targets.length];
+            round += 1;
+            try {
+              state.downloadBytes += await hostDownloadOnce(withCacheBuster(target, `${Date.now()}-${workerIndex}-${round}`));
+            } catch (error) {
+              lastError = error;
+              if (round >= targets.length) break;
+            }
+          }
+        }
+
+        try {
+          await Promise.allSettled(Array.from({ length: concurrency }, (_, index) => downloadWorker(index)));
+        } finally {
+          clearInterval(sampleTimer);
+        }
+        const seconds = Math.max((performance.now() - startedAt) / 1000, 0.001);
+        const mbps = (state.downloadBytes * 8) / seconds / 1000 / 1000;
+        if (state.downloadBytes > 0) {
+          pushChart('download', mbps);
+          return mbps;
+        }
+        for (const target of getSelectedNode().downloadTargets) {
+          if (state.aborted) return NaN;
+          try {
+            const fallbackStartedAt = performance.now();
+            state.downloadBytes = await hostDownloadOnce(target);
+            const fallbackSeconds = Math.max((performance.now() - fallbackStartedAt) / 1000, 0.001);
+            return (state.downloadBytes * 8) / fallbackSeconds / 1000 / 1000;
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        throw lastError || new Error('下载测速失败');
+      }
+
+      async function measurePing() {
+        const samples = [];
+        let failed = 0;
+        const targets = getSelectedNode().pingTargets;
+        for (let index = 0; index < 6; index += 1) {
+          if (state.aborted) return { jitter: NaN, ping: NaN };
+          const target = targets[index % targets.length];
+          try {
+            const durationMs = await probeTarget(target, 2200);
+            samples.push(durationMs);
+          } catch {
+            failed += 1;
+          }
+        }
+        if (!samples.length) return { jitter: NaN, loss: 100, ping: NaN };
+        const ping = Math.min(...samples);
+        const average = samples.reduce((sum, value) => sum + value, 0) / samples.length;
+        const jitter = samples.reduce((sum, value) => sum + Math.abs(value - average), 0) / samples.length;
+        const loss = (failed / (samples.length + failed)) * 100;
+        return { jitter, loss, ping };
+      }
+
+      async function measureUpload() {
+        const chunkSize = 768 * 1024;
+        const concurrency = 2;
+        const maxUploadMs = Math.max(2500, state.durationSeconds * 1000);
+        const payload = new Uint8Array(chunkSize);
+        for (let offset = 0; offset < payload.length; offset += 65536) {
+          crypto.getRandomValues(payload.subarray(offset, Math.min(offset + 65536, payload.length)));
+        }
+        const startedAt = performance.now();
+        let lastError = null;
+        let lastUploaded = 0;
+        let lastTime = startedAt;
+        const sampleTimer = setInterval(() => {
+          if (state.aborted) return;
+          const now = performance.now();
+          const deltaMs = now - lastTime;
+          if (deltaMs < 250) return;
+          const mbps = ((state.uploadBytes - lastUploaded) * 8) / (deltaMs / 1000) / 1000 / 1000;
+          if (Number.isFinite(mbps)) pushChart('upload', mbps);
+          lastUploaded = state.uploadBytes;
+          lastTime = now;
+        }, 500);
+
+        async function uploadWorker(workerIndex) {
+          let round = 0;
+          while (!state.aborted && performance.now() - startedAt < maxUploadMs) {
+            round += 1;
+            try {
+              await hostUploadOnce(getSelectedNode().uploadTarget, payload);
+              state.uploadBytes += chunkSize;
+            } catch (error) {
+              lastError = error;
+              break;
+            }
+          }
+        }
+
+        try {
+          await Promise.allSettled(Array.from({ length: concurrency }, (_, index) => uploadWorker(index)));
+        } finally {
+          clearInterval(sampleTimer);
+        }
+        const seconds = Math.max((performance.now() - startedAt) / 1000, 0.001);
+        const mbps = (state.uploadBytes * 8) / seconds / 1000 / 1000;
+        if (state.uploadBytes > 0) {
+          pushChart('upload', mbps);
+          return mbps;
+        }
+        throw lastError || new Error('上传测速失败');
+      }
+
+      function reset() {
+        if (state.running) {
+          stopTest();
+        }
+        state.aborted = false;
+        state.downloadBytes = 0;
+        state.downloadSeries = [];
+        state.uploadBytes = 0;
+        state.uploadSeries = [];
+        state.phase = 'idle';
+        state.running = false;
+        setGauge(0);
+        renderChart();
+        showError('');
+        $('pingValue').textContent = '--';
+        $('downloadValue').textContent = '--';
+        $('uploadValue').textContent = '--';
+        $('jitterValue').textContent = '--';
+        $('lossValue').textContent = '--';
+        setMetricBar('download', 0, 300, 'Mbps');
+        setMetricBar('upload', 0, 200, 'Mbps');
+        setMetricBar('ping', 0, 300, 'ms');
+        $('downloadBarText').textContent = '-- Mbps';
+        $('uploadBarText').textContent = '-- Mbps';
+        $('pingBarText').textContent = '-- ms';
+        $('speedUnit').textContent = 'Mbps';
+        $('phaseText').textContent = '准备检测当前网络';
+        state.activeNodeKey = state.selectedNode === 'auto' ? 'auto' : state.selectedNode;
+        $('activeNodeValue').textContent = state.selectedNode === 'auto' ? '自动' : getNodeLabel(state.selectedNode);
+        setBadge('待开始', false);
+      }
+
+      async function startTest() {
+        if (state.running) {
+          stopTest();
+          return;
+        }
+        reset();
+        const runId = state.runId + 1;
+        state.runId = runId;
+        state.running = true;
+        state.durationSeconds = Number($('durationSelect').value) || 5;
+        $('nodeSelect').disabled = true;
+        $('durationSelect').disabled = true;
+        $('startButton').disabled = false;
+        $('startButton').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>停止';
+        setBadge('测速中', true);
+
+        try {
+          await selectBestNode();
+          if (!isCurrentRun(runId)) return;
+          setBadge('测速中', true);
+          setPhase('ping', '正在检测延迟');
+          const pingResult = await measurePing();
+          if (!isCurrentRun(runId)) return;
+          $('pingValue').textContent = formatMetric(pingResult.ping, 0);
+          $('jitterValue').textContent = formatMetric(pingResult.jitter, 0);
+          $('lossValue').textContent = formatMetric(pingResult.loss, 0);
+          setMetricBar('ping', pingResult.ping, 300, 'ms');
+
+          if (!isCurrentRun(runId)) return;
+          setPhase('download', '正在检测下载速度');
+          const downloadMbps = await measureDownload();
+          if (!isCurrentRun(runId)) return;
+          $('downloadValue').textContent = formatMetric(downloadMbps, 1);
+          setGauge(downloadMbps);
+          setMetricBar('download', downloadMbps, 300, 'Mbps');
+
+          if (!isCurrentRun(runId)) return;
+          setPhase('upload', '正在检测上传速度');
+          const uploadMbps = await measureUpload();
+          if (!isCurrentRun(runId)) return;
+          $('uploadValue').textContent = formatMetric(uploadMbps, 1);
+          setMetricBar('upload', uploadMbps, 200, 'Mbps');
+          setGauge(downloadMbps);
+
+          finishPhases();
+          setBadge('完成', true);
+          $('phaseText').textContent = '测速完成';
+        } catch (error) {
+          if (!isCurrentRun(runId)) return;
+          showError(error instanceof Error ? error.message : '测速失败，请检查网络连接');
+          setBadge('失败', false);
+          $('phaseText').textContent = '测速未完成';
+        } finally {
+          if (state.runId !== runId) return;
+          state.running = false;
+          state.aborted = false;
+          setStartButtonIdle();
+        }
+      }
+
+      function bindUi() {
+        initIcons();
+        state.ringLength = $('ringValue').getTotalLength();
+        $('ringValue').style.strokeDasharray = `0 ${state.ringLength}`;
+        renderChart();
+        $('startButton').addEventListener('click', startTest);
+        $('resetButton').addEventListener('click', reset);
+        $('nodeSelect').addEventListener('change', (event) => {
+          state.selectedNode = event.target.value;
+          state.activeNodeKey = state.selectedNode === 'auto' ? 'auto' : state.selectedNode;
+          $('activeNodeValue').textContent = state.selectedNode === 'auto' ? '自动' : getNodeLabel(state.selectedNode);
+        });
+        $('durationSelect').addEventListener('change', (event) => {
+          state.durationSeconds = Number(event.target.value) || 5;
+        });
+      }
+
+      bindUi();
+
+      (function bootPluginHost(attempt) {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (attempt < 120) {
+            setTimeout(() => bootPluginHost(attempt + 1), 25);
+          } else {
+            showError('插件 SDK 未就绪，请重启 Tooldesk');
+          }
+          return;
+        }
+
+        const pluginCreateOptions = { id: 'tooldesk-network-speed-test', capabilities: ['sendHttpRequest'] };
+        const pluginOnReady = function () {
+          syncPluginApi();
+          loadNetworkInfo();
+        };
+        const pluginOfflineReady = function () {
+          syncPluginApi();
+          showError('插件 SDK 未就绪，请重启 Tooldesk');
+        };
+
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        pluginBoot = { api: plugin.api };
+        syncPluginApi();
+        pluginConnect = plugin.connect().then((result) => {
+          syncPluginApi();
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })(0);
+    </script>
+</html>

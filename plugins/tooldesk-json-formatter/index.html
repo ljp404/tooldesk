@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JSON 格式化</title>
+<style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  --brand: #2563eb;
+  --panel-bg: #fff;
+  --panel-border: #dbe4ef;
+  --tool-surface-border: #dbe4ef;
+  --tool-secondary-btn-bg: #f8fafc;
+  --tool-hover-bg: #eef4ff;
+  --tool-active-border: #bfdbfe;
+  --text-main: #111827;
+  --text-muted: #64748b;
+  background: #fff;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+.tool-panel {
+  background: var(--panel-bg);
+  border: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 48px;
+  height: 100vh;
+  overflow: hidden;
+}
+.tool-panel-head {
+  align-items: center;
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  justify-content: flex-end;
+  min-height: 48px;
+  padding: 0 18px;
+  position: relative;
+}
+.tool-status-actions { display: flex; gap: 8px; }
+.tool-status-error { color: #dc2626; font-size: 12px; margin: 0 auto 0 0; }
+.tool-copy-toast { background: rgba(15,23,42,.88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; line-height: 1; padding: 7px 10px; position: absolute; right: 14px; top: -36px; z-index: 5; }
+.tool-icon-button { align-items: center; background: var(--tool-secondary-btn-bg); border: 1px solid var(--tool-surface-border); border-radius: 6px; color: var(--brand); display: inline-flex; height: 32px; justify-content: center; min-height: 32px; padding: 0; width: 32px; }
+.tool-icon-button:hover { background: var(--tool-hover-bg); border-color: var(--tool-active-border); }
+.tool-action-icon { color: currentColor; display: block; fill: none; height: 16px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; width: 16px; }
+[hidden] { display: none !important; }
+
+
+.tool-panel:has(.json-editor) {
+  border-radius: 0;
+}
+
+.json-editor {
+  background: #ffffff;
+  border: 0;
+  border-radius: 0;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  height: 500px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.json-gutter {
+  background: #ffffff;
+  color: #999999;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 8px 12px 0;
+  text-align: right;
+  user-select: none;
+}
+
+.json-gutter-inner {
+  will-change: transform;
+}
+
+.json-gutter span {
+  display: block;
+  height: 1.8em;
+}
+
+.json-code {
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.json-highlight,
+.json-code textarea {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.8;
+  margin: 0;
+  min-height: 100%;
+  padding: 12px 14px;
+  white-space: pre;
+  word-break: normal;
+}
+
+.json-highlight {
+  color: #000000;
+  inset: 0;
+  min-width: 100%;
+  pointer-events: none;
+  position: absolute;
+  text-rendering: auto;
+  -webkit-font-smoothing: auto;
+  will-change: transform;
+}
+
+.json-search-match {
+  background: rgba(250, 204, 21, 0.38);
+  border-radius: 3px;
+  color: inherit;
+}
+
+.json-search-match.active {
+  background: rgba(37, 99, 235, 0.32);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.48);
+}
+
+.json-code textarea {
+  background: transparent;
+  border: 0;
+  caret-color: #111827;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  resize: none;
+  width: 100%;
+}
+
+.json-code textarea:focus,
+.json-code textarea:focus-visible {
+  outline: none;
+}
+
+.json-code textarea::selection {
+  background: rgba(125, 211, 252, 0.28);
+}
+
+.json-search-popover {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #dbe7fb;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 4;
+}
+
+.json-search-popover input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 6px;
+  color: #111827;
+  font-size: 12px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+  width: 180px;
+}
+
+.json-search-count {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 42px;
+  text-align: center;
+}
+
+.tool-panel .json-search-popover button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  border-radius: 6px;
+  color: #2563eb;
+  display: inline-flex;
+  font-size: 13px;
+  height: 28px;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0;
+  width: 28px;
+}
+
+.tool-panel .json-search-popover button:hover {
+  background: #f8fbff;
+  border-color: #c8daf8;
+  color: #2563eb;
+}
+
+.json-highlight .json-key {
+  color: #a31515;
+  font-weight: 400;
+}
+
+.json-highlight .json-string {
+  color: #0451a5;
+  font-weight: 400;
+}
+
+.json-highlight .json-number {
+  color: #098658;
+  font-weight: 400;
+}
+
+.json-highlight .json-const {
+  color: #0000ff;
+  font-weight: 400;
+}
+
+.json-highlight .json-punct {
+  color: #000000;
+  font-weight: 400;
+}
+
+.http-client-json-code.json-code {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.http-client-json-code .json-highlight,
+.http-client-json-code textarea {
+  box-sizing: border-box;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  min-height: 0;
+  padding: 12px 14px;
+}
+
+.http-client-json-code .json-highlight {
+  margin: 0;
+  overflow: hidden;
+}
+
+.http-client-json-code textarea {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  overflow: auto;
+  resize: none;
+  scrollbar-width: thin;
+  width: 100%;
+}
+
+.http-client-json-code textarea::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.http-client-json-code textarea::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.http-client-json-code textarea::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.http-client-json-code:focus-within {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.super-clipboard-detail-body .json-code-viewer.json-editor {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  flex: 1;
+  height: auto;
+  min-height: 160px;
+  overflow: hidden;
+}
+
+.json-editor { height: 100%; }
+</style>
+</head>
+<body>
+<main class="tool-panel tool-panel-fill">
+  <div class="json-editor tool-fill-editor">
+    <div class="json-gutter" aria-hidden="true"><div id="jsonGutterInner" class="json-gutter-inner"><span>1</span></div></div>
+    <div class="json-code">
+      <pre id="jsonHighlight" class="json-highlight" aria-hidden="true"></pre>
+      <textarea id="jsonInput" spellcheck="false" wrap="off" placeholder="打开时会自动读取完整 JSON，输入和粘贴内容将保持原样"></textarea>
+      <div id="jsonSearch" class="json-search-popover" hidden>
+        <input id="jsonSearchInput" type="search" placeholder="搜索" />
+        <span id="jsonSearchCount" class="json-search-count">0/0</span>
+        <button id="jsonSearchPrev" type="button" title="上一个">↑</button>
+        <button id="jsonSearchNext" type="button" title="下一个">↓</button>
+        <button id="jsonSearchClose" type="button" title="关闭">×</button>
+      </div>
+    </div>
+  </div>
+  <footer class="tool-panel-head">
+    <p id="jsonStatusError" class="tool-status-error"></p>
+    <span id="jsonStatusCopyToast" class="tool-copy-toast tool-status-copy-toast" role="status" hidden></span>
+    <div class="tool-status-actions">
+      <button id="jsonFormatBtn" class="tool-icon-button" type="button" aria-label="格式化" title="格式化"><svg class="tool-action-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5l1.9 5.1L19 12l-5.1 1.9L12 19l-1.9-5.1L5 12l5.1-1.9z"/></svg></button>
+      <button id="jsonMinifyBtn" class="tool-icon-button" type="button" aria-label="压缩" title="压缩"><svg class="tool-action-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/><path d="m14 4-4 16"/></svg></button>
+      <button id="jsonCopyBtn" class="tool-icon-button" type="button" aria-label="复制" title="复制"><svg class="tool-action-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg></button>
+    </div>
+  </footer>
+</main>
+<script>
+const plugin = TooldeskPlugin.create({ id: 'tooldesk-json-formatter', capabilities: ['copyText'], onLaunchContext(context) { applyJsonLaunchContext(context); } });
+const api = plugin.api;
+const jsonInput = document.getElementById('jsonInput');
+const jsonHighlight = document.getElementById('jsonHighlight');
+const jsonGutterInner = document.getElementById('jsonGutterInner');
+const jsonSearch = document.getElementById('jsonSearch');
+const jsonSearchInput = document.getElementById('jsonSearchInput');
+const jsonSearchCount = document.getElementById('jsonSearchCount');
+const jsonStatusError = document.getElementById('jsonStatusError');
+const jsonStatusCopyToast = document.getElementById('jsonStatusCopyToast');
+let jsonSearchActiveIndex = 0;
+let jsonSearchMatches = [];
+function escapeHtml(value) { return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function removeNewlinesInsideJsonStrings(source) {
+  const text = String(source || '');
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  for (const char of text) {
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+    if (char === '\\' && inString) {
+      result += char;
+      escaped = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      result += char;
+      continue;
+    }
+    if (inString && (char === '\n' || char === '\r')) {
+      continue;
+    }
+    result += char;
+  }
+  return result;
+}
+function parseJsonWithHiddenNewlines(source) {
+  const text = String(source || '');
+  try { return { value: JSON.parse(text), normalized: text, removedHiddenNewlines: false }; } catch {}
+  const normalized = removeNewlinesInsideJsonStrings(text);
+  if (normalized === text) return null;
+  try { return { value: JSON.parse(normalized), normalized, removedHiddenNewlines: true }; } catch {}
+  return null;
+}
+function locateJsonInText(source) {
+  const text = String(source || '');
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const parsedWhole = parseJsonWithHiddenNewlines(trimmed);
+  if (parsedWhole) { const start = text.indexOf(trimmed); return { prefix: text.slice(0, start), json: parsedWhole.normalized, suffix: text.slice(start + trimmed.length), isPure: true, removedHiddenNewlines: parsedWhole.removedHiddenNewlines }; }
+  for (let start = 0; start < text.length; start += 1) {
+    if (!'{['.includes(text[start])) continue;
+    for (let end = text.length; end > start; end -= 1) {
+      const candidate = text.slice(start, end).trim();
+      if (!candidate) continue;
+      const parsed = parseJsonWithHiddenNewlines(candidate);
+      if (parsed) return { prefix: text.slice(0, start), json: parsed.normalized, suffix: text.slice(end), isPure: false, removedHiddenNewlines: parsed.removedHiddenNewlines };
+    }
+  }
+  return null;
+}
+function composeFormattedMixedText(prefix, formatted, suffix) { return [prefix.trimEnd(), formatted, suffix.trimStart()].filter(Boolean).join('\n'); }
+function isWholeJsonValid(source) { const text = source.trim(); if (!text) return false; try { JSON.parse(text); return true; } catch { return false; } }
+function findTextMatches(text, query) {
+  if (!query) return [];
+  const matches = [];
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  let start = lowerText.indexOf(lowerQuery);
+  while (start >= 0) { matches.push({ start, end: start + query.length }); start = lowerText.indexOf(lowerQuery, start + Math.max(1, query.length)); }
+  return matches;
+}
+function splitTextByMatches(text, matches, activeIndex) {
+  if (!matches.length) return [{ text, active: false }];
+  const parts = [];
+  let cursor = 0;
+  matches.forEach((match, index) => {
+    if (match.start > cursor) parts.push({ text: text.slice(cursor, match.start), active: false });
+    parts.push({ text: text.slice(match.start, match.end), active: index === activeIndex });
+    cursor = match.end;
+  });
+  if (cursor < text.length) parts.push({ text: text.slice(cursor), active: false });
+  return parts;
+}
+function highlightJson(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/(&quot;(?:\\.|[^&])*?&quot;)\s*:/g, '<span class="json-key">$1</span>:');
+  html = html.replace(/(:\s*)(&quot;(?:\\.|[^&])*?&quot;)/g, '$1<span class="json-string">$2</span>');
+  html = html.replace(/\b(true|false|null)\b/g, '<span class="json-const">$1</span>');
+  html = html.replace(/(-?\b\d+(?:\.\d+)?\b)/g, '<span class="json-number">$1</span>');
+  return html;
+}
+function renderHighlightedText() {
+  const query = jsonSearchInput.value;
+  const text = jsonInput.value;
+  if (!query) return highlightJson(text);
+  return splitTextByMatches(text, jsonSearchMatches, jsonSearchActiveIndex)
+    .map((part) => part.active
+      ? '<mark class="json-search-match active">' + highlightJson(part.text) + '</mark>'
+      : (jsonSearchMatches.length && part.text.toLowerCase() === query.toLowerCase()
+        ? '<mark class="json-search-match">' + highlightJson(part.text) + '</mark>'
+        : highlightJson(part.text)))
+    .join('');
+}
+function updateEditor() {
+  const lines = jsonInput.value.split('\n');
+  jsonGutterInner.innerHTML = lines.map((_, index) => '<span>' + (index + 1) + '</span>').join('');
+  updateSearchMatches();
+  jsonHighlight.innerHTML = renderHighlightedText();
+  syncHighlightWidth();
+}
+function setError(message) { jsonStatusError.textContent = message && !isWholeJsonValid(jsonInput.value) ? message : ''; }
+function formatJson() {
+  const located = locateJsonInText(jsonInput.value);
+  if (!located) { setError('未找到可格式化的 JSON'); return; }
+  try { const formatted = JSON.stringify(JSON.parse(located.json), null, 4); jsonInput.value = located.isPure ? located.prefix + formatted + located.suffix : composeFormattedMixedText(located.prefix, formatted, located.suffix); setError(located.isPure ? (located.removedHiddenNewlines ? '已移除字符串内隐藏换行并格式化' : '') : '已格式化 JSON，非 JSON 内容保持不变'); resetScroll(); updateEditor(); } catch (error) { setError(error instanceof Error ? error.message : 'JSON 解析失败'); }
+}
+function minifyJson() {
+  const located = locateJsonInText(jsonInput.value);
+  if (!located) { setError('未找到可压缩的 JSON'); return; }
+  try { const minified = JSON.stringify(JSON.parse(located.json)); jsonInput.value = located.isPure ? located.prefix + minified + located.suffix : composeFormattedMixedText(located.prefix, minified, located.suffix); setError(located.isPure ? (located.removedHiddenNewlines ? '已移除字符串内隐藏换行并压缩' : '') : '已压缩 JSON，非 JSON 内容保持不变'); resetScroll(); updateEditor(); } catch (error) { setError(error instanceof Error ? error.message : 'JSON 解析失败'); }
+}
+function syncHighlightWidth() {
+  const width = Math.max(jsonInput.scrollWidth, jsonInput.clientWidth);
+  jsonHighlight.style.width = width + 'px';
+}
+function resetScroll() { jsonInput.scrollLeft = 0; jsonInput.scrollTop = 0; syncScroll(); }
+function syncScroll() {
+  syncHighlightWidth();
+  jsonHighlight.style.transform = 'translate(' + (-jsonInput.scrollLeft) + 'px, ' + (-jsonInput.scrollTop) + 'px)';
+  jsonGutterInner.style.transform = 'translateY(' + (-jsonInput.scrollTop) + 'px)';
+}
+function updateSearchMatches() { jsonSearchMatches = findTextMatches(jsonInput.value, jsonSearchInput.value); if (jsonSearchActiveIndex >= jsonSearchMatches.length) jsonSearchActiveIndex = Math.max(0, jsonSearchMatches.length - 1); jsonSearchCount.textContent = jsonSearchMatches.length ? (jsonSearchActiveIndex + 1) + '/' + jsonSearchMatches.length : '0/0'; }
+function moveSearch(direction) {
+  if (!jsonSearchMatches.length) return;
+  jsonSearchActiveIndex = (jsonSearchActiveIndex + direction + jsonSearchMatches.length) % jsonSearchMatches.length;
+  jsonSearchCount.textContent = (jsonSearchActiveIndex + 1) + '/' + jsonSearchMatches.length;
+  const active = jsonSearchMatches[jsonSearchActiveIndex];
+  const before = jsonInput.value.slice(0, active.start);
+  const lineIndex = before.split('\n').length - 1;
+  const styles = window.getComputedStyle(jsonInput);
+  const lineHeight = Number.parseFloat(styles.lineHeight) || 25;
+  jsonInput.scrollTop = Math.max(0, lineIndex * lineHeight - lineHeight * 2);
+  syncScroll();
+}
+function focusJsonInput() { window.focus(); window.requestAnimationFrame(() => { jsonInput.focus({ preventScroll: true }); }); window.setTimeout(() => { jsonInput.focus({ preventScroll: true }); }, 80); }
+function applyJsonLaunchContext(context) { const content = context && typeof context.content === 'string' ? context.content : ''; if (!content) { focusJsonInput(); return; } jsonInput.value = content; formatJson(); updateEditor(); focusJsonInput(); }
+async function copyJson() { if (!jsonInput.value) return; await api.copyText(jsonInput.value); jsonStatusCopyToast.textContent = 'JSON 已复制'; jsonStatusCopyToast.hidden = false; window.setTimeout(() => { jsonStatusCopyToast.hidden = true; }, 1400); }
+jsonInput.addEventListener('input', updateEditor);
+jsonInput.addEventListener('scroll', syncScroll);
+jsonInput.addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); jsonSearch.hidden = false; jsonSearchInput.focus(); jsonSearchInput.select(); } });
+jsonSearchInput.addEventListener('input', () => { jsonSearchActiveIndex = 0; updateEditor(); });
+jsonSearchInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); moveSearch(event.shiftKey ? -1 : 1); } if (event.key === 'Escape') { jsonSearch.hidden = true; jsonInput.focus(); } });
+document.getElementById('jsonSearchClose').addEventListener('click', () => { jsonSearch.hidden = true; jsonInput.focus(); });
+document.getElementById('jsonSearchPrev').addEventListener('click', () => moveSearch(-1));
+document.getElementById('jsonSearchNext').addEventListener('click', () => moveSearch(1));
+document.getElementById('jsonFormatBtn').addEventListener('click', formatJson);
+document.getElementById('jsonMinifyBtn').addEventListener('click', minifyJson);
+document.getElementById('jsonCopyBtn').addEventListener('click', copyJson);
+void plugin.connect().then(() => { focusJsonInput(); });
+updateEditor();
+</script>
+</body>
+</html>

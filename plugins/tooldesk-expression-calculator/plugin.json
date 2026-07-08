@@ -1,0 +1,39 @@
+{
+  "accent": "pink",
+  "caption": "输入算式即时求值，支持百分号、乘方与括号。",
+  "category": "life",
+  "clipboardMatch": {
+    "type": "calculator-expression",
+    "priority": 97
+  },
+  "defaultAlias": "bds",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-expression-calculator",
+  "keywords": [
+    "jsq",
+    "calc",
+    "biaodashi",
+    "jisuanqi",
+    "calculator",
+    "计算器",
+    "算式",
+    "表达式",
+    "求值",
+    "百分号",
+    "乘方"
+  ],
+  "name": "表达式计算器",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>插件 Starter</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: #eef3f8;
+        color: #111827;
+        display: grid;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
+        place-items: center;
+      }
+      .panel {
+        background: #fff;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        display: grid;
+        gap: 12px;
+        min-width: 320px;
+        padding: 16px;
+      }
+      input, button { font: inherit; height: 38px; }
+      input {
+        border: 1px solid #dbe4ef;
+        border-radius: 7px;
+        padding: 0 10px;
+        width: 100%;
+      }
+      button {
+        background: #2563eb;
+        border: 0;
+        border-radius: 7px;
+        color: #fff;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="panel">
+      <strong>Tooldesk Plugin Starter</strong>
+      <input id="input" type="text" placeholder="输入或从剪贴板带入内容" />
+      <button id="copy" type="button">复制当前内容</button>
+    </section>
+
+    <script>
+      const input = document.getElementById('input');
+      const plugin = TooldeskPlugin.create({
+        id: 'tooldesk-plugin-starter',
+        capabilities: ['copyText'],
+        onLaunchContext(context) {
+          const value = String(context?.content || '').trim();
+          if (value) {
+            input.value = value;
+          }
+        }
+      });
+      const api = plugin.api;
+
+      document.getElementById('copy').addEventListener('click', async () => {
+        const text = input.value.trim();
+        if (!text) {
+          return;
+        }
+
+        try {
+          await api.copyText(text);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      void plugin.connect().then(() => {});
+    </script>
+  </body>
+</html>

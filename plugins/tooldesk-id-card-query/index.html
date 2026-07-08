@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>身份证解析</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+[hidden] { display: none !important; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #7c3aed; color: #fff; }
+.app-icon { display: inline-flex; align-items: center; justify-content: center; }
+
+.id-card-query-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.id-card-query-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.id-card-query-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.id-card-query-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.id-card-query-icon-badge {
+  align-items: center;
+  background: #f5f3ff;
+  border-radius: 6px;
+  color: #7c3aed;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.id-card-query-loading {
+  color: #7c3aed;
+  font-size: 12px;
+  font-weight: 800;
+  margin-left: auto;
+}
+
+.id-card-query-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.id-card-query-field {
+  display: grid;
+  gap: 8px;
+}
+
+.id-card-query-field input {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  height: 38px;
+  outline: none;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.id-card-query-field input:focus {
+  border-color: #c4b5fd;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.tool-panel .id-card-query-primary-button,
+.tool-panel .id-card-query-copy-button,
+.id-card-query-primary-button,
+.id-card-query-copy-button {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.tool-panel .id-card-query-copy-button,
+.id-card-query-copy-button {
+  background: #ffffff;
+  border: 1px solid #ddd6fe;
+  color: #7c3aed;
+  font-size: 12px;
+  height: 30px;
+  margin-left: auto;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.tool-panel .id-card-query-copy-button:hover,
+.id-card-query-copy-button:hover {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.tool-panel .id-card-query-primary-button:disabled,
+.tool-panel .id-card-query-copy-button:disabled,
+.id-card-query-primary-button:disabled,
+.id-card-query-copy-button:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.id-card-query-info-grid {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.id-card-query-info-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.id-card-query-info-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.id-card-query-info-row strong {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.id-card-query-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 220px;
+  padding: 24px 20px;
+}
+
+.id-card-query-empty-icon {
+  align-items: center;
+  background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%);
+  border: 1px dashed #ddd6fe;
+  border-radius: 14px;
+  color: #7c3aed;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.id-card-query-empty strong {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.id-card-query-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 14px;
+  padding: 10px 12px;
+}
+
+.id-card-query-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 2;
+}
+
+.id-card-query-copy-toast::before {
+  border-bottom: 5px solid rgba(15, 23, 42, 0.88);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: -5px;
+}
+
+.id-card-query-disclaimer {
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 7px;
+  color: #5b21b6;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.7;
+  margin: 0 16px 16px;
+  padding: 10px 12px;
+}
+    </style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content id-card-query-layout">
+      <section class="id-card-query-card id-card-query-hero">
+        <div class="id-card-query-card-head">
+          <span class="id-card-query-icon-badge">ID</span>
+          <strong>身份证解析</strong>
+          <span id="loading" class="id-card-query-loading" hidden>解析中</span>
+        </div>
+        <div class="id-card-query-form">
+          <label class="field small id-card-query-field">
+            身份证号
+            <input id="cardInput" type="text" autocomplete="off" placeholder="输入 15 位或 18 位身份证号" />
+          </label>
+          <button id="query" class="id-card-query-primary-button tool-primary-button">解析</button>
+        </div>
+        <p class="id-card-query-disclaimer">免责声明：解析结果基于号码编码规则与公开行政区划数据，仅供开发测试与信息参考，不代表真实身份信息，不应用于实名认证或合规判断。</p>
+      </section>
+      <section class="id-card-query-card id-card-query-result">
+        <div class="id-card-query-card-head">
+          <span class="id-card-query-icon-badge">ID</span>
+          <strong>解析结果</strong>
+          <button id="copy" class="id-card-query-copy-button" disabled>复制结果</button>
+        </div>
+        <span id="toast" class="id-card-query-copy-toast" hidden></span>
+        <p id="error" class="id-card-query-error" hidden></p>
+        <div id="result" class="id-card-query-info-grid"></div>
+        <div id="empty" class="id-card-query-empty">
+          <span class="id-card-query-empty-icon">ID</span>
+          <strong>暂无解析结果</strong>
+        </div>
+      </section>
+    </main>
+<script>
+const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+      const checksumCodes = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+      let areaMapPromise = null;
+      let parseResult = null;
+      const $ = (id) => document.getElementById(id);
+
+      function applyLaunchContent(content) {
+        const normalized = normalizeIdCard(content);
+        if (!/^\d{15}$/.test(normalized) && !/^\d{17}[\dX]$/.test(normalized)) return;
+        $('cardInput').value = normalized;
+        queryCard();
+      }
+
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      function normalizeIdCard(value) {
+        return String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+      }
+
+      function setError(message) {
+        $('error').textContent = message;
+        $('error').hidden = !message;
+      }
+
+      function setLoading(value) {
+        $('loading').hidden = !value;
+        $('query').disabled = value;
+      }
+
+      function showToast(text) {
+        $('toast').textContent = text;
+        $('toast').hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600);
+      }
+
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      function isValidDateParts(year, month, day) {
+        if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return false;
+        if (year < 1900 || year > 2099 || month < 1 || month > 12 || day < 1 || day > 31) return false;
+        const date = new Date(year, month - 1, day);
+        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+      }
+
+      function inferCentury(twoDigitYear) {
+        const current = new Date().getFullYear() % 100;
+        return twoDigitYear > current ? 1900 : 2000;
+      }
+
+      function validateChecksum18(value) {
+        const body = value.slice(0, 17);
+        if (!/^\d{17}$/.test(body)) return false;
+        const sum = body.split('').reduce((total, digit, index) => total + Number(digit) * weights[index], 0);
+        return checksumCodes[sum % 11] === value[17];
+      }
+
+      async function loadAreaMap() {
+        if (!areaMapPromise) {
+          areaMapPromise = (async () => {
+            if (window.__TOOLDESK_ID_CARD_AREA_CODES__) {
+              const database = window.__TOOLDESK_ID_CARD_AREA_CODES__;
+              return new Map((database.records || []).map((record) => [record.code, record]));
+            }
+
+            const response = await fetch('./area_codes.json', { cache: 'force-cache' });
+            if (!response.ok) throw new Error('行政区划数据加载失败');
+            const database = await response.json();
+            return new Map((database.records || []).map((record) => [record.code, record]));
+          })().catch((error) => {
+            areaMapPromise = null;
+            throw error;
+          });
+        }
+        return areaMapPromise;
+      }
+
+      function lookupArea(areaCode, areaMap) {
+        const digits = String(areaCode || '').replace(/\D/g, '').slice(0, 6);
+        if (!digits) return null;
+        const candidates = [digits, digits.slice(0, 4), digits.slice(0, 2)];
+        for (const code of candidates) {
+          const record = areaMap.get(code);
+          if (record) return { matchedCode: code, record };
+        }
+        return null;
+      }
+
+      function parseIdCard(value, areaMap) {
+        const id = normalizeIdCard(value);
+        if (/^\d{15}$/.test(id)) {
+          const areaCode = id.slice(0, 6);
+          const yy = Number(id.slice(6, 8));
+          const month = Number(id.slice(8, 10));
+          const day = Number(id.slice(10, 12));
+          const year = inferCentury(yy) + yy;
+          if (!isValidDateParts(year, month, day)) {
+            throw new Error('出生日期编码无效');
+          }
+          const sequence = Number(id.slice(12, 15));
+          if (!Number.isFinite(sequence) || sequence <= 0) {
+            throw new Error('顺序码无效');
+          }
+          const area = lookupArea(areaCode, areaMap);
+          return {
+            id,
+            type: '15位',
+            areaCode,
+            areaLabel: area?.record.label || '未知地区',
+            matchedAreaCode: area?.matchedCode || '',
+            birthDate: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+            gender: sequence % 2 === 1 ? '男' : '女',
+            checksumValid: null
+          };
+        }
+
+        if (/^\d{17}[\dX]$/.test(id)) {
+          const areaCode = id.slice(0, 6);
+          const year = Number(id.slice(6, 10));
+          const month = Number(id.slice(10, 12));
+          const day = Number(id.slice(12, 14));
+          if (!isValidDateParts(year, month, day)) {
+            throw new Error('出生日期编码无效');
+          }
+          const sequence = Number(id.slice(14, 17));
+          if (!Number.isFinite(sequence) || sequence <= 0) {
+            throw new Error('顺序码无效');
+          }
+          const checksumValid = validateChecksum18(id);
+          const area = lookupArea(areaCode, areaMap);
+          return {
+            id,
+            type: '18位',
+            areaCode,
+            areaLabel: area?.record.label || '未知地区',
+            matchedAreaCode: area?.matchedCode || '',
+            birthDate: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+            gender: sequence % 2 === 1 ? '男' : '女',
+            checksumValid
+          };
+        }
+
+        throw new Error('请输入 15 位或 18 位身份证号');
+      }
+
+      function render() {
+        const rows = parseResult ? [
+          ['身份证号', parseResult.id],
+          ['证件类型', parseResult.type],
+          ['发证地区', parseResult.areaLabel],
+          ['区划代码', parseResult.matchedAreaCode || parseResult.areaCode],
+          ['出生日期', parseResult.birthDate],
+          ['性别', parseResult.gender],
+          ['校验位', parseResult.checksumValid === null ? '15位无校验位' : (parseResult.checksumValid ? '通过' : '未通过')]
+        ] : [];
+        $('copy').disabled = rows.length === 0;
+        $('empty').hidden = rows.length > 0 || !$('error').hidden;
+        $('result').replaceChildren(...rows.map(([label, value]) => {
+          const row = document.createElement('div');
+          row.className = 'id-card-query-info-row';
+          row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+          return row;
+        }));
+      }
+
+      async function queryCard() {
+        const normalized = normalizeIdCard($('cardInput').value);
+        if (!normalized) {
+          parseResult = null;
+          setError('请输入身份证号');
+          render();
+          return;
+        }
+        setLoading(true);
+        setError('');
+        try {
+          parseResult = parseIdCard(normalized, await loadAreaMap());
+          const parsedId = parseResult.id;
+          $('cardInput').value = parsedId;
+          if (parseResult.checksumValid === false) {
+            parseResult = null;
+            setError('校验位未通过，号码可能输入错误或不是有效身份证号');
+          }
+        } catch (error) {
+          parseResult = null;
+          setError(error instanceof Error ? error.message : '解析失败');
+        } finally {
+          setLoading(false);
+          render();
+        }
+      }
+
+      $('query').addEventListener('click', queryCard);
+      $('cardInput').addEventListener('keydown', (event) => { if (event.key === 'Enter') queryCard(); });
+      $('copy').addEventListener('click', () => {
+        if (!parseResult) return;
+        copyText([
+          `身份证号: ${parseResult.id}`,
+          `证件类型: ${parseResult.type}`,
+          `发证地区: ${parseResult.areaLabel}`,
+          `区划代码: ${parseResult.matchedAreaCode || parseResult.areaCode}`,
+          `出生日期: ${parseResult.birthDate}`,
+          `性别: ${parseResult.gender}`,
+          `校验位: ${parseResult.checksumValid === null ? '15位无校验位' : (parseResult.checksumValid ? '通过' : '未通过')}`
+        ].join('\n'), '解析结果已复制');
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-id-card-query', capabilities: ['copyText'],
+                onLaunchContext(context) {
+                  applyLaunchContent(context.content || '');
+                }
+              };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

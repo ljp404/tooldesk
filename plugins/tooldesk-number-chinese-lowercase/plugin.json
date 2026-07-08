@@ -1,0 +1,38 @@
+{
+  "accent": "green",
+  "caption": "将数字转为中文小写读法，与人民币大写组件配对使用。",
+  "category": "finance",
+  "clipboardMatch": {
+    "type": "decimal-amount",
+    "priority": 80
+  },
+  "defaultAlias": "szxx",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-number-chinese-lowercase",
+  "keywords": [
+    "szzwxx",
+    "numcn",
+    "shuzixiaoxie",
+    "number",
+    "chinese",
+    "数字",
+    "中文",
+    "小写",
+    "读法",
+    "金额"
+  ],
+  "name": "数字转中文小写",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

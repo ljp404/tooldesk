@@ -1,0 +1,66 @@
+{
+  "accent": "pink",
+  "caption": "播放本地音乐、云盘音乐和在线音乐。",
+  "category": "life",
+  "defaultAlias": "yy",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-music-player",
+  "keywords": [
+    "bfq",
+    "music",
+    "yinyue",
+    "yinyuebofangqi",
+    "player",
+    "mp3",
+    "audio"
+  ],
+  "name": "音乐播放器",
+  "permissions": [
+    "music",
+    "filesystem",
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "sync": {
+    "localStorageKeys": [
+      "tooldesk-music-recent",
+      "tooldesk-music-playlists"
+    ]
+  },
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "aliyunCheckQRCode",
+    "aliyunGenerateQRCode",
+    "aliyunListFiles",
+    "aliyunRefreshToken",
+    "aliyunScanAllMusic",
+    "clearAliyunToken",
+    "clearMusicCache",
+    "downloadCloudMusic",
+    "downloadMusicCloudStorageFile",
+    "downloadOnlineMusic",
+    "getAliyunToken",
+    "getMusicCacheStats",
+    "getMusicPlayerSettings",
+    "getPluginStorageItem",
+    "openPath",
+    "resolveCloudPlayUrl",
+    "resolveLocalPlayUrl",
+    "resolveMusicCloudStoragePlayUrl",
+    "resolveOnlinePlayUrl",
+    "resolveTrackLyrics",
+    "saveAliyunToken",
+    "saveMusicPlayerSettings",
+    "scanMusicFiles",
+    "searchOnlineMusic",
+    "setPluginStorageItem",
+    "showOpenDialog",
+    "uploadMusicCloudStorageFile",
+    "validateMusicCloudStorage"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

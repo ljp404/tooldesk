@@ -1,0 +1,41 @@
+{
+  "accent": "blue",
+  "caption": "使用 Prettier 格式化 HTML、CSS、JavaScript 和 Vue 代码。",
+  "category": "dev",
+  "defaultAlias": "dmgs",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-code-formatter",
+  "keywords": [
+    "code",
+    "formatter",
+    "prettier",
+    "html",
+    "css",
+    "javascript",
+    "js",
+    "vue",
+    "代码",
+    "格式化",
+    "美化"
+  ],
+  "manifestVersion": 1,
+  "minHostVersion": "0.1.0",
+  "name": "代码格式化",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "sdkVersion": "1.0.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "clipboardMatch": [
+    {
+      "type": "html",
+      "priority": 91
+    }
+  ],
+  "version": "0.1.0",
+  "windowIcon": "assets/window-icon.png"
+}

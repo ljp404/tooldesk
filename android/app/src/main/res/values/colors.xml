@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#FFFFFF</color>
+    <color name="colorPrimaryDark">#FFFFFF</color>
+    <color name="colorAccent">#2563EB</color>
+    <color name="tooldesk_status_bar">#FFFFFF</color>
+    <color name="tooldesk_navigation_bar">#FFFFFF</color>
+</resources>

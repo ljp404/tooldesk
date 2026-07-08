@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="静态服务器" fill="none">
+  <rect width="256" height="256" rx="56" fill="#047857"/>
+  <rect x="48" y="56" width="160" height="40" rx="12" fill="#d1fae5"/>
+  <rect x="48" y="108" width="160" height="40" rx="12" fill="#a7f3d0"/>
+  <rect x="48" y="160" width="160" height="40" rx="12" fill="#6ee7b7"/>
+  <circle cx="72" cy="76" r="8" fill="#047857"/>
+  <circle cx="96" cy="76" r="8" fill="#047857"/>
+  <circle cx="72" cy="128" r="8" fill="#047857"/>
+  <circle cx="96" cy="128" r="8" fill="#047857"/>
+  <circle cx="72" cy="180" r="8" fill="#047857"/>
+  <circle cx="96" cy="180" r="8" fill="#047857"/>
+  <path d="M136 76h48M136 128h48M136 180h32" stroke="#047857" stroke-width="10" stroke-linecap="round"/>
+  <path d="M184 192h24v24h-24z" fill="#ffffff"/>
+  <path d="M196 176v16M188 184h16" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+</svg>

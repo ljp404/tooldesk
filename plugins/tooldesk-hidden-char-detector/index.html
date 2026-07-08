@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>隐藏字符检测</title>
+<style>
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{--brand:#2563eb;--panel-bg:#fff;--panel-border:#dbe4ef;--tool-surface-border:#dbe4ef;--tool-secondary-btn-bg:#f8fafc;--tool-hover-bg:#eef4ff;--tool-active-border:#bfdbfe;--text-main:#111827;--text-muted:#64748b;--shadow:none;background:#eef3f8;color:#111827;font-family:"Microsoft YaHei","Segoe UI",Arial,sans-serif;font-size:13px}button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}.tool-panel{background:var(--panel-bg);border: 0;border-radius:0;min-height:100%;overflow:hidden;padding:0}.tool-panel-fill{display:flex;flex-direction:column;height:100%}.tool-panel-head{align-items:center;border-bottom:1px solid var(--panel-border);display:flex;justify-content:flex-end;min-height:48px;padding:0 18px;position:relative}.tool-actions{display:flex;gap:16px}.tool-content{padding:18px}.tool-primary-button,.secondary-action{background:var(--brand);border-radius:7px;color:#fff;font-weight:800;min-height:34px;padding:0 14px}.secondary-action{align-items:center;display:inline-flex}.tool-primary-button:hover,.secondary-action:hover{background:#1d4ed8}.tool-inline-error{color:#dc2626;font-size:12px;margin:8px 0 0}.field{display:grid;gap:8px}.field span{color:#475569;font-size:12px;font-weight:800}.app-icon{align-items:center;display:inline-flex;height:18px;justify-content:center;width:18px}.app-icon svg{height:18px;width:18px}.copy-toast{background:rgba(15,23,42,.88);border-radius:6px;color:#fff;font-size:12px;font-weight:700;line-height:1;padding:7px 10px;position:absolute;right:14px;top:56px;z-index:5}[hidden]{display:none!important}
+textarea,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 7px;
+  color: var(--text-main);
+  outline: none;
+  padding: 12px;
+}
+
+textarea:focus,
+textarea:focus-visible,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus,
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):focus-visible {
+  border-color: var(--panel-border);
+  box-shadow: none;
+  outline: none;
+}
+
+.field.small input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']) {
+  min-height: 40px;
+}
+
+.hidden-panel {
+  position: relative;
+}
+
+.hidden-layout {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+.hidden-input-card,
+.hidden-result-card {
+  background: #f8fafc;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.hidden-input-card textarea {
+  background: #ffffff;
+  border-color: #dbe4ef;
+  height: 420px;
+  min-height: 420px;
+  resize: none;
+}
+
+.hidden-result-card {
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  max-height: 498px;
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.hidden-card-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.hidden-card-title {
+  align-items: center;
+  color: #111827;
+  display: inline-flex;
+  gap: 10px;
+}
+
+.hidden-card-title strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.hidden-status-pill {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  border-radius: 999px;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.hidden-status-pill.danger {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.28);
+  color: #b91c1c;
+}
+
+.hidden-empty-state {
+  align-items: center;
+  align-self: stretch;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 10px;
+  justify-content: center;
+  min-height: 0;
+}
+
+.hidden-result-body {
+  display: grid;
+  gap: 8px;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
+}
+
+.hidden-stat-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hidden-stat-list span {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  color: #64748b;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  padding: 6px 9px;
+}
+
+.hidden-stat-list strong {
+  color: #1d4ed8;
+}
+
+.hidden-action-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tool-panel .hidden-action-row button {
+  background: #ffffff;
+  border: 1px solid #dbe7fb;
+  border-radius: 6px;
+  color: #2563eb;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.tool-panel .hidden-action-row button:hover {
+  background: #f8fbff;
+  border-color: #c8daf8;
+  color: #2563eb;
+}
+
+.hidden-char-list {
+  list-style: none;
+  margin: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
+}
+
+.hidden-char-list li {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  min-height: 42px;
+  margin-bottom: 6px;
+  padding: 7px 8px;
+}
+
+.hidden-char-list li:last-child {
+  margin-bottom: 0;
+}
+
+.hidden-char-index {
+  color: #64748b;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hidden-char-list li div {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hidden-char-list li strong {
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hidden-char-list li code {
+  color: #2563eb;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+}
+
+.hidden-char-preview {
+  background: #eef2f7;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 7px;
+}
+
+.hidden-copy-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 18px;
+  top: 14px;
+  z-index: 2;
+}
+
+</style>
+</head>
+<body>
+<main class="tool-panel hidden-panel">
+  <span class="hidden-copy-toast" role="status" hidden></span>
+  <div class="tool-content hidden-layout">
+    <section class="hidden-input-card">
+      <div class="hidden-card-head">
+        <div class="hidden-card-title"><strong>待检测文本</strong></div>
+      </div>
+      <textarea id="hiddenInput" spellcheck="false" placeholder="粘贴文本后自动检测零宽字符、控制符和不可见空白"></textarea>
+    </section>
+    <aside class="hidden-result-card">
+      <div class="hidden-card-head">
+        <div class="hidden-card-title"><strong>检测结果</strong></div>
+        <span id="hiddenStatus" class="hidden-status-pill">未发现异常</span>
+      </div>
+      <div id="hiddenEmpty" class="hidden-empty-state"><span>未发现隐藏字符</span></div>
+      <div id="hiddenBody" class="hidden-result-body" hidden>
+        <div id="hiddenStats" class="hidden-stat-list"></div>
+        <div class="hidden-action-row"><button id="cleanHidden" class="tool-primary-button" type="button">清理文本</button><button id="copyClean" class="tool-primary-button" type="button">复制清理结果</button></div>
+        <ul id="hiddenList" class="hidden-char-list"></ul>
+      </div>
+    </aside>
+  </div>
+</main>
+<script>
+const plugin=TooldeskPlugin.create({id:'tooldesk-hidden-char-detector',capabilities:['copyText']});
+const api=plugin.api;
+
+function byId(id){return document.getElementById(id)}
+function escapeHtml(value){return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function showToast(selector,text){const el=document.querySelector(selector);if(!el)return;el.textContent=text;el.hidden=false;clearTimeout(el._timer);el._timer=setTimeout(()=>{el.hidden=true},1600)}
+function applyLaunchContent(_plugin,_api,fn){window.addEventListener('message',event=>{const context=event.data||{};if(context.source==='tooldesk-host'&&context.type==='launch-context'){const content=typeof context.content==='string'?context.content:'';if(content)fn(content)}})}
+async function copyWithApi(api,text,msg,selector){if(!text)return;try{await api.copyText(String(text))}catch{return}showToast(selector,msg||'已复制')}
+
+function hiddenName(point){if(point===0x0009)return'制表符';if(point===0x000a)return'换行符';if(point===0x000d)return'回车符';if(point===0x00a0)return'不换行空格';if(point===0x200b)return'零宽空格';if(point===0x200c)return'零宽非连接符';if(point===0x200d)return'零宽连接符';if(point===0x2060)return'单词连接符';if(point===0xfeff)return'字节顺序标记';if(point<0x20||point===0x7f)return'控制字符';return''}
+function preview(ch){return ch==='\n'?'\\n':ch==='\r'?'\\r':ch==='\t'?'\\t':'不可见'}
+function findHidden(text){const rows=[];Array.from(text).forEach((ch,index)=>{const point=ch.codePointAt(0)||0;const name=hiddenName(point);if(name)rows.push({index,name,preview:preview(ch),codePoint:'U+'+point.toString(16).toUpperCase().padStart(4,'0')})});return rows}
+function cleanText(text){return Array.from(text).filter(ch=>!hiddenName(ch.codePointAt(0)||0)).join('')}
+function renderHidden(){const text=byId('hiddenInput').value;const rows=findHidden(text);byId('hiddenStatus').textContent=rows.length?rows.length+' 个异常':'未发现异常';byId('hiddenStatus').classList.toggle('danger',rows.length>0);byId('hiddenEmpty').hidden=rows.length>0;byId('hiddenBody').hidden=!rows.length;const stats=new Map();rows.forEach(row=>stats.set(row.name,(stats.get(row.name)||0)+1));byId('hiddenStats').innerHTML=[...stats].map(([name,count])=>'<span>'+escapeHtml(name)+'<strong>'+count+'</strong></span>').join('');byId('hiddenList').innerHTML=rows.map(row=>'<li><span class="hidden-char-index">#'+row.index+'</span><div><strong>'+escapeHtml(row.name)+'</strong><code>'+row.codePoint+'</code></div><span class="hidden-char-preview">'+escapeHtml(row.preview)+'</span></li>').join('')}
+function focusHiddenInput(){window.requestAnimationFrame(()=>{byId('hiddenInput').focus({preventScroll:true})})}
+byId('hiddenInput').addEventListener('input',renderHidden);byId('cleanHidden').addEventListener('click',()=>{byId('hiddenInput').value=cleanText(byId('hiddenInput').value);renderHidden();focusHiddenInput()});byId('copyClean').addEventListener('click',()=>copyWithApi(api,cleanText(byId('hiddenInput').value),'已复制清理结果','.hidden-copy-toast'));renderHidden();focusHiddenInput();void plugin.connect().then(() => {focusHiddenInput()});
+</script>
+</body>
+</html>

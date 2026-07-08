@@ -1,0 +1,62 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desktop-core",
+  "description": "Core permissions for the main window and quick tool windows in the Tauri desktop shell.",
+  "windows": ["main", "quick-*", "screenshot-*", "tray-menu", "taskbar-calendar-hotzone"],
+  "permissions": [
+    "core:default",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-close",
+    "core:window:allow-create",
+    "core:window:allow-maximize",
+    "core:window:allow-minimize",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-set-focus",
+    "core:window:allow-set-ignore-cursor-events",
+    "core:window:allow-set-position",
+    "core:window:allow-set-size",
+    "core:window:allow-show",
+    "core:window:allow-start-dragging",
+    "core:window:allow-unmaximize",
+    "clipboard-manager:allow-read-image",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-html",
+    "clipboard-manager:allow-write-image",
+    "clipboard-manager:allow-write-text",
+    "dialog:default",
+    "opener:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "obsidian:*"
+        }
+      ]
+    },
+    "allow-browser-bookmarks",
+    "allow-docker-ops",
+    "allow-file-ops",
+    "allow-http-request",
+    "allow-ping",
+    "allow-clipboard-ops",
+    "allow-app-settings",
+    "allow-plugin-management",
+    "allow-plugin-storage",
+    "allow-local-library",
+    "allow-music-player",
+    "allow-storage-directories",
+    "allow-quick-tool-window",
+    "allow-ssh-ops",
+    "allow-mail-ops",
+    "allow-plugin-native-tools",
+    "allow-keepass-ops",
+    "allow-global-shortcuts",
+    "allow-super-clipboard",
+    "allow-screenshot",
+    "allow-screen-recorder",
+    "allow-static-server",
+    "allow-tray-menu",
+    "allow-taskbar-calendar",
+    "allow-update-check"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "accent": "blue",
+  "caption": "和风天气数据源，支持 GPS 定位、小时降水预报与 7 日趋势。",
+  "category": "life",
+  "defaultAlias": "tq",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-weather",
+  "keywords": [
+    "tqyb",
+    "weather",
+    "tianqi",
+    "tianqiyubao",
+    "forecast",
+    "temperature",
+    "rain",
+    "precipitation",
+    "gps",
+    "qweather",
+    "天气",
+    "预报",
+    "温度",
+    "降雨",
+    "降水",
+    "定位",
+    "气象",
+    "和风"
+  ],
+  "manifestVersion": 1,
+  "minHostVersion": "0.1.0",
+  "name": "天气预报",
+  "permissions": [
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "sdkVersion": "1.0.0",
+  "capabilities": [
+    "getPluginStorageItem",
+    "sendHttpRequest",
+    "setPluginStorageItem"
+  ],
+  "version": "0.1.0",
+  "windowIcon": "assets/window-icon.png"
+}

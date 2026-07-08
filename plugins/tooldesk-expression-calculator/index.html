@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>表达式计算器</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #db2777; color: #fff; }
+
+.expr-calc-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+}
+
+.expr-calc-card {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.expr-calc-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.expr-calc-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.expr-calc-icon-badge {
+  align-items: center;
+  background: #fdf2f8;
+  border-radius: 6px;
+  color: #db2777;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.expr-calc-meta {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.expr-calc-form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.expr-calc-form textarea {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  min-height: 220px;
+  outline: none;
+  padding: 12px;
+  resize: vertical;
+  width: 100%;
+}
+
+.expr-calc-form textarea:focus {
+  border-color: #f9a8d4;
+  box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.12);
+}
+
+.expr-calc-hint {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.expr-calc-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.expr-calc-preset {
+  background: #ffffff;
+  border: 1px solid #fbcfe8;
+  border-radius: 999px;
+  color: #be185d;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.expr-calc-preset:hover { background: #fdf2f8; }
+
+.expr-calc-copy-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #fbcfe8;
+  border-radius: 7px;
+  color: #db2777;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 30px;
+  justify-content: center;
+  margin-left: auto;
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.expr-calc-copy-button:hover { background: #fdf2f8; color: #be185d; }
+.expr-calc-copy-button:disabled { color: #94a3b8; opacity: .62; }
+
+.expr-calc-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.expr-calc-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.expr-calc-row.invalid {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.expr-calc-row code {
+  color: #334155;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expr-calc-row strong {
+  color: #111827;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.expr-calc-row span {
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.expr-calc-empty {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 220px;
+  padding: 24px 20px;
+}
+
+.expr-calc-empty-icon {
+  align-items: center;
+  background: linear-gradient(180deg, #fdf2f8 0%, #ffffff 100%);
+  border: 1px dashed #fbcfe8;
+  border-radius: 14px;
+  color: #db2777;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.expr-calc-empty strong {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.expr-calc-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: absolute;
+  right: 14px;
+  top: 56px;
+  z-index: 2;
+}
+    </style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content expr-calc-layout">
+      <section class="expr-calc-card">
+        <div class="expr-calc-card-head">
+          <span class="expr-calc-icon-badge">=</span>
+          <strong>算式输入</strong>
+          <span id="count" class="expr-calc-meta">0 条</span>
+        </div>
+        <div class="expr-calc-form">
+          <textarea id="input" spellcheck="false" placeholder="每行一条，或用分号/顿号分隔&#10;例如 50%+50%、2^16、72*58.3"></textarea>
+          <p class="expr-calc-hint">支持 + - * / ^ () 与百分号。`50%` 按 0.5 参与计算。</p>
+          <div class="expr-calc-presets" id="presets"></div>
+        </div>
+      </section>
+      <section class="expr-calc-card">
+        <div class="expr-calc-card-head">
+          <span class="expr-calc-icon-badge">=</span>
+          <strong>计算结果</strong>
+          <button id="copy" class="expr-calc-copy-button" disabled>复制结果</button>
+        </div>
+        <span id="toast" class="expr-calc-toast" hidden></span>
+        <div id="list" class="expr-calc-list"></div>
+        <div id="empty" class="expr-calc-empty">
+          <span class="expr-calc-empty-icon">=</span>
+          <strong>输入算式后查看结果</strong>
+        </div>
+      </section>
+    </main>
+<script>
+      const presets = [
+        '50%+50%',
+        '1%+1%',
+        '2^16',
+        '72*58.3',
+        '(0.4+0.6)*0.15*31*2'
+      ];
+      const operators = new Set(['+', '-', '*', '/', '^', '(', ')']);
+      const $ = (id) => document.getElementById(id);
+      let api = { copyText: async () => false };
+      let pluginConnect = Promise.resolve();
+
+      function applyLaunchContent(content) {
+        const value = String(content || '').trim();
+        if (!value || !/[\d]/.test(value) || !/[+*/^%()]/.test(value)) return;
+        $('input').value = value;
+        render();
+      }
+
+      function showToast(text) {
+        $('toast').textContent = text;
+        $('toast').hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600);
+      }
+
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      function splitExpressions(content) {
+        return String(content || '')
+          .split(/[\n;；、]+/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function preprocessExpression(raw) {
+        return raw
+          .trim()
+          .replace(/=+\s*$/, '')
+          .replace(/[，；]/g, (value) => (value === '，' ? ',' : ';'))
+          .replace(/\s+/g, '')
+          .replace(/(?<=\d),(?=\d{3}(?:\D|$))/g, '')
+          .replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+      }
+
+      function formatResult(value) {
+        if (!Number.isFinite(value)) return '无效结果';
+        if (Number.isInteger(value)) return String(value);
+        return String(Number(value.toPrecision(12)));
+      }
+
+      function tokenize(expression) {
+        const tokens = [];
+        let index = 0;
+        while (index < expression.length) {
+          const char = expression[index];
+          if ((char >= '0' && char <= '9') || char === '.') {
+            let cursor = index;
+            let dotCount = 0;
+            while (cursor < expression.length) {
+              const current = expression[cursor];
+              if (current >= '0' && current <= '9') { cursor += 1; continue; }
+              if (current === '.' && dotCount === 0) { dotCount += 1; cursor += 1; continue; }
+              break;
+            }
+            const value = Number(expression.slice(index, cursor));
+            if (!Number.isFinite(value)) throw new Error('数字格式无效');
+            tokens.push({ type: 'number', value });
+            index = cursor;
+            continue;
+          }
+          if (operators.has(char)) {
+            tokens.push({ type: 'op', value: char });
+            index += 1;
+            continue;
+          }
+          throw new Error(`无法识别的字符：${char}`);
+        }
+        return tokens;
+      }
+
+      function parseTokens(tokens) {
+        let position = 0;
+        const peek = () => tokens[position];
+        const consume = () => tokens[position++];
+        const parseAddition = () => {
+          let left = parseMultiplication();
+          while (peek()?.type === 'op' && (peek().value === '+' || peek().value === '-')) {
+            const operator = consume().value;
+            const right = parseMultiplication();
+            left = operator === '+' ? left + right : left - right;
+          }
+          return left;
+        };
+        const parseMultiplication = () => {
+          let left = parsePower();
+          while (peek()?.type === 'op' && (peek().value === '*' || peek().value === '/')) {
+            const operator = consume().value;
+            const right = parsePower();
+            if (operator === '/') {
+              if (right === 0) throw new Error('除数不能为 0');
+              left /= right;
+            } else {
+              left *= right;
+            }
+          }
+          return left;
+        };
+        const parsePower = () => {
+          let left = parseUnary();
+          if (peek()?.type === 'op' && peek().value === '^') {
+            consume();
+            left = left ** parsePower();
+          }
+          return left;
+        };
+        const parseUnary = () => {
+          if (peek()?.type === 'op' && peek().value === '-') { consume(); return -parseUnary(); }
+          if (peek()?.type === 'op' && peek().value === '+') { consume(); return parseUnary(); }
+          return parsePrimary();
+        };
+        const parsePrimary = () => {
+          const token = peek();
+          if (!token) throw new Error('表达式不完整');
+          if (token.type === 'number') { consume(); return token.value; }
+          if (token.type === 'op' && token.value === '(') {
+            consume();
+            const value = parseAddition();
+            if (peek()?.type !== 'op' || peek().value !== ')') throw new Error('缺少右括号');
+            consume();
+            return value;
+          }
+          throw new Error('表达式格式无效');
+        };
+        const value = parseAddition();
+        if (position < tokens.length) throw new Error('表达式格式无效');
+        return value;
+      }
+
+      function evaluateExpression(raw) {
+        try {
+          const normalized = preprocessExpression(raw);
+          if (!normalized) return { valid: false, error: '表达式为空' };
+          const value = parseTokens(tokenize(normalized));
+          return { valid: true, result: formatResult(value) };
+        } catch (error) {
+          return { valid: false, error: error instanceof Error ? error.message : '计算失败' };
+        }
+      }
+
+      function evaluateAll(content) {
+        return splitExpressions(content).map((expression) => ({
+          expression,
+          ...evaluateExpression(expression)
+        }));
+      }
+
+      function render() {
+        const results = evaluateAll($('input').value);
+        const valid = results.filter((item) => item.valid);
+        $('count').textContent = `${results.length} 条`;
+        $('copy').disabled = valid.length === 0;
+        $('empty').hidden = results.length > 0;
+        $('list').replaceChildren(...results.map((item) => {
+          const row = document.createElement('div');
+          row.className = `expr-calc-row${item.valid ? '' : ' invalid'}`;
+          row.innerHTML = item.valid
+            ? `<code>${item.expression}</code><strong>= ${item.result}</strong>`
+            : `<code>${item.expression}</code><span>${item.error}</span>`;
+          return row;
+        }));
+      }
+
+      $('presets').replaceChildren(...presets.map((expression) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'expr-calc-preset';
+        button.textContent = expression;
+        button.addEventListener('click', () => {
+          $('input').value = expression;
+          render();
+        });
+        return button;
+      }));
+
+      $('input').value = presets.join('\n');
+      $('input').addEventListener('input', render);
+      $('copy').addEventListener('click', () => {
+        const lines = evaluateAll($('input').value).filter((item) => item.valid);
+        if (!lines.length) return;
+        copyText(lines.map((item) => `${item.expression} = ${item.result}`).join('\n'), '计算结果已复制');
+      });
+      render();
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-expression-calculator', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context.content || '');
+          }
+        };
+        const pluginOnReady = function () {  };
+        const pluginOfflineReady = function () {  };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

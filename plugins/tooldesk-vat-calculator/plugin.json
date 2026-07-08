@@ -1,0 +1,37 @@
+{
+  "accent": "orange",
+  "caption": "含税价与不含税价互算，展示税额与计算公式。",
+  "category": "finance",
+  "clipboardMatch": {
+    "type": "decimal-amount",
+    "priority": 80
+  },
+  "defaultAlias": "jsfl",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-vat-calculator",
+  "keywords": [
+    "zzs",
+    "vat",
+    "jiashuifenli",
+    "tax",
+    "增值税",
+    "价税分离",
+    "含税",
+    "不含税",
+    "税额"
+  ],
+  "name": "价税分离",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

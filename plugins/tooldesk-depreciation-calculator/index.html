@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>折旧计算</title>
+    <style>
+* { box-sizing: border-box; } html, body { height: 100%; margin: 0; }
+body { background: #eef3f8; color: #111827; font-family: "Microsoft YaHei","Segoe UI",Arial,sans-serif; font-size: 13px; }
+button, input, select { font: inherit; } button { border: 0; cursor: pointer; }
+.tool-content { height: 100%; min-height: 0; } .field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-layout { display: grid; gap: 16px; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); height: 100%; }
+.fin-card { background: #fff; border: 1px solid #dbe4ef; border-radius: 8px; display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; position: relative; }
+.fin-head { align-items: center; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; flex-shrink: 0; min-height: 48px; padding: 0 14px; }
+.fin-head strong { font-size: 14px; font-weight: 800; }
+.fin-badge { align-items: center; background: #f5f3ff; border-radius: 6px; color: #7c3aed; display: inline-flex; font-size: 12px; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.fin-form { display: grid; gap: 12px; padding: 16px; }
+.fin-field { display: grid; gap: 8px; }
+.fin-field input, .fin-field select { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; height: 38px; outline: none; padding: 0 10px; width: 100%; }
+.fin-grid2 { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+.fin-note { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 7px; color: #5b21b6; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 16px 16px; padding: 10px 12px; }
+.fin-formula { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #475569; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 14px 10px; padding: 10px 12px; }
+.fin-copy { background: #fff; border: 1px solid #ddd6fe; border-radius: 7px; color: #7c3aed; font-size: 12px; font-weight: 800; height: 30px; margin-left: auto; padding: 0 10px; }
+.fin-table-wrap { flex: 1; min-height: 0; overflow: auto; padding: 0 14px 14px; }
+.fin-table { border-collapse: collapse; width: 100%; }
+.fin-table th, .fin-table td { border-bottom: 1px solid #e2e8f0; font-size: 12px; padding: 10px 8px; text-align: right; }
+.fin-table th { background: #f8fafc; color: #64748b; font-weight: 800; position: sticky; top: 0; }
+.fin-table td:first-child, .fin-table th:first-child { text-align: center; }
+.fin-table td:nth-child(2) { text-align: left; color: #475569; }
+.fin-toast { background: rgba(15,23,42,.88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; padding: 7px 10px; position: absolute; right: 14px; top: 56px; z-index: 2; }
+    
+/* tooldesk responsive plugin layout */
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content, .fin-layout { height: auto; min-height: calc(100dvh - 20px); overflow: visible; }
+  .fin-layout { grid-template-columns: 1fr !important; gap: 12px; }
+  .fin-card { min-height: auto; overflow: visible; }
+  .fin-body, .fin-table-wrap { overflow: auto; }
+  .fin-grid2, .fin-row { grid-template-columns: 1fr !important; }
+  .fin-actions, .fin-quick { flex-wrap: wrap; }
+  .fin-result { font-size: 18px; margin: 12px; }
+  input, select, textarea, button { max-width: 100%; }
+}
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content fin-layout">
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">折</span><strong>资产参数</strong></div>
+        <div class="fin-form">
+          <label class="field small fin-field">资产原值（元）<input id="cost" type="number" min="0" step="0.01" value="120000" /></label>
+          <div class="fin-grid2">
+            <label class="field small fin-field">残值率（%）<input id="salvageRate" type="number" min="0" max="100" step="0.01" value="5" /></label>
+            <label class="field small fin-field">使用年限（年）<input id="life" type="number" min="1" max="50" step="1" value="5" /></label>
+          </div>
+          <label class="field small fin-field">折旧方法<select id="method">
+            <option value="straight">直线法（年限平均法）</option>
+            <option value="double">双倍余额递减法</option>
+            <option value="syd">年数总和法</option>
+          </select></label>
+        </div>
+        <p class="fin-note">应计折旧 = 原值 − 残值。双倍余额递减法最后两年转为直线法；结果四舍五入至分。</p>
+      </section>
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">折</span><strong>折旧摊销表</strong><button id="copy" class="fin-copy">复制表格</button></div>
+        <span id="toast" class="fin-toast" hidden></span>
+        <p id="formula" class="fin-formula"></p>
+        <div class="fin-table-wrap"><table class="fin-table"><thead><tr><th>期次</th><th>计算公式</th><th>本期折旧</th><th>累计折旧</th><th>账面净值</th></tr></thead><tbody id="tbody"></tbody></table></div>
+      </section>
+    </main>
+<script>
+const $ = (id) => document.getElementById(id);
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const fmt = (v) => Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const round2 = (v) => Math.round(v * 100) / 100;
+      function readParams() {
+        const cost = Number($('cost').value);
+        const salvageRate = Number($('salvageRate').value);
+        const life = Math.round(Number($('life').value));
+        const salvage = round2(cost * salvageRate / 100);
+        const depreciable = round2(cost - salvage);
+        return { cost, salvage, life, depreciable, method: $('method').value };
+      }
+      function straightLine(p) {
+        const annual = round2(p.depreciable / p.life);
+        const rows = []; let accumulated = 0;
+        for (let year = 1; year <= p.life; year += 1) {
+          const amount = year === p.life ? round2(p.depreciable - accumulated) : annual;
+          accumulated = round2(accumulated + amount);
+          rows.push({ period: `第${year}年`, formula: `(${fmt(p.cost)}−${fmt(p.salvage)})÷${p.life}`, amount, accumulated, book: round2(p.cost - accumulated) });
+        }
+        return { rows, formula: `年折旧额 = (原值 − 残值) ÷ 使用年限 = (${fmt(p.cost)} − ${fmt(p.salvage)}) ÷ ${p.life} = ${fmt(annual)}` };
+      }
+      function doubleDeclining(p) {
+        const rate = 2 / p.life; const rows = []; let book = p.cost; let accumulated = 0;
+        for (let year = 1; year <= p.life; year += 1) {
+          let amount;
+          let formula;
+          if (year > p.life - 2) {
+            amount = round2((book - p.salvage) / (p.life - year + 1));
+            formula = `(账面净值−残值)÷剩余${p.life - year + 1}年`;
+          } else {
+            amount = round2(book * rate);
+            formula = `账面净值×2÷${p.life}`;
+          }
+          if (accumulated + amount > p.depreciable) amount = round2(p.depreciable - accumulated);
+          accumulated = round2(accumulated + amount);
+          book = round2(p.cost - accumulated);
+          rows.push({ period: `第${year}年`, formula, amount, accumulated, book });
+        }
+        return { rows, formula: `年折旧率 = 2 ÷ ${p.life} = ${(rate * 100).toFixed(2)}%；最后两年改按直线法提足至残值` };
+      }
+      function sumOfYears(p) {
+        const syd = (p.life * (p.life + 1)) / 2; const rows = []; let accumulated = 0;
+        for (let year = 1; year <= p.life; year += 1) {
+          const weight = p.life - year + 1;
+          const amount = year === p.life ? round2(p.depreciable - accumulated) : round2(p.depreciable * weight / syd);
+          accumulated = round2(accumulated + amount);
+          rows.push({ period: `第${year}年`, formula: `(原值−残值)×${weight}÷${syd}`, amount, accumulated, book: round2(p.cost - accumulated) });
+        }
+        return { rows, formula: `年数总和 = ${p.life}×(${p.life}+1)÷2 = ${syd}；第 n 年折旧 = (原值−残值)×剩余年数÷年数总和` };
+      }
+      function applyLaunchContent(content) {
+        const text = String(content || '').trim().replace(/[¥￥,\s]/g, '');
+        if (!text || !/^-?\d+(?:\.\d+)?$/.test(text)) return;
+        $('cost').value = text;
+        render();
+      }
+      function render() {
+        const p = readParams();
+        if (!Number.isFinite(p.cost) || p.cost <= 0 || p.life < 1) return;
+        const result = p.method === 'double' ? doubleDeclining(p) : p.method === 'syd' ? sumOfYears(p) : straightLine(p);
+        $('formula').textContent = result.formula;
+        $('tbody').replaceChildren(...result.rows.map((row) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${row.period}</td><td>${row.formula}</td><td>${fmt(row.amount)}</td><td>${fmt(row.accumulated)}</td><td>${fmt(row.book)}</td>`;
+          return tr;
+        }));
+      }
+      ['cost','salvageRate','life','method'].forEach((id) => { $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+      $('copy').addEventListener('click', async () => {
+        const lines = ['期次\t本期折旧\t累计折旧\t账面净值'];
+        document.querySelectorAll('#tbody tr').forEach((tr) => {
+          const cells = [...tr.children].map((td) => td.textContent);
+          lines.push(`${cells[0]}\t${cells[2]}\t${cells[3]}\t${cells[4]}`);
+        });
+        const text = lines.join('\n');
+        await api.copyText(text);
+        $('toast').textContent = '已复制'; $('toast').hidden = false; setTimeout(() => { $('toast').hidden = true; }, 1600);
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-depreciation-calculator', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

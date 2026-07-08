@@ -1,0 +1,35 @@
+{
+  "accent": "purple",
+  "caption": "查询域名 ICP 备案信息，并提供官方查询入口。",
+  "category": "dev",
+  "defaultAlias": "icp",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-icp-query",
+  "keywords": [
+    "ba",
+    "bacx",
+    "beianchaxun",
+    "icp",
+    "beian",
+    "备案",
+    "域名",
+    "网站备案"
+  ],
+  "name": "ICP 备案查询",
+  "permissions": [
+    "clipboard",
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText",
+    "openExternalUrl",
+    "sendHttpRequest"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

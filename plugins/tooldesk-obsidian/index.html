@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Obsidian 搜索</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+        color: #111827;
+        background: #f8fafc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        min-height: 0;
+        padding: 20px;
+        overflow: hidden;
+        background: #f8fafc;
+      }
+
+      .search-shell {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        flex: 1;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 16px;
+      }
+
+      .search-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 0 16px;
+        background: #ffffff;
+      }
+
+      .search-input-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .search-icon,
+      .clear-search {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .search-icon {
+        left: 12px;
+        color: #6b7280;
+        font-size: 14px;
+        pointer-events: none;
+      }
+
+      .search-input {
+        width: 100%;
+        height: 36px;
+        padding: 0 36px 0 38px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: transparent;
+        color: #111827;
+        outline: 0;
+        font-size: 13px;
+        transition: border-color 0.15s ease;
+      }
+
+      .search-input::-webkit-search-cancel-button {
+        display: none;
+      }
+
+      .search-input:focus {
+        border-color: #2563eb;
+      }
+
+      .clear-search {
+        right: 8px;
+        display: none;
+        width: 24px;
+        height: 24px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: #3b5f9f;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .clear-search.visible {
+        display: inline-flex;
+      }
+
+      .clear-search:hover {
+        background: #f3f4f6;
+        color: #1d4ed8;
+      }
+
+      .library-select {
+        min-width: 150px;
+        max-width: 220px;
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid #dbe4ef;
+        border-radius: 6px;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 12px;
+      }
+
+      .results-area {
+        flex: 1;
+        min-height: 0;
+        background: #ffffff;
+        overflow: hidden;
+        padding: 0;
+      }
+
+      .state-panel {
+        display: flex;
+        height: 100%;
+        min-height: 280px;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        font-size: 13px;
+        text-align: center;
+      }
+
+      .state-panel strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #334155;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .library-list {
+        display: grid;
+        gap: 10px;
+        padding: 14px 0;
+      }
+
+      .library-card {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #dbe4ef;
+        border-radius: 8px;
+        background: #ffffff;
+        cursor: pointer;
+        text-align: left;
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .library-card:hover {
+        border-color: rgba(37, 99, 235, 0.38);
+        background: #f8fbff;
+      }
+
+      .library-icon {
+        display: inline-flex;
+        width: 34px;
+        height: 34px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 7px;
+        background: #eef2ff;
+        color: #4f46e5;
+        font-size: 16px;
+      }
+
+      .library-main {
+        min-width: 0;
+      }
+
+      .library-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .library-keyword {
+        display: inline-flex;
+        height: 20px;
+        align-items: center;
+        padding: 0 7px;
+        border-radius: 4px;
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .library-name {
+        overflow: hidden;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .library-path,
+      .library-meta {
+        overflow: hidden;
+        color: #64748b;
+        font-size: 12px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .library-open {
+        color: #64748b;
+        font-size: 18px;
+      }
+
+      .result-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+
+      .result-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f8f9fa;
+      }
+
+      .result-table th {
+        height: 34px;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 500;
+        text-align: left;
+      }
+
+      .result-table th,
+      .result-table td {
+        padding: 0 14px;
+        border-bottom: 1px solid #f3f4f6;
+      }
+
+      .result-table th:first-child,
+      .result-table td:first-child {
+        padding-left: 14px;
+      }
+
+      .result-row {
+        height: 40px;
+        cursor: pointer;
+        transition: background 0.12s ease;
+      }
+
+      .result-row:hover {
+        background: #f3f4f6;
+      }
+
+      .result-row.active {
+        background: #edf3ff;
+      }
+
+      .result-row.active td {
+        background: #edf3ff;
+        box-shadow:
+          inset 0 1px 0 #bfdbfe,
+          inset 0 -1px 0 #bfdbfe;
+      }
+
+      .result-row.active td:first-child {
+        box-shadow:
+          inset 1px 0 0 #bfdbfe,
+          inset 0 1px 0 #bfdbfe,
+          inset 0 -1px 0 #bfdbfe;
+      }
+
+      .result-row.active td:last-child {
+        box-shadow:
+          inset -1px 0 0 #bfdbfe,
+          inset 0 1px 0 #bfdbfe,
+          inset 0 -1px 0 #bfdbfe;
+      }
+
+      .name-cell,
+      .path-cell,
+      .time-cell {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .name-cell {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 8px;
+        color: #111827;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .file-icon {
+        display: inline-flex;
+        width: 18px;
+        height: 18px;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #3b82f6;
+      }
+
+      .file-icon svg {
+        display: block;
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2;
+      }
+
+      .line-badge {
+        flex-shrink: 0;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 11px;
+      }
+
+      .path-cell {
+        width: 100%;
+        color: #111827;
+        font-size: 12px;
+      }
+
+      .time-cell {
+        width: 100%;
+        color: #111827;
+        font-size: 12px;
+        text-align: right;
+      }
+
+      .search-foot {
+        display: flex;
+        flex-shrink: 0;
+        height: 28px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0 0;
+        color: #111827;
+        font-size: 11px;
+      }
+
+      .footer-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .pager {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pager button {
+        height: 24px;
+        padding: 0 11px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #111827;
+        cursor: pointer;
+        font-size: 12px;
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .pager button:hover:not(:disabled) {
+        border-color: #2563eb;
+        background: #f3f4f6;
+      }
+
+      .pager button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .hint {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #111827;
+      }
+
+      .hint kbd {
+        display: inline-flex;
+        min-width: 18px;
+        height: 18px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 1px solid #e5e7eb;
+        border-radius: 3px;
+        background: #f3f4f6;
+        color: #111827;
+        font-size: 10px;
+        font-weight: 500;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 720px) {
+        .app {
+          padding: 10px;
+        }
+
+        .search-shell {
+          height: calc(100vh - 20px);
+        }
+
+        .search-head {
+          display: grid;
+        }
+
+        .library-select {
+          max-width: none;
+          width: 100%;
+        }
+
+        .hint {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="search-shell" aria-label="Obsidian 搜索">
+        <header class="search-head">
+          <label class="search-input-wrap">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input
+              id="search"
+              class="search-input"
+              type="text"
+              placeholder="搜索笔记内容或文件名"
+              autocomplete="off"
+              autofocus
+            />
+            <button id="clearSearch" class="clear-search" type="button" aria-label="清空搜索">×</button>
+          </label>
+
+          <select id="librarySelect" class="library-select hidden" aria-label="选择笔记库"></select>
+        </header>
+
+        <div id="resultsArea" class="results-area"></div>
+
+        <footer class="search-foot">
+          <span id="resultCount">加载中...</span>
+          <div class="footer-actions">
+            <span id="pager" class="pager hidden">
+              <button id="prevPage" type="button">上一页</button>
+              <span id="pageInfo"></span>
+              <button id="nextPage" type="button">下一页</button>
+            </span>
+            <span class="hint">
+              <kbd>↑</kbd> <kbd>↓</kbd> 选择 · <kbd>Enter</kbd> 打开 · <kbd>Esc</kbd> 清空
+            </span>
+          </div>
+        </footer>
+      </section>
+    </main>
+<script>
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const searchEl = document.getElementById('search');
+      const clearSearchEl = document.getElementById('clearSearch');
+      const librarySelectEl = document.getElementById('librarySelect');
+      const resultsAreaEl = document.getElementById('resultsArea');
+      const resultCountEl = document.getElementById('resultCount');
+      const pagerEl = document.getElementById('pager');
+      const prevPageEl = document.getElementById('prevPage');
+      const nextPageEl = document.getElementById('nextPage');
+      const pageInfoEl = document.getElementById('pageInfo');
+
+      const pageSize = 10;
+      let libraries = [];
+      let selectedLibrary = null;
+      let results = [];
+      let activeIndex = 0;
+      let currentPage = 1;
+      let searchTimer = 0;
+      let isSearching = false;
+      let initialLibraryKeyword = '';
+      let unsubscribeLocalLibraryChanged = null;
+
+      function formatTime(timestamp) {
+        const date = new Date(timestamp || Date.now());
+        const now = new Date();
+        const days = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (days <= 0) return '今天';
+        if (days === 1) return '昨天';
+        if (days < 30) return `${days} 天前`;
+        if (days < 365) return `${Math.floor(days / 30)} 月前`;
+        return `${Math.floor(days / 365)} 年前`;
+      }
+
+      function getTotalPages() {
+        return Math.max(1, Math.ceil(results.length / pageSize));
+      }
+
+      function getDisplayResults() {
+        const start = (currentPage - 1) * pageSize;
+        return results.slice(start, start + pageSize);
+      }
+
+      function setState(message, title = '') {
+        resultsAreaEl.innerHTML = `
+          <div class="state-panel">
+            <div>
+              ${title ? `<strong>${escapeHtml(title)}</strong>` : ''}
+              <span>${escapeHtml(message)}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      function createFileIcon() {
+        return `
+          <span class="file-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6" />
+              <path d="M10 13h4" />
+              <path d="M10 17h4" />
+            </svg>
+          </span>
+        `;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function renderLibrarySelect() {
+        librarySelectEl.innerHTML = '';
+
+        if (!selectedLibrary || libraries.length <= 1) {
+          librarySelectEl.classList.add('hidden');
+          return;
+        }
+
+        for (const library of libraries) {
+          const option = document.createElement('option');
+          option.value = library.keyword;
+          option.textContent = library.name || library.keyword;
+          librarySelectEl.appendChild(option);
+        }
+
+        librarySelectEl.value = selectedLibrary?.keyword || libraries[0]?.keyword || '';
+        librarySelectEl.classList.remove('hidden');
+      }
+
+      function renderLibraryList() {
+        pagerEl.classList.add('hidden');
+        resultCountEl.textContent = `${libraries.length} 个笔记库`;
+
+        if (!libraries.length) {
+          setState('请在设置 -> Obsidian 中添加一个本地库。', '还没有配置笔记库');
+          return;
+        }
+
+        const list = document.createElement('div');
+        list.className = 'library-list';
+
+        for (const library of libraries) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'library-card';
+          button.innerHTML = `
+            <span class="library-icon" aria-hidden="true">□</span>
+            <span class="library-main">
+              <span class="library-title">
+                <span class="library-keyword">${escapeHtml(library.keyword || '')}</span>
+                <span class="library-name">${escapeHtml(library.name || library.keyword || '')}</span>
+              </span>
+              <span class="library-path">${escapeHtml(library.path || '')}</span>
+              <span class="library-meta">${escapeHtml((library.extensions || []).join(' · '))}</span>
+            </span>
+            <span class="library-open" aria-hidden="true">›</span>
+          `;
+          button.addEventListener('click', () => selectLibrary(library));
+          list.appendChild(button);
+        }
+
+        resultsAreaEl.innerHTML = '';
+        resultsAreaEl.appendChild(list);
+      }
+
+      function renderResults() {
+        clearSearchEl.classList.toggle('visible', Boolean(searchEl.value.trim()));
+
+        if (!selectedLibrary) {
+          renderLibraryList();
+          return;
+        }
+
+        if (isSearching) {
+          resultCountEl.textContent = '搜索中...';
+          pagerEl.classList.add('hidden');
+          setState('搜索中...');
+          return;
+        }
+
+        if (!results.length) {
+          const hasQuery = Boolean(searchEl.value.trim());
+          resultCountEl.textContent = hasQuery ? '0 个结果' : '输入关键词开始搜索';
+          pagerEl.classList.add('hidden');
+          setState(hasQuery ? '没有找到匹配的文件' : '输入关键词开始搜索');
+          return;
+        }
+
+        const displayResults = getDisplayResults();
+        const tableWrap = document.createElement('div');
+        tableWrap.style.height = '100%';
+        tableWrap.style.overflow = 'auto';
+
+        const table = document.createElement('table');
+        table.className = 'result-table';
+        table.innerHTML = `
+          <colgroup>
+            <col style="width: 35%" />
+            <col style="width: 45%" />
+            <col style="width: 20%" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>路径</th>
+              <th style="text-align: right">更新时间</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const body = table.querySelector('tbody');
+        for (const [index, result] of displayResults.entries()) {
+          const row = document.createElement('tr');
+          row.className = `result-row${index === activeIndex ? ' active' : ''}`;
+          row.innerHTML = `
+            <td>
+              <div class="name-cell">
+                ${createFileIcon()}
+                <span>${escapeHtml(result.fileName || '')}</span>
+                ${result.line ? `<span class="line-badge">第 ${escapeHtml(result.line)} 行</span>` : ''}
+              </div>
+            </td>
+            <td><div class="path-cell">${escapeHtml(result.relativePath || result.filePath || '')}</div></td>
+            <td><div class="time-cell">${escapeHtml(formatTime(result.modifiedTime))}</div></td>
+          `;
+          row.addEventListener('mouseenter', () => setActiveRow(index));
+          row.addEventListener('click', () => openResult(result));
+          body.appendChild(row);
+        }
+
+        resultsAreaEl.innerHTML = '';
+        tableWrap.appendChild(table);
+        resultsAreaEl.appendChild(tableWrap);
+
+        const totalPages = getTotalPages();
+        resultCountEl.textContent = `${results.length} 个结果`;
+        if (results.length > pageSize) {
+          pagerEl.classList.remove('hidden');
+          pageInfoEl.textContent = `${currentPage} / ${totalPages}`;
+          prevPageEl.disabled = currentPage <= 1;
+          nextPageEl.disabled = currentPage >= totalPages;
+        } else {
+          pagerEl.classList.add('hidden');
+        }
+      }
+
+      function selectLibrary(library) {
+        selectedLibrary = library;
+        searchEl.value = '';
+        results = [];
+        activeIndex = 0;
+        currentPage = 1;
+        renderLibrarySelect();
+        void search();
+        searchEl.focus();
+      }
+
+      function applyLaunchContent(content) {
+        if (!content) {
+          return;
+        }
+
+        try {
+          const payload = JSON.parse(content);
+          initialLibraryKeyword = String(payload?.libraryKeyword || '').trim();
+        } catch {
+          initialLibraryKeyword = '';
+        }
+
+        if (!initialLibraryKeyword || !libraries.length) {
+          return;
+        }
+
+        const library = libraries.find((item) => item.keyword === initialLibraryKeyword);
+        if (library) {
+          selectLibrary(library);
+        }
+      }
+
+      async function loadLibraries() {
+        try {
+          const previousKeyword = selectedLibrary?.keyword || '';
+          const loaded = await api.getLocalLibraries();
+          libraries = Array.isArray(loaded) ? loaded.filter((library) => library && library.enabled !== false) : [];
+
+          if (!libraries.length) {
+            selectedLibrary = null;
+            renderLibrarySelect();
+            renderLibraryList();
+            return;
+          }
+
+          const launchLibrary = initialLibraryKeyword
+            ? libraries.find((library) => library.keyword === initialLibraryKeyword)
+            : null;
+          const previousLibrary = previousKeyword
+            ? libraries.find((library) => library.keyword === previousKeyword)
+            : null;
+
+          selectedLibrary = launchLibrary || previousLibrary || (libraries.length === 1 ? libraries[0] : null);
+          renderLibrarySelect();
+          if (selectedLibrary) {
+            await search();
+            searchEl.focus();
+          } else {
+            renderLibraryList();
+          }
+        } catch (error) {
+          resultCountEl.textContent = '加载失败';
+          setState(error instanceof Error ? error.message : '本地库加载失败', '无法读取本地库');
+        }
+      }
+
+      async function search() {
+        if (!selectedLibrary) {
+          renderLibraryList();
+          return;
+        }
+
+        const query = searchEl.value.trim();
+
+        isSearching = true;
+        renderResults();
+
+        try {
+          const searchResults = await api.searchLocalLibrary(selectedLibrary.keyword, query);
+          results = Array.isArray(searchResults) ? searchResults : [];
+          activeIndex = 0;
+          currentPage = 1;
+        } catch (error) {
+          results = [];
+          resultCountEl.textContent = '搜索失败';
+          setState(error instanceof Error ? error.message : '搜索失败');
+        } finally {
+          isSearching = false;
+          renderResults();
+        }
+      }
+
+      async function openResult(result) {
+        if (!selectedLibrary) {
+          return;
+        }
+
+        try {
+          await api.openLocalLibraryFile(
+            result.filePath,
+            selectedLibrary.keyword,
+            result.line,
+            result.matchedKeyword
+          );
+        } catch (error) {
+          window.alert(error instanceof Error ? error.message : '打开文件失败');
+        }
+      }
+
+      function scrollActiveIntoView() {
+        resultsAreaEl.querySelector('.result-row.active')?.scrollIntoView({ block: 'nearest' });
+      }
+
+      function setActiveRow(index) {
+        activeIndex = index;
+        resultsAreaEl.querySelectorAll('.result-row').forEach((row, rowIndex) => {
+          row.classList.toggle('active', rowIndex === activeIndex);
+        });
+      }
+
+      function handleResultKeydown(event) {
+        if (!selectedLibrary) {
+          return;
+        }
+
+        const displayResults = getDisplayResults();
+
+        if (event.key === 'ArrowDown') {
+          if (!displayResults.length) {
+            return;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (activeIndex >= displayResults.length - 1) {
+            if (currentPage < getTotalPages()) {
+              currentPage += 1;
+              activeIndex = 0;
+              renderResults();
+            }
+          } else {
+            setActiveRow(activeIndex + 1);
+          }
+
+          scrollActiveIntoView();
+          return;
+        }
+
+        if (event.key === 'ArrowUp') {
+          if (!displayResults.length) {
+            return;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (activeIndex <= 0) {
+            if (currentPage > 1) {
+              currentPage -= 1;
+              activeIndex = Math.max(getDisplayResults().length - 1, 0);
+              renderResults();
+            }
+          } else {
+            setActiveRow(activeIndex - 1);
+          }
+
+          scrollActiveIntoView();
+          return;
+        }
+
+        if (event.key === 'Enter' && displayResults[activeIndex]) {
+          event.preventDefault();
+          event.stopPropagation();
+          void openResult(displayResults[activeIndex]);
+          return;
+        }
+
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          if (searchEl.value.trim()) {
+            searchEl.value = '';
+            void search();
+          } else {
+            selectedLibrary = null;
+            results = [];
+            activeIndex = 0;
+            currentPage = 1;
+            renderLibrarySelect();
+            renderLibraryList();
+          }
+        }
+      }
+
+      async function refreshLibraries() {
+        await loadLibraries();
+      }
+
+      function refreshLibrariesWhenVisible() {
+        if (!document.hidden) {
+          void refreshLibraries();
+        }
+      }
+
+      searchEl.addEventListener('input', () => {
+        window.clearTimeout(searchTimer);
+        searchTimer = window.setTimeout(() => void search(), 180);
+        clearSearchEl.classList.toggle('visible', Boolean(searchEl.value.trim()));
+      });
+      searchEl.addEventListener('keydown', handleResultKeydown);
+
+      clearSearchEl.addEventListener('click', () => {
+        searchEl.value = '';
+        void search();
+        searchEl.focus();
+      });
+
+      librarySelectEl.addEventListener('change', () => {
+        const library = libraries.find((item) => item.keyword === librarySelectEl.value);
+        if (library) {
+          selectLibrary(library);
+        }
+      });
+
+      prevPageEl.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage -= 1;
+          activeIndex = 0;
+          renderResults();
+        }
+      });
+
+      nextPageEl.addEventListener('click', () => {
+        if (currentPage < getTotalPages()) {
+          currentPage += 1;
+          activeIndex = 0;
+          renderResults();
+        }
+      });
+
+      window.addEventListener('keydown', handleResultKeydown);
+      window.addEventListener('focus', () => void refreshLibraries());
+      document.addEventListener('visibilitychange', refreshLibrariesWhenVisible);
+
+      function startObsidianPlugin() {
+        void loadLibraries();
+        void api.onLocalLibraryChanged(() => void refreshLibraries()).then((unsubscribe) => {
+          unsubscribeLocalLibraryChanged = unsubscribe;
+        }).catch(() => {
+          unsubscribeLocalLibraryChanged = null;
+        });
+        window.addEventListener('beforeunload', () => {
+          if (typeof unsubscribeLocalLibraryChanged === 'function') {
+            unsubscribeLocalLibraryChanged();
+          }
+        });
+      }
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = {
+            id: 'tooldesk-obsidian',
+            capabilities: [
+              'getLocalLibraries',
+              'onLocalLibraryChanged',
+              'openLocalLibraryFile',
+              'searchLocalLibrary'
+            ],
+            onLaunchContext(context) {
+              applyLaunchContent(context.content);
+            }
+          };
+        const pluginOnReady = function () {
+            startObsidianPlugin();
+          };
+        const pluginOfflineReady = function () {
+            startObsidianPlugin();
+          };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+  </body>
+</html>

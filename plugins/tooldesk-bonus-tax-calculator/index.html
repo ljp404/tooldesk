@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>年终奖计税</title>
+    <style>
+* { box-sizing: border-box; } html, body { height: 100%; margin: 0; }
+body { background: #eef3f8; color: #111827; font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif; font-size: 13px; }
+button, input, select { font: inherit; } button { border: 0; cursor: pointer; }
+.tool-content { height: 100%; min-height: 0; } .field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.fin-layout { display: grid; gap: 16px; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
+.fin-card { background: #fff; border: 1px solid #dbe4ef; border-radius: 8px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; position: relative; }
+.fin-head { align-items: center; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; min-height: 48px; padding: 0 14px; }
+.fin-head strong { font-size: 14px; font-weight: 800; }
+.fin-badge { align-items: center; background: #f5f3ff; border-radius: 6px; color: #7c3aed; display: inline-flex; font-size: 12px; font-weight: 800; height: 28px; justify-content: center; width: 28px; }
+.fin-form { display: grid; gap: 12px; padding: 16px; }
+.fin-field { display: grid; gap: 8px; }
+.fin-field input, .fin-field select { background: #fff; border: 1px solid #dbe4ef; border-radius: 7px; height: 38px; outline: none; padding: 0 10px; width: 100%; }
+.fin-note { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 7px; color: #5b21b6; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 16px 16px; padding: 10px 12px; }
+.fin-copy { background: #fff; border: 1px solid #ddd6fe; border-radius: 7px; color: #7c3aed; font-size: 12px; font-weight: 800; height: 30px; margin-left: auto; padding: 0 10px; }
+.fin-compare { display: grid; gap: 10px; padding: 14px; }
+.fin-plan { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
+.fin-plan.best { background: #f5f3ff; border-color: #c4b5fd; }
+.fin-plan h3 { color: #111827; font-size: 13px; font-weight: 800; margin: 0 0 10px; }
+.fin-plan p { color: #64748b; font-size: 12px; font-weight: 700; line-height: 1.6; margin: 0 0 8px; }
+.fin-plan strong { color: #7c3aed; font-family: Consolas, monospace; font-size: 18px; font-weight: 800; }
+.fin-formula { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; color: #475569; font-size: 12px; font-weight: 700; line-height: 1.7; margin: 0 14px 14px; padding: 12px; }
+.fin-toast { background: rgba(15,23,42,.88); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; padding: 7px 10px; position: absolute; right: 14px; top: 56px; z-index: 2; }
+    
+/* tooldesk responsive plugin layout */
+@media (max-width: 760px) {
+  html, body { height: auto; min-height: 100%; overflow: auto; }
+  body { padding: 10px; }
+  .tool-content, .fin-layout { height: auto; min-height: calc(100dvh - 20px); overflow: visible; }
+  .fin-layout { grid-template-columns: 1fr !important; gap: 12px; }
+  .fin-card { min-height: auto; overflow: visible; }
+  .fin-body, .fin-table-wrap { overflow: auto; }
+  .fin-grid2, .fin-row { grid-template-columns: 1fr !important; }
+  .fin-actions, .fin-quick { flex-wrap: wrap; }
+  .fin-result { font-size: 18px; margin: 12px; }
+  input, select, textarea, button { max-width: 100%; }
+}
+</style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content fin-layout">
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">奖</span><strong>计税参数</strong></div>
+        <div class="fin-form">
+          <label class="field small fin-field">年终奖金额（元）<input id="bonus" type="number" min="0" step="0.01" value="60000" /></label>
+          <label class="field small fin-field">并入月份（综合所得）<select id="month">
+            <option value="1">1 月</option>
+            <option value="2">2 月</option>
+            <option value="3">3 月</option>
+            <option value="4">4 月</option>
+            <option value="5">5 月</option>
+            <option value="6">6 月</option>
+            <option value="7">7 月</option>
+            <option value="8">8 月</option>
+            <option value="9">9 月</option>
+            <option value="10">10 月</option>
+            <option value="11">11 月</option>
+            <option value="12" selected>12 月</option>
+          </select></label>
+          <label class="field small fin-field">该月税前月薪（并入方案）<input id="gross" type="number" min="0" step="0.01" value="15000" /></label>
+          <label class="field small fin-field">该月五险一金（并入方案）<input id="social" type="number" min="0" step="0.01" value="3000" /></label>
+          <label class="field small fin-field">该月专项附加扣除<input id="special" type="number" min="0" step="0.01" value="2000" /></label>
+        </div>
+        <p class="fin-note">单独计税：商数=奖金÷12，按月度税率表找税率；应纳税额=奖金×税率−速算扣除数。并入方案为累计预扣法估算，供对比参考。</p>
+      </section>
+      <section class="fin-card">
+        <div class="fin-head"><span class="fin-badge">奖</span><strong>方案对比</strong><button id="copy" class="fin-copy">复制结果</button></div>
+        <span id="toast" class="fin-toast" hidden></span>
+        <div id="compare" class="fin-compare"></div>
+        <p id="formula" class="fin-formula"></p>
+      </section>
+    </main>
+<script>
+const MONTHLY_BRACKETS = [
+        { limit: 3000, rate: 0.03, quick: 0 },
+        { limit: 12000, rate: 0.10, quick: 210 },
+        { limit: 25000, rate: 0.20, quick: 1410 },
+        { limit: 35000, rate: 0.25, quick: 2660 },
+        { limit: 55000, rate: 0.30, quick: 4410 },
+        { limit: 80000, rate: 0.35, quick: 7160 },
+        { limit: Infinity, rate: 0.45, quick: 15160 }
+      ];
+      const ANNUAL_BRACKETS = [
+        { limit: 36000, rate: 0.03, quick: 0 },
+        { limit: 144000, rate: 0.10, quick: 2520 },
+        { limit: 300000, rate: 0.20, quick: 16920 },
+        { limit: 420000, rate: 0.25, quick: 31920 },
+        { limit: 660000, rate: 0.30, quick: 52920 },
+        { limit: 960000, rate: 0.35, quick: 85920 },
+        { limit: Infinity, rate: 0.45, quick: 181920 }
+      ];
+      const BASIC = 5000;
+      const $ = (id) => document.getElementById(id);
+      let api = null;
+      let pluginConnect = Promise.resolve();
+
+      const fmt = (v) => Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const round2 = (v) => Math.round(v * 100) / 100;
+      function bracketTax(amount, brackets) {
+        if (amount <= 0) return { tax: 0, rate: 0, quick: 0 };
+        for (const b of brackets) {
+          if (amount <= b.limit) return { tax: round2(amount * b.rate - b.quick), rate: b.rate, quick: b.quick };
+        }
+        return { tax: 0, rate: 0, quick: 0 };
+      }
+      function calcSeparate(bonus) {
+        const quotient = bonus / 12;
+        const { tax, rate, quick } = bracketTax(quotient, MONTHLY_BRACKETS);
+        const bonusTax = round2(bonus * rate - quick);
+        return { tax: Math.max(0, bonusTax), net: round2(bonus - Math.max(0, bonusTax)), quotient, rate, quick, formula: `商数=${fmt(quotient)}；税额=${fmt(bonus)}×${(rate*100).toFixed(0)}%−${fmt(quick)}` };
+      }
+      function calcMerged(bonus, month, gross, social, special) {
+        const monthlyTaxable = gross - social - special - BASIC;
+        const baseCumulative = Math.max(0, monthlyTaxable * month);
+        const withBonus = Math.max(0, monthlyTaxable * (month - 1) + (gross + bonus - social - special - BASIC));
+        const taxWithout = bracketTax(baseCumulative, ANNUAL_BRACKETS).tax;
+        const taxWith = bracketTax(withBonus, ANNUAL_BRACKETS).tax;
+        const bonusTax = Math.max(0, round2(taxWith - taxWithout));
+        return { tax: bonusTax, net: round2(bonus - bonusTax), formula: `累计应税（含奖金月）=${fmt(withBonus)}；增量税额=${fmt(taxWith)}−${fmt(taxWithout)}` };
+      }
+      function applyLaunchContent(content) {
+        const text = String(content || '').trim().replace(/[¥￥,\s]/g, '');
+        if (!text || !/^-?\d+(?:\.\d+)?$/.test(text)) return;
+        $('bonus').value = text;
+        render();
+      }
+      function render() {
+        const bonus = Number($('bonus').value); const month = Number($('month').value) || 12;
+        const gross = Number($('gross').value); const social = Number($('social').value); const special = Number($('special').value);
+        if (!Number.isFinite(bonus) || bonus < 0) return;
+        const separate = calcSeparate(bonus);
+        const merged = calcMerged(bonus, month, gross, social, special);
+        const best = separate.tax <= merged.tax ? 'separate' : 'merged';
+        $('compare').replaceChildren(
+          ...[
+            { key: 'separate', title: '单独计税', data: separate },
+            { key: 'merged', title: '并入综合所得（估算）', data: merged }
+          ].map(({ key, title, data }) => {
+            const box = document.createElement('div');
+            box.className = `fin-plan${best === key ? ' best' : ''}`;
+            box.innerHTML = `<h3>${title}${best === key ? ' · 更优' : ''}</h3><p>个税：${fmt(data.tax)}</p><strong>到手 ¥ ${fmt(data.net)}</strong>`;
+            return box;
+          })
+        );
+        $('formula').textContent = `单独：${separate.formula}。并入：${merged.formula}。`;
+      }
+      $('month').value = '12';
+      ['bonus','month','gross','social','special'].forEach((id) => { $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
+      $('copy').addEventListener('click', async () => {
+        const bonus = Number($('bonus').value);
+        const s = calcSeparate(bonus);
+        const m = calcMerged(bonus, Number($('month').value), Number($('gross').value), Number($('social').value), Number($('special').value));
+        const text = [`年终奖: ${fmt(bonus)}`, `单独计税-个税: ${fmt(s.tax)} 到手: ${fmt(s.net)}`, `并入综合-个税: ${fmt(m.tax)} 到手: ${fmt(m.net)}`].join('\n');
+        await api.copyText(text);
+        $('toast').textContent = '已复制'; $('toast').hidden = false; setTimeout(() => { $('toast').hidden = true; }, 1600);
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-bonus-tax-calculator', capabilities: ['copyText'],
+          onLaunchContext(context) {
+            applyLaunchContent(context?.content || '');
+          }
+        };
+        const pluginOnReady = function () { render(); };
+        const pluginOfflineReady = function () { render(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</html>

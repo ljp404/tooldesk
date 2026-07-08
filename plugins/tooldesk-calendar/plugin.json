@@ -1,0 +1,31 @@
+{
+  "accent": "purple",
+  "caption": "查看日期、周数和常用日期上下文。",
+  "category": "life",
+  "defaultAlias": "rl",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-calendar",
+  "keywords": [
+    "calendar",
+    "rili",
+    "date",
+    "week",
+    "日历",
+    "日期",
+    "星期"
+  ],
+  "name": "日历",
+  "permissions": [
+    "http"
+  ],
+  "capabilities": [
+    "sendHttpRequest"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "windowIcon": "assets/window-icon.png"
+}

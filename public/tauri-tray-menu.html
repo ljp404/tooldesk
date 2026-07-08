@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tooldesk</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        background: #ffffff;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      body {
+        font:
+          13px/1.35 "Segoe UI",
+          system-ui,
+          "Microsoft YaHei",
+          sans-serif;
+      }
+
+      .tray-menu {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0;
+        display: inline-block;
+        min-width: 244px;
+        padding: 6px;
+      }
+
+      .tray-menu button {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 6px;
+        color: #172033;
+        cursor: default;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 20px minmax(0, 1fr) auto;
+        font: inherit;
+        min-height: 34px;
+        padding: 0 9px;
+        text-align: left;
+        white-space: nowrap;
+        width: 100%;
+      }
+
+      .tray-menu-icon {
+        align-items: center;
+        color: #64748b;
+        display: inline-flex;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .tray-menu-icon svg {
+        display: block;
+        fill: none;
+        height: 15px;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2;
+        width: 15px;
+      }
+
+      .tray-menu-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .tray-menu-shortcut {
+        color: #7b8798;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .tray-menu button:hover,
+      .tray-menu button:focus-visible {
+        background: #eef4ff;
+        color: #1d4ed8;
+        outline: none;
+      }
+
+      .tray-menu button:hover .tray-menu-icon,
+      .tray-menu button:focus-visible .tray-menu-icon {
+        color: #2563eb;
+      }
+
+      .tray-menu button:hover .tray-menu-shortcut,
+      .tray-menu button:focus-visible .tray-menu-shortcut {
+        color: #3b5f9f;
+      }
+
+      .tray-menu button.danger:hover,
+      .tray-menu button.danger:focus-visible {
+        background: #fff1f2;
+        color: #dc2626;
+      }
+
+      .tray-menu button.danger:hover .tray-menu-icon,
+      .tray-menu button.danger:focus-visible .tray-menu-icon {
+        color: #dc2626;
+      }
+
+      .tray-menu-sep {
+        background: #edf0f5;
+        height: 1px;
+        margin: 6px 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="tray-menu" id="tray-menu" aria-label="托盘菜单"></nav>
+    <script src="./tauri-tray-menu.js"></script>
+  </body>
+</html>

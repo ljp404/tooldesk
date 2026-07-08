@@ -1,0 +1,38 @@
+{
+  "accent": "blue",
+  "caption": "按累计预扣法估算月薪税后到手，含五险一金与专项附加扣除。",
+  "category": "finance",
+  "clipboardMatch": {
+    "type": "decimal-amount",
+    "priority": 80
+  },
+  "defaultAlias": "shjs",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-salary-tax-calculator",
+  "keywords": [
+    "gzsh",
+    "tax",
+    "shuihoujisuan",
+    "salary",
+    "income",
+    "税后",
+    "个税",
+    "工资",
+    "五险一金",
+    "计算器"
+  ],
+  "name": "税后计算器",
+  "permissions": [
+    "clipboard"
+  ],
+  "publisher": "tooldesk",
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>随机密码生成器</title>
+    <style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #eef3f8;
+  color: #111827;
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+button, input, select, textarea { font: inherit; }
+button { border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .62; }
+.tool-content { height: 100%; min-height: 0; }
+.field > span { color: #64748b; font-size: 12px; font-weight: 800; }
+.tool-primary-button { background: #d97706; color: #fff; }
+
+.pwd-gen-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.pwd-gen-config,
+.pwd-gen-result {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.pwd-gen-card-head {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.pwd-gen-card-head strong {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.pwd-gen-icon-badge {
+  align-items: center;
+  background: #fffbeb;
+  border-radius: 6px;
+  color: #d97706;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.pwd-gen-count {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.pwd-gen-form {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.pwd-gen-field {
+  display: grid;
+  gap: 8px;
+}
+
+.pwd-gen-field input[type='number'],
+.pwd-gen-field input[type='text'] {
+  background: #ffffff;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  color: #111827;
+  height: 38px;
+  outline: none;
+  padding: 0 10px;
+  width: 100%;
+}
+
+.pwd-gen-field input[type='number']:focus,
+.pwd-gen-field input[type='text']:focus {
+  border-color: #fcd34d;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+}
+
+.pwd-gen-options {
+  display: grid;
+  gap: 8px;
+}
+
+.pwd-gen-option {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #334155;
+  display: flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.pwd-gen-option input {
+  accent-color: #d97706;
+  height: 16px;
+  width: 16px;
+}
+
+.pwd-gen-disclaimer {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 7px;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.7;
+  margin: 0 16px 16px;
+  padding: 10px 12px;
+}
+
+.pwd-gen-list {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+
+.pwd-gen-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #334155;
+  display: flex;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.pwd-gen-row:hover {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.pwd-gen-row code {
+  color: #111827;
+  flex: 1;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pwd-gen-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pwd-gen-error {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 16px;
+  padding: 10px 12px;
+}
+
+.pwd-gen-toast {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 7px 10px;
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  z-index: 20;
+}
+    </style>
+  </head>
+  <body class="tool-panel">
+    <main class="tool-content pwd-gen-layout">
+      <section class="pwd-gen-config">
+        <div class="pwd-gen-card-head">
+          <span class="pwd-gen-icon-badge">Pw</span>
+          <strong>生成配置</strong>
+        </div>
+        <div class="pwd-gen-form">
+          <label class="field small pwd-gen-field">
+            密码长度
+            <input id="length" type="number" min="4" max="128" value="16" />
+          </label>
+          <label class="field small pwd-gen-field">
+            生成数量
+            <input id="count" type="number" min="1" max="30" value="10" />
+          </label>
+          <div class="pwd-gen-options">
+            <label class="pwd-gen-option"><input id="upper" type="checkbox" checked />大写字母 A-Z</label>
+            <label class="pwd-gen-option"><input id="lower" type="checkbox" checked />小写字母 a-z</label>
+            <label class="pwd-gen-option"><input id="number" type="checkbox" checked />数字 0-9</label>
+            <label class="pwd-gen-option"><input id="symbol" type="checkbox" checked />符号 !@#$...</label>
+            <label class="pwd-gen-option"><input id="excludeAmbiguous" type="checkbox" />排除易混淆字符 0OIl1</label>
+          </div>
+          <label class="field small pwd-gen-field">
+            排除指定字符
+            <input id="excludeChars" type="text" spellcheck="false" placeholder="例如 @ / # / 空格" />
+          </label>
+        </div>
+        <p class="pwd-gen-disclaimer">免责声明：本工具生成的密码仅用于测试、演示和临时凭证场景，请自行评估强度并妥善保管，不要用于生产环境核心账号。</p>
+        <p id="error" class="pwd-gen-error" hidden></p>
+      </section>
+      <section class="pwd-gen-result">
+        <div class="pwd-gen-card-head">
+          <span class="pwd-gen-icon-badge">Pw</span>
+          <strong>生成结果</strong>
+          <span id="resultCount" class="pwd-gen-count">0 条</span>
+        </div>
+        <div id="list" class="pwd-gen-list"></div>
+      </section>
+      <span id="toast" class="pwd-gen-toast" hidden></span>
+    </main>
+<script>
+      const CHARSETS = {
+        upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        lower: 'abcdefghijklmnopqrstuvwxyz',
+        number: '0123456789',
+        symbol: '!@#$%^&*()-_=+[]{}|;:,.<>?'
+      };
+      const AMBIGUOUS = '0OIl1';
+      const state = { passwords: [] };
+      const $ = (id) => document.getElementById(id);
+      let api = { copyText: async () => false };
+      let pluginConnect = Promise.resolve();
+
+      function showToast(text) {
+        $('toast').textContent = text;
+        $('toast').hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => { $('toast').hidden = true; }, 1600);
+      }
+
+      async function copyText(text, message) {
+        const value = String(text ?? '');
+        if (!value.trim()) {
+          showToast('没有可复制的内容');
+          return;
+        }
+
+        await pluginConnect;
+
+        try {
+          await api.copyText(value);
+          showToast(message || '已复制');
+        } catch {
+          showToast('复制失败');
+        }
+      }
+
+      function clampNumber(value, min, max, fallback) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return fallback;
+        return Math.min(Math.max(Math.round(number), min), max);
+      }
+
+      function getExcludedChars() {
+        return new Set(Array.from(`${$('excludeAmbiguous').checked ? AMBIGUOUS : ''}${$('excludeChars').value || ''}`));
+      }
+
+      function filterExcludedChars(text, excludedChars) {
+        if (!excludedChars.size) return text;
+        return Array.from(text).filter((char) => !excludedChars.has(char)).join('');
+      }
+
+      function getSelectedSets() {
+        const excludedChars = getExcludedChars();
+        const sets = [];
+        if ($('upper').checked) sets.push({ key: 'upper', chars: filterExcludedChars(CHARSETS.upper, excludedChars) });
+        if ($('lower').checked) sets.push({ key: 'lower', chars: filterExcludedChars(CHARSETS.lower, excludedChars) });
+        if ($('number').checked) sets.push({ key: 'number', chars: filterExcludedChars(CHARSETS.number, excludedChars) });
+        if ($('symbol').checked) sets.push({ key: 'symbol', chars: filterExcludedChars(CHARSETS.symbol, excludedChars) });
+        return sets.filter((item) => item.chars.length > 0);
+      }
+
+      function randomIndex(max) {
+        const buffer = new Uint32Array(1);
+        crypto.getRandomValues(buffer);
+        return buffer[0] % max;
+      }
+
+      function pickChar(chars) {
+        return chars[randomIndex(chars.length)];
+      }
+
+      function createPassword(length, sets) {
+        const allChars = sets.map((item) => item.chars).join('');
+        const required = sets.map((item) => pickChar(item.chars));
+        const rest = [];
+        while (required.length + rest.length < length) {
+          rest.push(pickChar(allChars));
+        }
+        const chars = required.concat(rest);
+        for (let index = chars.length - 1; index > 0; index -= 1) {
+          const swapIndex = randomIndex(index + 1);
+          const temp = chars[index];
+          chars[index] = chars[swapIndex];
+          chars[swapIndex] = temp;
+        }
+        return chars.join('');
+      }
+
+      function setError(message) {
+        $('error').textContent = message || '';
+        $('error').hidden = !message;
+      }
+
+      function render() {
+        $('resultCount').textContent = `${state.passwords.length} 条`;
+        $('list').replaceChildren(...state.passwords.map((password, index) => {
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'pwd-gen-row';
+          row.title = '点击复制密码';
+          const code = document.createElement('code');
+          const length = document.createElement('span');
+          code.textContent = password;
+          length.textContent = `${password.length} 位`;
+          row.append(code, length);
+          row.addEventListener('click', () => copyText(password, '密码已复制'));
+          return row;
+        }));
+      }
+
+      function generate() {
+        const length = clampNumber($('length').value, 4, 128, 16);
+        const count = clampNumber($('count').value, 1, 30, 10);
+        const sets = getSelectedSets();
+        $('length').value = String(length);
+        $('count').value = String(count);
+
+        if (!sets.length) {
+          state.passwords = [];
+          setError('请至少选择一种字符类型');
+          render();
+          return;
+        }
+
+        if (length < sets.length) {
+          state.passwords = [];
+          setError(`密码长度不能小于已选字符类型数量（${sets.length}）`);
+          render();
+          return;
+        }
+
+        setError('');
+        const used = new Set();
+        state.passwords = [];
+        let attempts = 0;
+        while (state.passwords.length < count && attempts < count * 20) {
+          attempts += 1;
+          const password = createPassword(length, sets);
+          if (!used.has(password)) {
+            used.add(password);
+            state.passwords.push(password);
+          }
+        }
+        render();
+      }
+
+      ['length', 'count'].forEach((id) => {
+        $(id).addEventListener('input', generate);
+        $(id).addEventListener('change', generate);
+      });
+      $('excludeChars').addEventListener('input', generate);
+      $('excludeChars').addEventListener('change', generate);
+      ['upper', 'lower', 'number', 'symbol', 'excludeAmbiguous'].forEach((id) => {
+        $(id).addEventListener('change', generate);
+      });
+
+      (function bootPluginHost() {
+        if (typeof TooldeskPlugin === 'undefined') {
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPluginHost, { once: true });
+            window.addEventListener('load', bootPluginHost, { once: true });
+            return;
+          }
+          return;
+        }
+        const pluginCreateOptions = { id: 'tooldesk-password-generator', capabilities: ['copyText'] };
+        const pluginOnReady = function () { generate(); };
+        const pluginOfflineReady = function () { generate(); };
+        const plugin = TooldeskPlugin.create(pluginCreateOptions);
+        api = plugin.api;
+        pluginConnect = plugin.connect().then((result) => {
+          if (result && result.ready === false) {
+            return pluginOfflineReady();
+          }
+          return pluginOnReady();
+        });
+        void pluginConnect;
+      })();
+    </script>
+</body>
+</html>

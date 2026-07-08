@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>tooldesk 贴图菜单</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        background: transparent;
+        height: 100%;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      .pin-context-menu {
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        border-radius: 8px;
+        box-shadow:
+          0 4px 6px rgba(15, 23, 42, 0.06),
+          0 12px 24px rgba(15, 23, 42, 0.14);
+        display: none;
+        min-width: 132px;
+        overflow: hidden;
+        padding: 4px;
+        position: fixed;
+        z-index: 20;
+      }
+
+      .pin-context-menu.open {
+        display: grid;
+        gap: 2px;
+      }
+
+      .pin-context-menu button {
+        -webkit-app-region: no-drag;
+        background: transparent;
+        border: 0;
+        border-radius: 6px;
+        color: #0f172a;
+        cursor: pointer;
+        font:
+          13px/1.4 'Segoe UI',
+          system-ui,
+          sans-serif;
+        padding: 8px 12px;
+        text-align: left;
+        width: 100%;
+      }
+
+      .pin-context-menu button:hover {
+        background: #f1f5f9;
+      }
+
+      .pin-context-menu button.danger {
+        color: #dc2626;
+      }
+
+      .pin-context-menu button.danger:hover {
+        background: #fef2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="pin-menu" class="pin-context-menu open" role="menu" aria-label="贴图菜单">
+      <button type="button" data-action="copy" role="menuitem">复制</button>
+      <button type="button" data-action="download" role="menuitem">保存</button>
+      <button type="button" data-action="close" class="danger" role="menuitem">关闭贴图</button>
+    </div>
+    <script>
+      document.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) {
+          return;
+        }
+        void window.screenshotPinMenu?.action(button.dataset.action);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="邮箱管理" fill="none">
+  <rect width="64" height="64" rx="14" fill="#2563eb"/>
+  <g transform="translate(12 12) scale(1.6667)">
+    <g fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25">
+      <rect width="20" height="16" x="2" y="5" rx="2"/>
+      <path d="m3 7l9 7l9-7"/>
+      <path d="m8.5 12.5l-5.8 5.3"/>
+      <path d="m15.5 12.5l5.8 5.3"/>
+    </g>
+  </g>
+</svg>

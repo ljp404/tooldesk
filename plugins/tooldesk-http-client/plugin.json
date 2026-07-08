@@ -1,0 +1,46 @@
+{
+  "accent": "blue",
+  "caption": "接口调试：发送 HTTP 请求、查看响应和历史记录。",
+  "category": "dev",
+  "defaultAlias": "http",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-http-client",
+  "keywords": [
+    "qq",
+    "jkts",
+    "qingqiu",
+    "jiekoutiaoshi",
+    "http",
+    "api",
+    "postman",
+    "rest",
+    "请求",
+    "接口",
+    "fetch"
+  ],
+  "name": "HTTP 请求",
+  "permissions": [
+    "clipboard",
+    "http"
+  ],
+  "publisher": "tooldesk",
+  "sync": {
+    "localStorageKeys": [
+      "tooldesk-http-collections",
+      "tooldesk-http-history",
+      "tooldesk-http-open-tabs"
+    ]
+  },
+  "version": "0.1.0",
+  "manifestVersion": 1,
+  "sdkVersion": "1.0.0",
+  "minHostVersion": "0.1.0",
+  "capabilities": [
+    "copyText",
+    "getPluginStorageItem",
+    "sendHttpRequest",
+    "setPluginStorageItem"
+  ],
+  "windowIcon": "assets/window-icon.png"
+}

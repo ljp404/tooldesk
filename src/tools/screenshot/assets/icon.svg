@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="截图" fill="none">
+  <rect x="72" y="72" width="112" height="112" rx="22" fill="#2563eb"/>
+  <rect x="99" y="99" width="58" height="58" rx="10" fill="#ffffff"/>
+  <circle cx="128" cy="128" r="20" fill="#38bdf8"/>
+  <g stroke="#2563eb" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M44 88V60a16 16 0 0 1 16-16h28"/>
+    <path d="M168 44h28a16 16 0 0 1 16 16v28"/>
+    <path d="M44 168v28a16 16 0 0 0 16 16h28"/>
+    <path d="M168 212h28a16 16 0 0 0 16-16v-28"/>
+  </g>
+</svg>

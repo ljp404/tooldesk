@@ -1,0 +1,40 @@
+{
+  "accent": "red",
+  "caption": "PDF 转换、提取、合并、拆分、页面处理和压缩。",
+  "category": "document",
+  "defaultAlias": "pdf",
+  "entry": "index.html",
+  "icon": "assets/icon.svg",
+  "id": "tooldesk-pdf-toolbox",
+  "keywords": [
+    "pdf",
+    "pdfgongju",
+    "hebingpdf",
+    "chaifenpdf",
+    "yasuopdf",
+    "PDF",
+    "转换",
+    "合并",
+    "拆分",
+    "压缩"
+  ],
+  "manifestVersion": 1,
+  "minHostVersion": "0.1.0",
+  "name": "PDF 工具箱",
+  "permissions": [
+    "filesystem",
+    "native-tool"
+  ],
+  "publisher": "tooldesk",
+  "sdkVersion": "1.0.0",
+  "capabilities": [
+    "openPath",
+    "runPluginTool",
+    "showOpenDialog"
+  ],
+  "nativeTools": {
+    "qpdf": "tools/windows/qpdf/bin/qpdf.exe"
+  },
+  "version": "0.1.0",
+  "windowIcon": "assets/window-icon.png"
+}

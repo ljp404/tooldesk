@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="翻译" fill="none">
+  <rect width="64" height="64" rx="14" fill="#2563eb"/>
+  <rect x="13" y="14" width="25" height="25" rx="6" fill="#ffffff"/>
+  <rect x="26" y="25" width="25" height="25" rx="6" fill="#dbeafe"/>
+  <path d="M20 31l5.3-12h2.4L33 31h-3.1l-1-2.6h-5l-1 2.6H20Zm4.7-5h3.4l-1.7-4.5L24.7 26Z" fill="#2563eb"/>
+  <path d="M34 33.5h11" stroke="#2563eb" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M39.5 30.5v3" stroke="#2563eb" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M36.4 33.6c.8 2.7 2.4 4.8 4.8 6.4m2.9-6.4c-.9 3.1-2.9 5.7-6 7.9" stroke="#2563eb" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18 45h13m0 0l-4-4m4 4l-4 4" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M46 19H33m0 0l4-4m-4 4l4 4" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
