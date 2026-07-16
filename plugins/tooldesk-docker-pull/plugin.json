@@ -1,6 +1,6 @@
 {
   "accent": "blue",
-  "caption": "解析 Compose、多镜像拉取；支持本机 Docker、SSH 远程或导出服务器脚本。",
+  "caption": "支持 Compose 或手动镜像清单，可在本机、SSH 远程拉取或导出服务器脚本。",
   "category": "dev",
   "defaultAlias": "jxlq",
   "entry": "index.html",
@@ -51,11 +51,13 @@
   ],
   "sync": {
     "localStorageKeys": [
+      "tooldesk-docker-pull-manual-images",
       "tooldesk-docker-pull-mirrors",
       "tooldesk-docker-pull-mode",
+      "tooldesk-docker-pull-source",
       "tooldesk-docker-pull-ssh-config"
     ]
   },
-  "version": "0.1.2",
+  "version": "0.2.0",
   "windowIcon": "assets/window-icon.png"
 }

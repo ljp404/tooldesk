@@ -73,6 +73,16 @@
         border-color: #2563eb;
         color: #fff;
       }
+      button.source-tab {
+        background: #f8fafc;
+        border: 1px solid #dbe4ef;
+        color: #475569;
+      }
+      button.source-tab.active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
       button:disabled { cursor: not-allowed; opacity: .62; }
       [hidden] { display: none !important; }
       .panel {
@@ -179,6 +189,28 @@
         font-weight: 700;
         margin-bottom: 8px;
       }
+      .source-selector {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .source-selector-label {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+        margin-right: 2px;
+      }
+      .manual-image-input {
+        min-height: 72px;
+      }
+      .validation-message {
+        color: #dc2626;
+        font-size: 12px;
+        line-height: 1.5;
+        margin-top: 6px;
+      }
       .hint {
         color: #64748b;
         font-size: 12px;
@@ -281,6 +313,12 @@
           <button id="modeScript" type="button" class="tab" data-mode="script">生成脚本</button>
         </div>
 
+        <div class="source-selector">
+          <span class="source-selector-label">镜像清单来源</span>
+          <button id="sourceCompose" type="button" class="source-tab active" data-source="compose">Compose 文件</button>
+          <button id="sourceManual" type="button" class="source-tab" data-source="manual">手动输入</button>
+        </div>
+
         <div id="sshPanel" hidden>
           <div class="section-title">远程 Linux 服务器（密码登录）</div>
           <div class="field-grid">
@@ -288,7 +326,7 @@
             <label>端口<input id="sshPort" type="number" value="22" min="1" max="65535" /></label>
             <label>用户名<input id="sshUser" type="text" placeholder="root" /></label>
             <label>密码<input id="sshPassword" type="password" /></label>
-            <label class="wide">远程 Compose 目录<input id="remoteComposeDir" type="text" placeholder="/opt/myapp" /></label>
+            <label id="remoteComposeDirField" class="wide">远程 Compose 目录<input id="remoteComposeDir" type="text" placeholder="/opt/myapp" /></label>
           </div>
         </div>
 
@@ -303,6 +341,11 @@
           <input id="composePath" type="text" placeholder="选择本地 docker-compose.yml（用于解析镜像）" readonly />
           <button id="pickCompose" type="button" class="secondary">选择文件</button>
           <button id="parseCompose" type="button" class="secondary">解析镜像</button>
+        </div>
+
+        <div id="manualImageRow" hidden style="margin-top: 10px;">
+          <textarea id="manualImageList" class="manual-image-input" spellcheck="false" placeholder="每行一个镜像，例如：&#10;eclipse-temurin:17-jre&#10;registry.example.com/team/app:1.0.0"></textarea>
+          <div id="manualImageValidation" class="validation-message" hidden></div>
         </div>
 
         <div class="row" style="margin-top: 8px;">
@@ -378,9 +421,13 @@
       const MIRROR_STORAGE_KEY = 'tooldesk-docker-pull-mirrors';
       const MODE_STORAGE_KEY = 'tooldesk-docker-pull-mode';
       const SSH_STORAGE_KEY = 'tooldesk-docker-pull-ssh-config';
+      const SOURCE_STORAGE_KEY = 'tooldesk-docker-pull-source';
+      const MANUAL_IMAGES_STORAGE_KEY = 'tooldesk-docker-pull-manual-images';
       const PULL_TIMEOUT_MS = 5 * 60 * 1000;
 
       const composePathInput = document.getElementById('composePath');
+      const manualImageListInput = document.getElementById('manualImageList');
+      const manualImageValidation = document.getElementById('manualImageValidation');
       const mirrorListInput = document.getElementById('mirrorList');
       const imageRows = document.getElementById('imageRows');
       const logEl = document.getElementById('log');
@@ -394,9 +441,13 @@
       let api = null;
       let composeDir = '';
       let images = [];
+      let sourceImages = { compose: [], manual: [] };
+      let manualInvalidEntries = [];
       let mirrorHealth = new Map();
       let busy = false;
       let mode = 'local';
+      let sourceMode = 'compose';
+      let settingsSaveTimer = null;
 
       const plugin = TooldeskPlugin.create({
         id: 'tooldesk-docker-pull',
@@ -429,13 +480,16 @@
           'composeUp',
           'testSsh',
           'generateScript',
-          'copyScript'
+          'copyScript',
+          'sourceCompose',
+          'sourceManual'
         ]) {
           const node = document.getElementById(id);
           if (node) {
             node.disabled = next;
           }
         }
+        manualImageListInput.disabled = next;
       }
 
       function appendLog(message) {
@@ -557,6 +611,56 @@
         };
       }
 
+      function isValidDockerImageReference(value) {
+        const reference = String(value || '').trim();
+        if (!reference || reference.length > 255 || /\s/.test(reference) || reference.includes('://')) {
+          return false;
+        }
+
+        const digestParts = reference.split('@');
+        if (digestParts.length > 2) {
+          return false;
+        }
+        if (digestParts[1] && !/^[A-Za-z][A-Za-z0-9_+.-]*:[0-9a-fA-F]{32,}$/.test(digestParts[1])) {
+          return false;
+        }
+
+        let name = digestParts[0];
+        const lastSlash = name.lastIndexOf('/');
+        const lastColon = name.lastIndexOf(':');
+        if (lastColon > lastSlash) {
+          const tag = name.slice(lastColon + 1);
+          if (!/^[\w][\w.-]{0,127}$/.test(tag)) {
+            return false;
+          }
+          name = name.slice(0, lastColon);
+        }
+
+        const namePattern = /^(?:[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?(?::[0-9]+)?\/)?[a-z0-9]+(?:(?:[._]|__|[-]+)[a-z0-9]+)*(?:\/[a-z0-9]+(?:(?:[._]|__|[-]+)[a-z0-9]+)*)*$/;
+        return namePattern.test(name);
+      }
+
+      function parseManualImageLines(text) {
+        const valid = [];
+        const invalid = [];
+        const seen = new Set();
+
+        for (const line of String(text || '').split(/\r?\n/)) {
+          const reference = line.trim();
+          if (!reference || seen.has(reference)) {
+            continue;
+          }
+          seen.add(reference);
+          if (isValidDockerImageReference(reference)) {
+            valid.push(reference);
+          } else {
+            invalid.push(reference);
+          }
+        }
+
+        return { invalid, valid };
+      }
+
       function buildMirrorPullRef(image, mirrorHost) {
         const parsed = parseDockerImage(image);
         if (!parsed.isDockerHub) {
@@ -575,9 +679,12 @@
 
       function renderImageRows() {
         if (!images.length) {
-          imageRows.innerHTML =
-            '<tr><td colspan="3" style="color:#94a3b8;">未解析到 image 字段</td></tr>';
-          summaryTextEl.textContent = '未找到镜像';
+          const emptyText = sourceMode === 'manual' ? '请输入镜像名称，每行一个' : '未解析到 image 字段';
+          imageRows.innerHTML = `<tr><td colspan="3" style="color:#94a3b8;">${emptyText}</td></tr>`;
+          summaryTextEl.textContent =
+            sourceMode === 'manual' && manualInvalidEntries.length
+              ? `无有效镜像，${manualInvalidEntries.length} 行格式无效`
+              : '未找到镜像';
           return;
         }
         imageRows.innerHTML = images
@@ -592,11 +699,15 @@
           )
           .join('');
         const doneCount = images.filter((item) => item.status === 'ok' || item.status === 'skip').length;
-        summaryTextEl.textContent = `共 ${images.length} 个镜像，已完成 ${doneCount} 个`;
+        const invalidText = sourceMode === 'manual' && manualInvalidEntries.length
+          ? `，${manualInvalidEntries.length} 行无效`
+          : '';
+        summaryTextEl.textContent = `共 ${images.length} 个镜像，已完成 ${doneCount} 个${invalidText}`;
       }
 
       function updateImageState(name, patch) {
         images = images.map((item) => (item.name === name ? { ...item, ...patch } : item));
+        sourceImages[sourceMode] = images;
         renderImageRows();
       }
 
@@ -651,6 +762,21 @@
         } catch {
           // ignore
         }
+
+        try {
+          manualImageListInput.value =
+            (await plugin.api.getPluginStorageItem(MANUAL_IMAGES_STORAGE_KEY)) || '';
+        } catch {
+          manualImageListInput.value = '';
+        }
+        applyManualImages();
+
+        try {
+          const savedSource = await plugin.api.getPluginStorageItem(SOURCE_STORAGE_KEY);
+          setSourceMode(savedSource === 'manual' ? 'manual' : 'compose', false);
+        } catch {
+          setSourceMode('compose', false);
+        }
       }
 
       async function saveSettings(showLog = false) {
@@ -665,8 +791,13 @@
           const mirrorSaved = await plugin.api.setPluginStorageItem(MIRROR_STORAGE_KEY, mirrorListInput.value.trim());
           const modeSaved = await plugin.api.setPluginStorageItem(MODE_STORAGE_KEY, mode);
           const sshSaved = await plugin.api.setPluginStorageItem(SSH_STORAGE_KEY, sshPayload);
+          const sourceSaved = await plugin.api.setPluginStorageItem(SOURCE_STORAGE_KEY, sourceMode);
+          const manualImagesSaved = await plugin.api.setPluginStorageItem(
+            MANUAL_IMAGES_STORAGE_KEY,
+            manualImageListInput.value.trim()
+          );
 
-          if (!mirrorSaved || !modeSaved || !sshSaved) {
+          if (!mirrorSaved || !modeSaved || !sshSaved || !sourceSaved || !manualImagesSaved) {
             appendLog('配置保存失败');
             return false;
           }
@@ -688,6 +819,35 @@
         }
       }
 
+      function scheduleSettingsSave() {
+        window.clearTimeout(settingsSaveTimer);
+        settingsSaveTimer = window.setTimeout(() => void saveSettings(), 300);
+      }
+
+      function updateSourceUi() {
+        const usesCompose = sourceMode === 'compose';
+        document.getElementById('composePickerRow').hidden = !usesCompose || mode === 'remote';
+        document.getElementById('manualImageRow').hidden = usesCompose;
+        document.getElementById('remoteComposeDirField').hidden = !usesCompose;
+        document.getElementById('remoteDirRow').hidden = !usesCompose || mode !== 'script';
+        document.getElementById('composeUp').hidden = !usesCompose || mode !== 'local';
+      }
+
+      function setSourceMode(nextSource, persist = true) {
+        sourceMode = nextSource;
+        for (const button of document.querySelectorAll('button.source-tab')) {
+          button.classList.toggle('active', button.dataset.source === nextSource);
+        }
+        updateSourceUi();
+        images = sourceImages[nextSource];
+        renderImageRows();
+
+        if (persist) {
+          appendLog(nextSource === 'manual' ? `手动镜像清单：${images.length} 个` : '镜像清单来源：Compose 文件');
+          void saveSettings();
+        }
+      }
+
       function setMode(nextMode, persist = true) {
         mode = nextMode;
         document.body.dataset.mode = nextMode;
@@ -695,13 +855,11 @@
           button.classList.toggle('active', button.dataset.mode === nextMode);
         }
         sshPanel.hidden = nextMode !== 'remote';
-        document.getElementById('remoteDirRow').hidden = nextMode !== 'script';
-        document.getElementById('composePickerRow').hidden = nextMode === 'remote';
         scriptPanel.hidden = nextMode !== 'script';
         scriptActions.hidden = nextMode !== 'script';
         document.getElementById('testSsh').hidden = nextMode !== 'remote';
         document.getElementById('prePull').hidden = nextMode === 'script';
-        document.getElementById('composeUp').hidden = nextMode !== 'local';
+        updateSourceUi();
 
         if (nextMode === 'local') {
           void refreshLocalDockerStatus();
@@ -740,15 +898,41 @@
       }
 
       function applyParsedImages(names, sourceLabel) {
-        images = names.map((name) => ({
+        sourceImages.compose = names.map((name) => ({
           detail: '',
           name,
           status: 'pending',
           statusClass: 'pending',
           statusLabel: '待拉取'
         }));
+        if (sourceMode === 'compose') {
+          images = sourceImages.compose;
+        }
         appendLog(`${sourceLabel}：镜像 ${names.length} 个`);
         renderImageRows();
+      }
+
+      function applyManualImages() {
+        const { invalid, valid } = parseManualImageLines(manualImageListInput.value);
+        const previous = new Map(sourceImages.manual.map((item) => [item.name, item]));
+        manualInvalidEntries = invalid;
+        sourceImages.manual = valid.map((name) => previous.get(name) || ({
+          detail: '',
+          name,
+          status: 'pending',
+          statusClass: 'pending',
+          statusLabel: '待拉取'
+        }));
+
+        manualImageValidation.hidden = invalid.length === 0;
+        manualImageValidation.textContent = invalid.length
+          ? `格式无效：${invalid.slice(0, 3).join('、')}${invalid.length > 3 ? ` 等 ${invalid.length} 行` : ''}`
+          : '';
+
+        if (sourceMode === 'manual') {
+          images = sourceImages.manual;
+          renderImageRows();
+        }
       }
 
       async function parseComposeFile() {
@@ -771,7 +955,7 @@
       }
 
       async function parseRemoteComposeFile() {
-        const remoteDir = getRemoteComposeDir();
+        const remoteDir = sourceMode === 'compose' ? getRemoteComposeDir() : '';
         const config = getSshConfig();
         if (!remoteDir) {
           appendLog('请填写远程 Compose 目录');
@@ -987,7 +1171,7 @@
 
       async function prePullAll() {
         if (!images.length) {
-          appendLog('请先解析 Compose 文件');
+          appendLog(sourceMode === 'manual' ? '请先输入有效的镜像名称' : '请先解析 Compose 文件');
           return;
         }
         if (mode === 'local') {
@@ -1011,6 +1195,7 @@
         setBusy(true);
         try {
           await saveSettings();
+          appendLog(sourceMode === 'manual' ? `使用手动镜像清单：${images.length} 个` : `使用 Compose 镜像清单：${images.length} 个`);
           appendLog(`开始拉取（${mode === 'remote' ? '远程服务器' : '本机'}）…`);
           if (mode === 'remote') {
             appendLog(`远程主机 ${getSshConfig().host}，单镜像超时 ${PULL_TIMEOUT_MS / 60000} 分钟`);
@@ -1099,7 +1284,7 @@
           return '';
         }
         const mirrors = getOrderedMirrors();
-        const remoteDir = getRemoteComposeDir();
+        const remoteDir = sourceMode === 'compose' ? getRemoteComposeDir() : '';
         const lines = [
           '#!/usr/bin/env bash',
           'set -euo pipefail',
@@ -1161,7 +1346,7 @@
           const result = await api.testSshConnection(getSshConfig());
           setRuntimeStatus(result.ok ? 'ok' : 'err', result.message);
           appendLog(result.message);
-          if (result.ok) {
+          if (result.ok && sourceMode === 'compose') {
             await parseRemoteComposeFile();
           }
         } catch (error) {
@@ -1174,6 +1359,12 @@
       document.getElementById('modeLocal').addEventListener('click', () => setMode('local'));
       document.getElementById('modeRemote').addEventListener('click', () => setMode('remote'));
       document.getElementById('modeScript').addEventListener('click', () => setMode('script'));
+      document.getElementById('sourceCompose').addEventListener('click', () => setSourceMode('compose'));
+      document.getElementById('sourceManual').addEventListener('click', () => setSourceMode('manual'));
+      manualImageListInput.addEventListener('input', () => {
+        applyManualImages();
+        scheduleSettingsSave();
+      });
 
       document.getElementById('pickCompose').addEventListener('click', async () => {
         try {
@@ -1208,6 +1399,7 @@
           return;
         }
         scriptOutput.value = script;
+        appendLog(sourceMode === 'manual' ? `使用手动镜像清单：${images.length} 个` : `使用 Compose 镜像清单：${images.length} 个`);
         appendLog('远程脚本已生成，可复制到服务器执行');
       });
 
