@@ -876,6 +876,7 @@
 
       async function imageExists(imageName) {
         if (mode === 'remote') {
+          appendLog(`${imageName} → 检查远程镜像是否已存在（最长 30 秒）`);
           const result = await remoteExec(`docker image inspect ${shQuote(imageName)}`, { timeoutMs: 30000 });
           return result.ok;
         }
@@ -883,7 +884,7 @@
       }
 
       async function pullImageRef(ref) {
-        const command = `docker pull --progress=plain ${shQuote(ref)}`;
+        const command = `docker pull ${shQuote(ref)}`;
         if (mode === 'remote') {
           return remoteExec(command, { timeoutMs: PULL_TIMEOUT_MS });
         }
@@ -898,6 +899,12 @@
       }
 
       async function pullSingleImage(imageName) {
+        updateImageState(imageName, {
+          detail: mode === 'remote' ? '检查远程镜像…' : '检查本机镜像…',
+          status: 'checking',
+          statusClass: 'pending',
+          statusLabel: '检查中'
+        });
         const exists = await imageExists(imageName);
         if (exists) {
           updateImageState(imageName, {
@@ -951,6 +958,9 @@
         }
 
         appendLog(`${imageName} ← 尝试 Docker Hub 直连`);
+        if (mode === 'remote') {
+          appendLog(`  远程执行: docker pull ${imageName}`);
+        }
         const direct = await pullImageRef(imageName);
         if (direct.ok) {
           updateImageState(imageName, {
@@ -997,19 +1007,39 @@
         }
 
         setBusy(true);
-        await saveSettings();
-        appendLog(`开始拉取（${mode === 'remote' ? '远程服务器' : '本机'}）…`);
-        if (mode === 'remote') {
-          appendLog(`远程主机 ${getSshConfig().host}，单镜像超时 ${PULL_TIMEOUT_MS / 60000} 分钟`);
-        }
-        let successCount = 0;
-        for (const item of images) {
-          if (await pullSingleImage(item.name)) {
-            successCount += 1;
+        try {
+          await saveSettings();
+          appendLog(`开始拉取（${mode === 'remote' ? '远程服务器' : '本机'}）…`);
+          if (mode === 'remote') {
+            appendLog(`远程主机 ${getSshConfig().host}，单镜像超时 ${PULL_TIMEOUT_MS / 60000} 分钟`);
           }
+          let successCount = 0;
+          for (const item of images) {
+            if (await pullSingleImage(item.name)) {
+              successCount += 1;
+            }
+          }
+          appendLog(`拉取完成：${successCount}/${images.length}`);
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : typeof error === 'string'
+                ? error
+                : '远程命令执行失败';
+          const activeImage = images.find((item) => item.status === 'checking' || item.status === 'pulling');
+          if (activeImage) {
+            updateImageState(activeImage.name, {
+              detail: message.slice(-180),
+              status: 'fail',
+              statusClass: 'fail',
+              statusLabel: '失败'
+            });
+          }
+          appendLog(`拉取中断：${message}`);
+        } finally {
+          setBusy(false);
         }
-        appendLog(`拉取完成：${successCount}/${images.length}`);
-        setBusy(false);
       }
 
       async function composeUp() {
