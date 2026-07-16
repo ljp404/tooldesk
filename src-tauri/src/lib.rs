@@ -6,6 +6,7 @@ mod docker_ops;
 mod file_ops;
 mod global_shortcuts;
 mod http_client;
+mod installed_apps;
 mod keepass_ops;
 mod local_library;
 mod mail_ops;
@@ -139,6 +140,9 @@ pub fn run() {
             file_ops::write_hosts_file,
             file_ops::write_text_file,
             http_client::send_http_request,
+            installed_apps::get_installed_application_icon,
+            installed_apps::launch_installed_application,
+            installed_apps::list_installed_applications,
             global_shortcuts::resume_global_shortcuts,
             global_shortcuts::suspend_global_shortcuts,
             global_shortcuts::sync_global_shortcuts,

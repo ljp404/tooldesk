@@ -91,6 +91,11 @@ import {
 } from './tauriMusic';
 import { getLastContent, openQuickToolWindow } from './tauriQuickTool';
 import {
+  getInstalledApplicationIcon,
+  launchInstalledApplication,
+  listInstalledApplications
+} from './tauriInstalledApplications';
+import {
   installLocalPlugin,
   installMarketPlugin,
   listPluginMarket,
@@ -476,6 +481,7 @@ export function installTauriBridge() {
     getAliyunToken,
     getAppSettings,
     getAppVersion: getTauriAppVersion,
+    getInstalledApplicationIcon,
     getLastContent,
     getKeePassSession,
     getLastScreenshot,
@@ -499,7 +505,9 @@ export function installTauriBridge() {
     invalidateCloudCache,
     isWindowMaximized: () => getCurrentWindow().isMaximized(),
     isWindowPinned: () => Promise.resolve(tauriPinned),
+    launchInstalledApplication,
     listBrowserBookmarks,
+    listInstalledApplications,
     listMailFolders,
     listPluginMarket,
     listPluginTools,

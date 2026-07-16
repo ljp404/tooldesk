@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { resolveContentToolKeys } from '../../shared/toolContentRules';
+import type { InstalledApplication } from '../../types/installedApplication';
 import type { ToolAliasSettings, ToolItem, ToolKey } from '../../types/toolbox';
+import { filterInstalledApplications } from '../../utils/installedApplicationSearch';
 import {
   filterToolsBySearchQuery,
   getDefaultToolAliasSettings,
@@ -15,12 +17,23 @@ import commonSitesData from '../../../plugins/tooldesk-common-sites/sites.json';
 
 type QuickKeyboardGroup = 'content' | 'favorite' | 'recent' | 'search';
 type QuickKeyboardDirection = 'down' | 'left' | 'right' | 'up';
-type QuickKeyboardItem = {
-  group: QuickKeyboardGroup;
-  id: string;
-  tool: ToolItem;
-  type: 'tool';
-};
+type QuickKeyboardItem =
+  | {
+      group: QuickKeyboardGroup;
+      id: string;
+      tool: ToolItem;
+      type: 'tool';
+    }
+  | {
+      application: InstalledApplication;
+      group: 'search';
+      id: string;
+      type: 'application';
+    };
+
+type QuickSearchResult =
+  | { id: string; tool: ToolItem; type: 'tool' }
+  | { application: InstalledApplication; id: string; type: 'application' };
 
 type CommonSiteCommand = {
   aliases: string[];
@@ -67,7 +80,10 @@ const activeInlineContent = ref('');
 const activeInlineVersion = ref(0);
 const showInlineWindowHint = ref(false);
 const localLibraries = ref<TooldeskLocalLibraryConfig[]>([]);
+const installedApplications = ref<InstalledApplication[]>([]);
+const installedApplicationIcons = ref<Record<string, string | null>>({});
 const toolAliasSettings = ref<ToolAliasSettings>(getDefaultToolAliasSettings());
+const installedApplicationIconRequests = new Set<string>();
 let inlineDoubleClickOpening = false;
 let inlineWindowHintTimer: number | null = null;
 let inlineLastPointerDown:
@@ -79,7 +95,9 @@ let inlineLastPointerDown:
   | null = null;
 
 const normalizedSearch = computed(() => searchQuery.value.trim().toLowerCase());
-const searchPlaceholder = computed(() => (showClipboardChip.value ? '继续输入筛选…' : '搜索功能 / 粘贴文本、链接、JSON'));
+const searchPlaceholder = computed(() =>
+  showClipboardChip.value ? '继续输入筛选…' : '搜索工具、本机程序 / 粘贴文本、链接、JSON'
+);
 const searchInputText = computed(() => searchQuery.value || '　');
 
 function formatClipboardPreview(content: string) {
@@ -201,7 +219,7 @@ const showRecentExpand = computed(
 const favoriteToolItems = computed(() => resolveToolKeys(favoriteTools.value).slice(0, 8));
 const defaultRecentItems = computed(() => (recentToolItems.value.length > 0 ? recentToolItems.value : props.tools.slice(0, 5)));
 const contentResultItems = computed(() => filteredTools.value.slice(0, 12));
-const searchResultItems = computed(() => {
+const searchToolItems = computed(() => {
   const items = [...filteredTools.value, ...searchContentMatchedTools.value].filter(
     (tool, index, tools) => tools.findIndex((item) => item.key === tool.key) === index
   );
@@ -221,6 +239,64 @@ const searchResultItems = computed(() => {
 
   return items.slice(0, 12);
 });
+const matchedInstalledApplications = computed(() =>
+  filterInstalledApplications(installedApplications.value, normalizedSearch.value)
+);
+const searchResultItems = computed<QuickSearchResult[]>(() => {
+  const applicationLimit = Math.min(4, matchedInstalledApplications.value.length);
+  const toolResults = searchToolItems.value.slice(0, 12 - applicationLimit).map((tool) => ({
+    id: `tool:${tool.key}`,
+    tool,
+    type: 'tool' as const
+  }));
+  const applicationResults = matchedInstalledApplications.value.slice(0, applicationLimit).map((application) => ({
+    application,
+    id: `application:${application.id}`,
+    type: 'application' as const
+  }));
+
+  return [...toolResults, ...applicationResults];
+});
+
+function resolveInstalledApplicationIcon(application: InstalledApplication) {
+  return installedApplicationIcons.value[application.id] || 'application';
+}
+
+async function loadInstalledApplicationIcon(application: InstalledApplication) {
+  if (
+    Object.prototype.hasOwnProperty.call(installedApplicationIcons.value, application.id) ||
+    installedApplicationIconRequests.has(application.id) ||
+    !window.tooldeskShortcut?.getInstalledApplicationIcon
+  ) {
+    return;
+  }
+
+  installedApplicationIconRequests.add(application.id);
+
+  try {
+    const icon = await window.tooldeskShortcut.getInstalledApplicationIcon(application.id);
+    installedApplicationIcons.value = {
+      ...installedApplicationIcons.value,
+      [application.id]: icon
+    };
+  } catch (error) {
+    console.warn('[tooldesk] Failed to load installed application icon.', error);
+    installedApplicationIcons.value = {
+      ...installedApplicationIcons.value,
+      [application.id]: null
+    };
+  } finally {
+    installedApplicationIconRequests.delete(application.id);
+  }
+}
+
+watch(searchResultItems, (results) => {
+  for (const result of results) {
+    if (result.type === 'application') {
+      void loadInstalledApplicationIcon(result.application);
+    }
+  }
+});
 
 const keyboardItems = computed(() => {
   if (isContentMatchMode.value) {
@@ -228,7 +304,7 @@ const keyboardItems = computed(() => {
   }
 
   if (normalizedSearch.value) {
-    return searchResultItems.value.map((tool, index) => createKeyboardToolItem('search', tool, index));
+    return searchResultItems.value.map((result, index) => createKeyboardSearchItem(result, index));
   }
 
   return [
@@ -247,7 +323,35 @@ function createKeyboardToolItem(group: QuickKeyboardGroup, tool: ToolItem, index
   };
 }
 
+function createKeyboardSearchItem(result: QuickSearchResult, index: number): QuickKeyboardItem {
+  if (result.type === 'application') {
+    return {
+      application: result.application,
+      group: 'search',
+      id: `search:${result.id}:${index}`,
+      type: 'application'
+    };
+  }
+
+  return createKeyboardToolItem('search', result.tool, index);
+}
+
+async function refreshInstalledApplications() {
+  if (!window.tooldeskShortcut?.listInstalledApplications) {
+    installedApplications.value = [];
+    return;
+  }
+
+  try {
+    installedApplications.value = await window.tooldeskShortcut.listInstalledApplications();
+  } catch (error) {
+    console.warn('[tooldesk] Failed to list installed applications.', error);
+    installedApplications.value = [];
+  }
+}
+
 watch([() => props.shortcutContent, () => props.shortcutContentVersion], () => {
+  void refreshInstalledApplications();
   const content = props.shortcutContent?.trim() ?? '';
 
   if (activeInlineTool.value && activeInlineContent.value.trim()) {
@@ -437,6 +541,28 @@ function openSearchResultTool(tool: ToolItem, forceNew = false) {
   }
 
   openTool(tool, forceNew);
+}
+
+async function openInstalledApplication(application: InstalledApplication) {
+  if (!window.tooldeskShortcut?.launchInstalledApplication) {
+    return;
+  }
+
+  try {
+    await window.tooldeskShortcut.launchInstalledApplication(application.id);
+    await window.tooldeskShortcut.closeCurrentWindow();
+  } catch (error) {
+    console.warn('[tooldesk] Failed to launch installed application.', error);
+  }
+}
+
+function openSearchResult(result: QuickSearchResult, forceNew = false) {
+  if (result.type === 'application') {
+    void openInstalledApplication(result.application);
+    return;
+  }
+
+  openSearchResultTool(result.tool, forceNew);
 }
 
 function focusSearchInput(options: { selectExisting?: boolean } = {}) {
@@ -673,6 +799,7 @@ function handleSearchKeydown(event: KeyboardEvent) {
       if (
         commonSiteCommand &&
         commonSitesPluginTool.value &&
+        activeKeyboardItem.value.type === 'tool' &&
         activeKeyboardItem.value.tool.key === commonSitesPluginTool.value.key
       ) {
         openExternalUrl(commonSiteCommand.targetUrl);
@@ -704,6 +831,11 @@ function handleSearchKeydown(event: KeyboardEvent) {
 }
 
 function openKeyboardItem(item: QuickKeyboardItem, forceNew = false) {
+  if (item.type === 'application') {
+    void openInstalledApplication(item.application);
+    return;
+  }
+
   openSearchResultTool(item.tool, forceNew);
 }
 
@@ -769,6 +901,11 @@ function isToolActive(group: QuickKeyboardGroup, tool: ToolItem, index: number) 
   return activeKeyboardItem.value?.id === `${group}:${tool.key}:${index}`;
 }
 
+function isSearchResultActive(result: QuickSearchResult, index: number) {
+  const id = result.type === 'tool' ? `search:${result.tool.key}:${index}` : `search:${result.id}:${index}`;
+  return activeKeyboardItem.value?.id === id;
+}
+
 onMounted(() => {
   loadSavedToolState();
 
@@ -783,6 +920,7 @@ onMounted(() => {
     void window.tooldeskShortcut.getLocalLibraries().then((libraries) => {
       localLibraries.value = libraries;
     });
+    void refreshInstalledApplications();
   }
 });
 
@@ -948,15 +1086,16 @@ watch(searchInputText, updateSearchInputWidth, { immediate: true });
       </div>
       <div v-if="searchResultItems.length > 0" class="quick-launcher-grid">
         <button
-          v-for="(tool, index) in searchResultItems"
-          :key="tool.key"
+          v-for="(result, index) in searchResultItems"
+          :key="result.id"
           class="quick-launcher-tool"
-          :class="{ active: isToolActive('search', tool, index) }"
+          :class="{ active: isSearchResultActive(result, index) }"
           type="button"
-          @click="openSearchResultTool(tool, $event.shiftKey)"
+          @click="openSearchResult(result, $event.shiftKey)"
         >
-          <ToolIcon :accent="tool.accent" :icon="tool.icon" />
-          <span>{{ tool.label }}</span>
+          <ToolIcon v-if="result.type === 'tool'" :accent="result.tool.accent" :icon="result.tool.icon" />
+          <ToolIcon v-else accent="cyan" :icon="resolveInstalledApplicationIcon(result.application)" />
+          <span>{{ result.type === 'tool' ? result.tool.label : result.application.name }}</span>
         </button>
       </div>
       <p v-else class="quick-launcher-empty">未找到相关工具，换个关键词试试</p>

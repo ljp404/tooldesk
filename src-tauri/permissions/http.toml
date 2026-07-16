@@ -61,7 +61,13 @@ commands.allow = [
 [[permission]]
 identifier = "allow-quick-tool-window"
 description = "Allows the frontend bridge to open quick tool windows with the configured Tauri data directory."
-commands.allow = ["get_last_content", "open_quick_tool"]
+commands.allow = [
+  "get_last_content",
+  "get_installed_application_icon",
+  "launch_installed_application",
+  "list_installed_applications",
+  "open_quick_tool"
+]
 
 [[permission]]
 identifier = "allow-file-ops"

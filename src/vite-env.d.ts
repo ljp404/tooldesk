@@ -507,6 +507,7 @@ interface TooldeskShortcutApi {
   showCurrentWindow(): Promise<void>;
   startCurrentWindowDrag(): Promise<void>;
   getAppSettings(): Promise<TooldeskAppSettings>;
+  getInstalledApplicationIcon(applicationId: string): Promise<string | null>;
   getAppVersion(): Promise<string>;
   getStorageDirectories(): Promise<TooldeskStorageDirectoryConfig>;
   resetStorageDirectory(kind: TooldeskStorageDirectoryKind): Promise<TooldeskStorageDirectoryConfig>;
@@ -567,6 +568,8 @@ interface TooldeskShortcutApi {
   onLocalLibraryChanged(callback: () => void): () => void;
   installLocalPlugin(): Promise<TooldeskPluginInstallResult>;
   installMarketPlugin(pluginId: string): Promise<TooldeskPluginInstallResult>;
+  launchInstalledApplication(applicationId: string): Promise<void>;
+  listInstalledApplications(): Promise<import('./types/installedApplication').InstalledApplication[]>;
   getPluginStorageItem(key: string): Promise<string | null>;
   listPluginMarket(): Promise<TooldeskPluginMarketCatalog>;
   listPluginTools(): Promise<TooldeskPluginToolRegistration[]>;

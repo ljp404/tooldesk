@@ -25,6 +25,12 @@ const isImageIcon = computed(() => {
       <path d="M4 11.5 12 5l8 6.5" />
       <path d="M6.5 10.5V19h11v-8.5" />
     </template>
+    <template v-else-if="name === 'application'">
+      <rect x="3" y="4" width="18" height="14" rx="2" />
+      <path d="M8 21h8" />
+      <path d="M12 18v3" />
+      <path d="M3 8h18" />
+    </template>
     <template v-else-if="name === 'recent'">
       <circle cx="12" cy="12" r="7" />
       <path d="M12 8v4l2.5 1.5" />
