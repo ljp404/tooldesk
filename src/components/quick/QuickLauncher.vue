@@ -354,7 +354,9 @@ watch([() => props.shortcutContent, () => props.shortcutContentVersion], () => {
   void refreshInstalledApplications();
   const content = props.shortcutContent?.trim() ?? '';
 
-  if (activeInlineTool.value && activeInlineContent.value.trim()) {
+  if (activeInlineTool.value) {
+    clipboardContent.value = content;
+    searchQuery.value = '';
     if (window.tooldeskShortcut) {
       void nextTick(() =>
         window.tooldeskShortcut?.fitCurrentWindow({
@@ -364,20 +366,6 @@ watch([() => props.shortcutContent, () => props.shortcutContentVersion], () => {
       );
     }
     return;
-  }
-
-  if (activeInlineTool.value) {
-    activeInlineTool.value = null;
-    activeInlineContent.value = '';
-    activeInlineVersion.value = 0;
-    if (window.tooldeskShortcut) {
-      void nextTick(() =>
-        window.tooldeskShortcut?.fitCurrentWindow({
-          width: LAUNCHER_WINDOW_WIDTH,
-          height: LAUNCHER_WINDOW_HEIGHT
-        })
-      );
-    }
   }
 
   const contentChanged = content !== clipboardContent.value.trim();
