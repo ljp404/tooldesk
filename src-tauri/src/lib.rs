@@ -50,6 +50,10 @@ fn configure_display_media_capture() {
 #[cfg(not(target_os = "windows"))]
 fn configure_display_media_capture() {}
 
+fn should_warm_screenshot_overlay(os: &str) -> bool {
+    os != "macos"
+}
+
 pub fn run() {
     diagnostics::install_panic_hook();
     diagnostics::log_flow("app", format!("process start pid={}", std::process::id()));
@@ -95,7 +99,11 @@ pub fn run() {
             diagnostics::log_flow("app", "tray created");
             taskbar_calendar::start_hotzone(app);
             clipboard_ops::start_clipboard_change_watcher(app_handle.clone());
-            screenshot::warm_screenshot_overlay(app_handle.clone());
+            if should_warm_screenshot_overlay(std::env::consts::OS) {
+                screenshot::warm_screenshot_overlay(app_handle.clone());
+            } else {
+                diagnostics::log_flow("screenshot", "warm skipped platform=macos");
+            }
             quick_tool::warm_quick_launcher(app_handle.clone());
             quick_tool::warm_taskbar_calendar_popup(app_handle.clone());
             diagnostics::log_flow("app", "setup complete");
@@ -268,4 +276,14 @@ pub fn run() {
         }
         _ => {}
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::should_warm_screenshot_overlay;
+
+    #[test]
+    fn macos_skips_screenshot_overlay_warmup() {
+        assert!(!should_warm_screenshot_overlay("macos"));
+    }
 }

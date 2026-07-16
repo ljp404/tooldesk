@@ -49,4 +49,24 @@ describe('tauri plugin asset paths', () => {
 
     vi.unstubAllEnvs();
   });
+
+  it('normalizes newly installed tools without rescanning the plugin directory', async () => {
+    const { __testing } = await import('./tauriPlugins');
+
+    const tools = __testing.normalizeInstalledPluginTools([
+      {
+        entryUrl: 'D:\\work\\plugins\\tooldesk-zeta\\index.html',
+        installPath: 'D:\\work\\plugins\\tooldesk-zeta',
+        label: 'Zeta'
+      },
+      {
+        entryUrl: 'D:\\work\\plugins\\tooldesk-alpha\\index.html',
+        installPath: 'D:\\work\\plugins\\tooldesk-alpha',
+        label: 'Alpha'
+      }
+    ] as TooldeskPluginToolRegistration[]);
+
+    expect(tools.map((tool) => tool.label)).toEqual(['Alpha', 'Zeta']);
+    expect(tools[0].entryUrl).toBe('asset://D:/work/plugins/tooldesk-alpha/index.html');
+  });
 });

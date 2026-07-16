@@ -59,17 +59,22 @@ function normalizeInstalledPluginRegistration(tool: TooldeskPluginToolRegistrati
   };
 }
 
+function normalizeInstalledPluginTools(tools: TooldeskPluginToolRegistration[]) {
+  return tools
+    .map(normalizeInstalledPluginRegistration)
+    .sort((current, next) => current.label.localeCompare(next.label, 'zh-CN'));
+}
+
 export const __testing = {
+  normalizeInstalledPluginTools,
   resolveInstalledPluginAssetPath,
   resolveInstalledPluginEntryUrl
 };
 
 export async function listPluginTools() {
-  const installed = await invoke<TooldeskPluginToolRegistration[]>('list_installed_plugin_tools')
-    .then((items) => items.map(normalizeInstalledPluginRegistration))
-    .catch(() => []);
+  const installed = await invoke<TooldeskPluginToolRegistration[]>('list_installed_plugin_tools').catch(() => []);
 
-  return installed.sort((current, next) => current.label.localeCompare(next.label, 'zh-CN'));
+  return normalizeInstalledPluginTools(installed);
 }
 
 function notifyPluginToolsChanged(tools: TooldeskPluginToolRegistration[]) {
@@ -85,8 +90,8 @@ export function onPluginToolsChanged(callback: (tools: TooldeskPluginToolRegistr
   };
 }
 
-async function withLatestPluginTools(result: TooldeskPluginInstallResult) {
-  const tools = await listPluginTools();
+function publishPluginInstallResult(result: TooldeskPluginInstallResult) {
+  const tools = normalizeInstalledPluginTools(result.tools);
   const nextResult = {
     ...result,
     tools
@@ -114,13 +119,13 @@ export async function installLocalPlugin(): Promise<TooldeskPluginInstallResult>
     sourcePath: selected.trim()
   });
 
-  return withLatestPluginTools(result);
+  return publishPluginInstallResult(result);
 }
 
 export async function uninstallPlugin(pluginId: string): Promise<TooldeskPluginInstallResult> {
   const result = await invoke<TooldeskPluginInstallResult>('uninstall_plugin', { pluginId });
 
-  return withLatestPluginTools(result);
+  return publishPluginInstallResult(result);
 }
 
 export function listPluginMarket(): Promise<TooldeskPluginMarketCatalog> {
@@ -130,5 +135,5 @@ export function listPluginMarket(): Promise<TooldeskPluginMarketCatalog> {
 export async function installMarketPlugin(pluginId: string): Promise<TooldeskPluginInstallResult> {
   const result = await invoke<TooldeskPluginInstallResult>('install_market_plugin', { pluginId });
 
-  return withLatestPluginTools(result);
+  return publishPluginInstallResult(result);
 }
