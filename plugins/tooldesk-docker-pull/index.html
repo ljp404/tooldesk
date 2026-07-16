@@ -846,7 +846,7 @@
         let lastLine = '';
 
         if (typeof api.onSshExecOutput === 'function') {
-          unsubscribe = api.onSshExecOutput((chunk) => {
+          unsubscribe = await api.onSshExecOutput((chunk) => {
             const line = String(chunk?.line ?? '').trim();
             if (!line) {
               return;
@@ -867,7 +867,9 @@
           }
           return await api.sshExec(config, command, { timeoutMs: options.timeoutMs ?? PULL_TIMEOUT_MS });
         } finally {
-          unsubscribe?.();
+          if (typeof unsubscribe === 'function') {
+            unsubscribe();
+          }
           if (activeImage && lastLine) {
             updateImageState(activeImage, { detail: lastLine.slice(-80) });
           }

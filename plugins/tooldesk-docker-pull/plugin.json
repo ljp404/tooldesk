@@ -56,6 +56,6 @@
       "tooldesk-docker-pull-ssh-config"
     ]
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "windowIcon": "assets/window-icon.png"
 }
