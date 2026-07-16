@@ -14,20 +14,27 @@ use std::sync::{Mutex, OnceLock};
 use windows::{
     core::{Interface, PCWSTR},
     Win32::{
+        Foundation::SIZE,
+        Graphics::Gdi::HBITMAP,
         Storage::FileSystem::WIN32_FIND_DATAW,
         System::Com::{
-            CoCreateInstance, CoInitializeEx, CoUninitialize, IPersistFile, CLSCTX_INPROC_SERVER,
-            COINIT_APARTMENTTHREADED, STGM_READ,
+            CoCreateInstance, CoInitializeEx, CoTaskMemFree, CoUninitialize, IPersistFile,
+            CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED, STGM_READ,
         },
-        UI::Shell::{IShellLinkW, ShellLink, SLGP_RAWPATH},
+        UI::Shell::{
+            BHID_EnumItems, FOLDERID_AppsFolder, IEnumShellItems, IShellItem,
+            IShellItemImageFactory, IShellLinkW, SHCreateItemFromParsingName, SHGetKnownFolderItem,
+            ShellLink, KF_FLAG_DEFAULT, SIGDN, SIGDN_DESKTOPABSOLUTEPARSING, SIGDN_NORMALDISPLAY,
+            SIIGBF_ICONONLY, SLGP_RAWPATH,
+        },
     },
 };
 #[cfg(target_os = "windows")]
 use windows_sys::Win32::Foundation::HWND;
 #[cfg(target_os = "windows")]
 use windows_sys::Win32::Graphics::Gdi::{
-    CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, GetDC, ReleaseDC, SelectObject,
-    BITMAPINFO, BI_RGB, DIB_RGB_COLORS,
+    CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, GetDC, GetDIBits, ReleaseDC,
+    SelectObject, BITMAPINFO, BI_RGB, DIB_RGB_COLORS,
 };
 #[cfg(target_os = "windows")]
 use windows_sys::Win32::UI::Shell::{SHGetFileInfoW, SHFILEINFOW, SHGFI_ICON, SHGFI_LARGEICON};
@@ -37,6 +44,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 };
 
 static APPLICATION_ICON_CACHE: OnceLock<Mutex<HashMap<String, Option<String>>>> = OnceLock::new();
+static APPLICATION_ENTRY_CACHE: OnceLock<Mutex<Vec<InstalledApplicationEntry>>> = OnceLock::new();
 const APPLICATION_ICON_SIZE: u32 = 64;
 
 #[derive(Clone, Debug, Serialize)]
@@ -50,7 +58,14 @@ pub(crate) struct InstalledApplication {
 #[derive(Clone, Debug)]
 struct InstalledApplicationEntry {
     application: InstalledApplication,
-    path: PathBuf,
+    target: InstalledApplicationTarget,
+}
+
+#[derive(Clone, Debug)]
+enum InstalledApplicationTarget {
+    Path(PathBuf),
+    #[cfg(target_os = "windows")]
+    ShellItem(String),
 }
 
 fn should_include_application_name(name: &str) -> bool {
@@ -108,7 +123,7 @@ fn push_application(entries: &mut Vec<InstalledApplicationEntry>, root: &Path, p
             keywords: application_keywords(root, &path, &name),
             name,
         },
-        path,
+        target: InstalledApplicationTarget::Path(path),
     });
 }
 
@@ -150,6 +165,81 @@ fn collect_windows_shortcuts(
 }
 
 #[cfg(target_os = "windows")]
+fn shell_item_display_name(item: &IShellItem, name_type: SIGDN) -> Option<String> {
+    let value = unsafe { item.GetDisplayName(name_type) }.ok()?;
+    let result = unsafe { value.to_string() }.ok();
+    unsafe { CoTaskMemFree(Some(value.0.cast())) };
+    result
+}
+
+#[cfg(target_os = "windows")]
+fn apps_folder_target(parsing_name: &str) -> String {
+    if parsing_name.starts_with("shell:") || parsing_name.starts_with("::{") {
+        parsing_name.to_string()
+    } else {
+        format!(r"shell:AppsFolder\{parsing_name}")
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn collect_windows_shell_applications(entries: &mut Vec<InstalledApplicationEntry>) {
+    let initialized = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }.0 >= 0;
+    let applications = (|| {
+        let apps_folder: IShellItem =
+            unsafe { SHGetKnownFolderItem(&FOLDERID_AppsFolder, KF_FLAG_DEFAULT, None) }.ok()?;
+        let enumerator: IEnumShellItems = unsafe {
+            apps_folder.BindToHandler(
+                None::<&windows::Win32::System::Com::IBindCtx>,
+                &BHID_EnumItems,
+            )
+        }
+        .ok()?;
+        let mut applications = Vec::new();
+
+        loop {
+            let mut items = [None];
+            let mut fetched = 0;
+            if unsafe { enumerator.Next(&mut items, Some(&mut fetched)) }.is_err() || fetched == 0 {
+                break;
+            }
+
+            let Some(item) = items[0].take() else {
+                continue;
+            };
+            let Some(name) = shell_item_display_name(&item, SIGDN_NORMALDISPLAY) else {
+                continue;
+            };
+            let Some(parsing_name) = shell_item_display_name(&item, SIGDN_DESKTOPABSOLUTEPARSING)
+            else {
+                continue;
+            };
+
+            if !should_include_application_name(&name) || Path::new(&parsing_name).is_absolute() {
+                continue;
+            }
+
+            applications.push(InstalledApplicationEntry {
+                application: InstalledApplication {
+                    id: format!("windows-shell:{parsing_name}"),
+                    keywords: vec![name.clone(), parsing_name.clone()],
+                    name,
+                },
+                target: InstalledApplicationTarget::ShellItem(apps_folder_target(&parsing_name)),
+            });
+        }
+
+        Some(applications)
+    })()
+    .unwrap_or_default();
+
+    if initialized {
+        unsafe { CoUninitialize() };
+    }
+
+    entries.extend(applications);
+}
+
+#[cfg(target_os = "windows")]
 fn collect_platform_applications(entries: &mut Vec<InstalledApplicationEntry>) {
     let roots = [
         env::var_os("APPDATA").map(PathBuf::from).map(|path| {
@@ -169,6 +259,8 @@ fn collect_platform_applications(entries: &mut Vec<InstalledApplicationEntry>) {
     for root in roots.into_iter().flatten().filter(|path| path.is_dir()) {
         collect_windows_shortcuts(&root, &root, 0, entries);
     }
+
+    collect_windows_shell_applications(entries);
 }
 
 #[cfg(target_os = "macos")]
@@ -299,7 +391,7 @@ fn collect_platform_applications(entries: &mut Vec<InstalledApplicationEntry>) {
                     keywords: vec![name.clone()],
                     name,
                 },
-                path,
+                target: InstalledApplicationTarget::Path(path),
             });
         }
     }
@@ -320,6 +412,35 @@ fn installed_application_entries() -> Vec<InstalledApplicationEntry> {
     let mut names = HashSet::new();
     entries.retain(|entry| names.insert(entry.application.name.to_lowercase()));
     entries
+}
+
+fn application_entry_cache() -> &'static Mutex<Vec<InstalledApplicationEntry>> {
+    APPLICATION_ENTRY_CACHE.get_or_init(|| Mutex::new(Vec::new()))
+}
+
+fn refresh_installed_application_entries() -> Vec<InstalledApplicationEntry> {
+    let entries = installed_application_entries();
+
+    if let Ok(mut cache) = application_entry_cache().lock() {
+        *cache = entries.clone();
+    }
+
+    entries
+}
+
+fn find_installed_application_entry(application_id: &str) -> Option<InstalledApplicationEntry> {
+    if let Some(entry) = application_entry_cache().lock().ok().and_then(|cache| {
+        cache
+            .iter()
+            .find(|entry| entry.application.id == application_id)
+            .cloned()
+    }) {
+        return Some(entry);
+    }
+
+    refresh_installed_application_entries()
+        .into_iter()
+        .find(|entry| entry.application.id == application_id)
 }
 
 fn application_icon_cache() -> &'static Mutex<HashMap<String, Option<String>>> {
@@ -510,7 +631,7 @@ fn icon_data_url(
         )
     };
     let byte_count = (APPLICATION_ICON_SIZE * APPLICATION_ICON_SIZE * 4) as usize;
-    let mut rgba = if drawn != 0 {
+    let rgba = if drawn != 0 {
         unsafe { std::slice::from_raw_parts(bits.cast::<u8>(), byte_count) }.to_vec()
     } else {
         Vec::new()
@@ -530,6 +651,11 @@ fn icon_data_url(
         return Ok(None);
     }
 
+    rgba_data_url(rgba)
+}
+
+#[cfg(target_os = "windows")]
+fn rgba_data_url(mut rgba: Vec<u8>) -> Result<Option<String>, String> {
     for pixel in rgba.chunks_exact_mut(4) {
         pixel.swap(0, 2);
     }
@@ -543,6 +669,87 @@ fn icon_data_url(
     }
 
     encode_png(rgba).map(|png| Some(png_data_url(&png)))
+}
+
+#[cfg(target_os = "windows")]
+fn bitmap_data_url(bitmap: HBITMAP) -> Result<Option<String>, String> {
+    let desktop: HWND = std::ptr::null_mut();
+    let screen_dc = unsafe { GetDC(desktop) };
+
+    if screen_dc.is_null() {
+        unsafe { DeleteObject(bitmap.0) };
+        return Ok(None);
+    }
+
+    let mut bitmap_info = unsafe { std::mem::zeroed::<BITMAPINFO>() };
+    bitmap_info.bmiHeader.biSize = std::mem::size_of_val(&bitmap_info.bmiHeader) as u32;
+    bitmap_info.bmiHeader.biWidth = APPLICATION_ICON_SIZE as i32;
+    bitmap_info.bmiHeader.biHeight = -(APPLICATION_ICON_SIZE as i32);
+    bitmap_info.bmiHeader.biPlanes = 1;
+    bitmap_info.bmiHeader.biBitCount = 32;
+    bitmap_info.bmiHeader.biCompression = BI_RGB;
+    let mut rgba = vec![0; (APPLICATION_ICON_SIZE * APPLICATION_ICON_SIZE * 4) as usize];
+    let copied = unsafe {
+        GetDIBits(
+            screen_dc,
+            bitmap.0,
+            0,
+            APPLICATION_ICON_SIZE,
+            rgba.as_mut_ptr().cast(),
+            &mut bitmap_info,
+            DIB_RGB_COLORS,
+        )
+    };
+
+    unsafe {
+        ReleaseDC(desktop, screen_dc);
+        DeleteObject(bitmap.0);
+    }
+
+    if copied == 0 {
+        return Ok(None);
+    }
+
+    rgba_data_url(rgba)
+}
+
+#[cfg(target_os = "windows")]
+fn extract_shell_item_icon(target: &str) -> Result<Option<String>, String> {
+    let initialized = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }.0 >= 0;
+    let bitmap = (|| {
+        let wide_target = target
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect::<Vec<_>>();
+        let item: IShellItem = unsafe {
+            SHCreateItemFromParsingName(
+                PCWSTR(wide_target.as_ptr()),
+                None::<&windows::Win32::System::Com::IBindCtx>,
+            )
+        }
+        .ok()?;
+        let factory: IShellItemImageFactory = item.cast().ok()?;
+        unsafe {
+            factory.GetImage(
+                SIZE {
+                    cx: APPLICATION_ICON_SIZE as i32,
+                    cy: APPLICATION_ICON_SIZE as i32,
+                },
+                SIIGBF_ICONONLY,
+            )
+        }
+        .ok()
+    })();
+    let result = match bitmap {
+        Some(bitmap) => bitmap_data_url(bitmap),
+        None => Ok(None),
+    };
+
+    if initialized {
+        unsafe { CoUninitialize() };
+    }
+
+    result
 }
 
 #[cfg(target_os = "windows")]
@@ -609,7 +816,7 @@ fn extract_application_icon(_path: &Path) -> Result<Option<String>, String> {
 
 #[tauri::command]
 pub(crate) fn list_installed_applications() -> Vec<InstalledApplication> {
-    installed_application_entries()
+    refresh_installed_application_entries()
         .into_iter()
         .map(|entry| entry.application)
         .collect()
@@ -629,11 +836,13 @@ pub(crate) fn get_installed_application_icon(
         return Ok(icon);
     }
 
-    let entry = installed_application_entries()
-        .into_iter()
-        .find(|entry| entry.application.id == application_id)
+    let entry = find_installed_application_entry(application_id)
         .ok_or_else(|| "未找到本机程序".to_string())?;
-    let icon = extract_application_icon(&entry.path)?;
+    let icon = match &entry.target {
+        InstalledApplicationTarget::Path(path) => extract_application_icon(path)?,
+        #[cfg(target_os = "windows")]
+        InstalledApplicationTarget::ShellItem(target) => extract_shell_item_icon(target)?,
+    };
 
     if let Ok(mut cache) = application_icon_cache().lock() {
         cache.insert(application_id.to_string(), icon.clone());
@@ -645,29 +854,31 @@ pub(crate) fn get_installed_application_icon(
 #[tauri::command]
 pub(crate) fn launch_installed_application(application_id: String) -> Result<(), String> {
     let application_id = application_id.trim();
-    let entry = installed_application_entries()
-        .into_iter()
-        .find(|entry| entry.application.id == application_id)
+    let entry = find_installed_application_entry(application_id)
         .ok_or_else(|| "未找到本机程序".to_string())?;
 
     #[cfg(target_os = "windows")]
-    Command::new("explorer")
-        .arg(&entry.path)
-        .spawn()
-        .map_err(|error| format!("启动程序失败：{error}"))?;
+    match &entry.target {
+        InstalledApplicationTarget::Path(path) => Command::new("explorer").arg(path).spawn(),
+        InstalledApplicationTarget::ShellItem(target) => {
+            Command::new("explorer").arg(target).spawn()
+        }
+    }
+    .map_err(|error| format!("启动程序失败：{error}"))?;
 
     #[cfg(target_os = "macos")]
-    Command::new("open")
-        .arg(&entry.path)
-        .spawn()
-        .map_err(|error| format!("启动程序失败：{error}"))?;
+    match &entry.target {
+        InstalledApplicationTarget::Path(path) => Command::new("open").arg(path).spawn(),
+    }
+    .map_err(|error| format!("启动程序失败：{error}"))?;
 
     #[cfg(all(unix, not(target_os = "macos")))]
-    Command::new("gio")
-        .arg("launch")
-        .arg(&entry.path)
-        .spawn()
-        .map_err(|error| format!("启动程序失败：{error}"))?;
+    match &entry.target {
+        InstalledApplicationTarget::Path(path) => {
+            Command::new("gio").arg("launch").arg(path).spawn()
+        }
+    }
+    .map_err(|error| format!("启动程序失败：{error}"))?;
 
     Ok(())
 }
@@ -678,7 +889,8 @@ mod tests {
 
     #[cfg(target_os = "windows")]
     use super::{
-        extract_application_icon, installed_application_entries, shortcut_icon_sources,
+        apps_folder_target, extract_application_icon, extract_shell_item_icon,
+        installed_application_entries, shortcut_icon_sources, InstalledApplicationTarget,
         APPLICATION_ICON_SIZE, BASE64_STANDARD,
     };
     #[cfg(target_os = "windows")]
@@ -700,28 +912,76 @@ mod tests {
     #[cfg(target_os = "windows")]
     #[test]
     fn extracts_start_menu_shortcut_icon() {
-        let Some(entry) = installed_application_entries().into_iter().next() else {
+        let Some(path) = installed_application_entries()
+            .into_iter()
+            .find_map(|entry| match entry.target {
+                InstalledApplicationTarget::Path(path) => Some(path),
+                InstalledApplicationTarget::ShellItem(_) => None,
+            })
+        else {
             return;
         };
-        let sources = shortcut_icon_sources(&entry.path);
+        let sources = shortcut_icon_sources(&path);
         assert!(sources.iter().all(|(path, _)| {
             !path
                 .extension()
                 .and_then(|value| value.to_str())
                 .is_some_and(|value| value.eq_ignore_ascii_case("lnk"))
         }));
-        let icon = extract_application_icon(&entry.path)
+        let icon = extract_application_icon(&path)
             .expect("shortcut icon extraction should not fail")
             .expect("shortcut should have an associated icon");
 
+        assert_png_data_url(&icon);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn builds_apps_folder_launch_target() {
+        assert_eq!(
+            apps_folder_target("Microsoft.WindowsNotepad_8wekyb3d8bbwe!App"),
+            r"shell:AppsFolder\Microsoft.WindowsNotepad_8wekyb3d8bbwe!App"
+        );
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn extracts_packaged_application_icon() {
+        let entries = installed_application_entries();
+        let shell_applications = entries
+            .iter()
+            .filter_map(|entry| match &entry.target {
+                InstalledApplicationTarget::ShellItem(target) => {
+                    Some((entry.application.name.as_str(), target.as_str()))
+                }
+                InstalledApplicationTarget::Path(_) => None,
+            })
+            .collect::<Vec<_>>();
+        assert!(!shell_applications.is_empty());
+        let (_, target) = shell_applications
+            .iter()
+            .find(|(name, target)| *name == "记事本" || target.contains("WindowsNotepad"))
+            .copied()
+            .unwrap_or(shell_applications[0]);
+        let icon = extract_shell_item_icon(target)
+            .expect("packaged application icon extraction should not fail")
+            .expect("packaged application should have an associated icon");
+
+        assert_png_data_url(&icon);
+    }
+
+    #[cfg(target_os = "windows")]
+    fn assert_png_data_url(icon: &str) {
         let encoded = icon
             .strip_prefix("data:image/png;base64,")
-            .expect("shortcut icon should be a PNG data URL");
+            .expect("application icon should be a PNG data URL");
         let png = BASE64_STANDARD
             .decode(encoded)
-            .expect("shortcut icon should contain valid base64");
-        let image = xcap::image::load_from_memory(&png).expect("shortcut icon should be valid PNG");
+            .expect("application icon should contain valid base64");
+        let image =
+            xcap::image::load_from_memory(&png).expect("application icon should be valid PNG");
         assert_eq!(image.width(), APPLICATION_ICON_SIZE);
         assert_eq!(image.height(), APPLICATION_ICON_SIZE);
+        assert!(image.to_rgba8().pixels().any(|pixel| pixel[3] > 0));
     }
 }
