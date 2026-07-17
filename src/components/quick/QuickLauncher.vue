@@ -244,7 +244,15 @@ const matchedInstalledApplications = computed(() =>
 );
 const searchResultItems = computed<QuickSearchResult[]>(() => {
   const applicationLimit = Math.min(4, matchedInstalledApplications.value.length);
-  const toolResults = searchToolItems.value.slice(0, 12 - applicationLimit).map((tool) => ({
+  const contentMatchedKeys = new Set(searchContentMatchedTools.value.map((tool) => tool.key));
+  const explicitlyMatchedKeys = new Set(filteredTools.value.map((tool) => tool.key));
+  const primaryTools = searchToolItems.value.filter(
+    (tool) => !contentMatchedKeys.has(tool.key) || explicitlyMatchedKeys.has(tool.key)
+  );
+  const inferredTools = searchToolItems.value.filter(
+    (tool) => contentMatchedKeys.has(tool.key) && !explicitlyMatchedKeys.has(tool.key)
+  );
+  const primaryToolResults = primaryTools.slice(0, 12 - applicationLimit).map((tool) => ({
     id: `tool:${tool.key}`,
     tool,
     type: 'tool' as const
@@ -254,8 +262,14 @@ const searchResultItems = computed<QuickSearchResult[]>(() => {
     id: `application:${application.id}`,
     type: 'application' as const
   }));
+  const inferredToolLimit = 12 - primaryToolResults.length - applicationResults.length;
+  const inferredToolResults = inferredTools.slice(0, inferredToolLimit).map((tool) => ({
+    id: `tool:${tool.key}`,
+    tool,
+    type: 'tool' as const
+  }));
 
-  return [...toolResults, ...applicationResults];
+  return [...primaryToolResults, ...applicationResults, ...inferredToolResults];
 });
 
 function resolveInstalledApplicationIcon(application: InstalledApplication) {

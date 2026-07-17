@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ToolItem } from '../../types/toolbox';
 import QuickLauncher from './QuickLauncher.vue';
@@ -13,6 +13,20 @@ const dockerPullTool: ToolItem = {
   label: '镜像拉取',
   shortcut: {
     accepts: (content) => content === '远程拉起'
+  }
+};
+
+const translatorTool: ToolItem = {
+  accent: 'blue',
+  caption: '多语言文本互译',
+  category: 'text',
+  defaultAlias: 'fy',
+  icon: 'translate',
+  key: 'translator',
+  keywords: ['translate', '翻译'],
+  label: '翻译',
+  shortcut: {
+    accepts: (content) => /[\u4e00-\u9fffA-Za-z]/.test(content)
   }
 };
 
@@ -71,5 +85,41 @@ describe('QuickLauncher', () => {
     expect(wrapper.find('[data-testid="tool-renderer"]').exists()).toBe(false);
     expect(wrapper.text()).toContain('匹配结果');
     expect(wrapper.text()).toContain('镜像拉取');
+  });
+
+  it('places an installed application before generic content-matched tools', async () => {
+    Object.defineProperty(window, 'tooldeskShortcut', {
+      configurable: true,
+      value: {
+        getLocalLibraries: async () => [],
+        listInstalledApplications: async () => [
+          { id: 'notepad', keywords: ['notepad'], name: '记事本' }
+        ]
+      },
+      writable: true
+    });
+
+    const wrapper = mount(QuickLauncher, {
+      global: {
+        stubs: {
+          AppIcon: true,
+          ToolIcon: true,
+          ToolRenderer: true
+        }
+      },
+      props: {
+        shortcutContent: '',
+        shortcutContentVersion: 1,
+        tools: [translatorTool]
+      }
+    });
+
+    await flushPromises();
+    await wrapper.get('input[type="search"]').setValue('记事本');
+
+    expect(wrapper.findAll('button.quick-launcher-tool').map((button) => button.text())).toEqual([
+      '记事本',
+      '翻译'
+    ]);
   });
 });
