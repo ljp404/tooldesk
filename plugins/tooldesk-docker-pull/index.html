@@ -262,6 +262,7 @@
         display: inline-block;
         font-size: 11px;
         padding: 2px 8px;
+        white-space: nowrap;
       }
       .tag.pending { background: #f1f5f9; color: #64748b; }
       .tag.pulling { background: #dbeafe; color: #1d4ed8; }
@@ -358,7 +359,7 @@
               <thead>
                 <tr>
                   <th style="width: 38%;">镜像</th>
-                  <th style="width: 14%;">状态</th>
+                  <th style="width: 18%;">状态</th>
                   <th>来源 / 说明</th>
                 </tr>
               </thead>
@@ -398,7 +399,6 @@
         'https://proxy.vvvv.ee'
       ];
       const MIRROR_STORAGE_KEY = 'tooldesk-docker-pull-mirrors';
-      const MODE_STORAGE_KEY = 'tooldesk-docker-pull-mode';
       const SSH_STORAGE_KEY = 'tooldesk-docker-pull-ssh-config';
       const SOURCE_STORAGE_KEY = 'tooldesk-docker-pull-source';
       const MANUAL_IMAGES_STORAGE_KEY = 'tooldesk-docker-pull-manual-images';
@@ -711,12 +711,7 @@
           mirrorListInput.value = DEFAULT_MIRRORS.join('\n');
         }
 
-        try {
-          const savedMode = await plugin.api.getPluginStorageItem(MODE_STORAGE_KEY);
-          setMode(savedMode === 'local' ? 'local' : 'remote', false);
-        } catch {
-          setMode('remote', false);
-        }
+        setMode('remote');
 
         try {
           const raw = await plugin.api.getPluginStorageItem(SSH_STORAGE_KEY);
@@ -758,7 +753,6 @@
             username: document.getElementById('sshUser').value.trim()
           });
           const mirrorSaved = await plugin.api.setPluginStorageItem(MIRROR_STORAGE_KEY, mirrorListInput.value.trim());
-          const modeSaved = await plugin.api.setPluginStorageItem(MODE_STORAGE_KEY, mode);
           const sshSaved = await plugin.api.setPluginStorageItem(SSH_STORAGE_KEY, sshPayload);
           const sourceSaved = await plugin.api.setPluginStorageItem(SOURCE_STORAGE_KEY, remoteSourceMode);
           const manualImagesSaved = await plugin.api.setPluginStorageItem(
@@ -766,7 +760,7 @@
             manualImageListInput.value.trim()
           );
 
-          if (!mirrorSaved || !modeSaved || !sshSaved || !sourceSaved || !manualImagesSaved) {
+          if (!mirrorSaved || !sshSaved || !sourceSaved || !manualImagesSaved) {
             appendLog('配置保存失败');
             return false;
           }
@@ -819,7 +813,7 @@
         }
       }
 
-      function setMode(nextMode, persist = true) {
+      function setMode(nextMode) {
         mode = nextMode;
         sourceMode = nextMode === 'remote' ? remoteSourceMode : 'compose';
         document.body.dataset.mode = nextMode;
@@ -838,9 +832,6 @@
           setRuntimeStatus('', '远程 SSH 模式');
         }
 
-        if (persist) {
-          void saveSettings();
-        }
       }
 
       async function refreshLocalDockerStatus() {

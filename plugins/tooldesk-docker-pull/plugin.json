@@ -51,11 +51,10 @@
     "localStorageKeys": [
       "tooldesk-docker-pull-manual-images",
       "tooldesk-docker-pull-mirrors",
-      "tooldesk-docker-pull-mode",
       "tooldesk-docker-pull-source",
       "tooldesk-docker-pull-ssh-config"
     ]
   },
-  "version": "0.3.0",
+  "version": "0.3.1",
   "windowIcon": "assets/window-icon.png"
 }
