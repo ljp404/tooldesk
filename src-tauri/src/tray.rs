@@ -146,9 +146,10 @@ fn create_tray_menu_window(app: &AppHandle) -> Option<tauri::WebviewWindow> {
     .inner_size(TRAY_MENU_WIDTH, TRAY_MENU_ESTIMATED_HEIGHT)
     .position(-10_000.0, -10_000.0)
     .resizable(false)
+    .shadow(!cfg!(target_os = "macos"))
     .skip_taskbar(true)
     .title("tooldesk 托盘菜单")
-    .transparent(false)
+    .transparent(cfg!(target_os = "macos"))
     .visible(false)
     .build();
 
