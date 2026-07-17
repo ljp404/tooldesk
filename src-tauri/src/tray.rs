@@ -9,7 +9,7 @@ use std::time::Instant;
 use tauri::image::Image;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{
-    AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, WebviewUrl, WebviewWindowBuilder,
+    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindowBuilder,
     WindowEvent,
 };
 use tokio::time::{sleep, Duration};
@@ -17,6 +17,7 @@ use tokio::time::{sleep, Duration};
 const TRAY_MENU_LABEL: &str = "tray-menu";
 const TRAY_MENU_WIDTH: f64 = 244.0;
 const TRAY_MENU_ESTIMATED_HEIGHT: f64 = 352.0;
+const TRAY_MENU_EDGE_GAP: f64 = 1.0;
 
 const QUICK_LAUNCHER_ID: &str = "quickLauncher";
 const SCREEN_RECORDER_ID: &str = "screenRecorder";
@@ -168,24 +169,113 @@ fn create_tray_menu_window(app: &AppHandle) -> Option<tauri::WebviewWindow> {
     Some(window)
 }
 
-fn place_tray_menu_window(window: &tauri::WebviewWindow, x: f64, y: f64) {
+fn anchored_menu_position(
+    anchor_x: f64,
+    anchor_y: f64,
+    menu_width: f64,
+    menu_height: f64,
+    work_x: f64,
+    work_y: f64,
+    work_width: f64,
+    work_height: f64,
+) -> (i32, i32) {
+    let work_right = work_x + work_width;
+    let work_bottom = work_y + work_height;
+    let min_left = work_x + TRAY_MENU_EDGE_GAP;
+    let max_left = (work_right - menu_width - TRAY_MENU_EDGE_GAP).max(min_left);
+    let left = anchor_x.max(min_left).min(max_left);
+
+    let min_top = work_y + TRAY_MENU_EDGE_GAP;
+    let max_top = (work_bottom - menu_height - TRAY_MENU_EDGE_GAP).max(min_top);
+    let below_top = (anchor_y + TRAY_MENU_EDGE_GAP).max(min_top);
+    let above_top = anchor_y - menu_height - TRAY_MENU_EDGE_GAP;
+    let can_open_below = below_top <= max_top;
+    let can_open_above = above_top >= min_top;
+    let prefer_below = anchor_y <= work_y + work_height / 2.0;
+    let desired_top = if prefer_below && can_open_below {
+        below_top
+    } else if can_open_above {
+        above_top
+    } else if can_open_below {
+        below_top
+    } else {
+        anchor_y - menu_height / 2.0
+    };
+    let top = desired_top.max(min_top).min(max_top);
+
+    (left.round() as i32, top.round() as i32)
+}
+
+fn tray_menu_position(
+    app: &AppHandle,
+    x: f64,
+    y: f64,
+    width: u32,
+    height: u32,
+) -> Option<(i32, i32)> {
+    let monitors = app.available_monitors().ok()?;
+    let monitor = monitors
+        .iter()
+        .find(|monitor| {
+            let position = monitor.position();
+            let size = monitor.size();
+            x >= position.x as f64
+                && x <= position.x as f64 + size.width as f64
+                && y >= position.y as f64
+                && y <= position.y as f64 + size.height as f64
+        })
+        .cloned()
+        .or_else(|| app.primary_monitor().ok().flatten())?;
+    let scale_factor = monitor.scale_factor();
+    let work_area = monitor.work_area();
+
+    Some(anchored_menu_position(
+        x,
+        y,
+        width as f64 * scale_factor,
+        height as f64 * scale_factor,
+        work_area.position.x as f64,
+        work_area.position.y as f64,
+        work_area.size.width as f64,
+        work_area.size.height as f64,
+    ))
+}
+
+fn place_tray_menu_window(
+    app: &AppHandle,
+    window: &tauri::WebviewWindow,
+    x: f64,
+    y: f64,
+) -> Result<(), String> {
     let (width, height) = tray_menu_state()
         .lock()
         .ok()
         .and_then(|state| state.size)
         .unwrap_or((TRAY_MENU_WIDTH as u32, TRAY_MENU_ESTIMATED_HEIGHT as u32));
-    let scale_factor = window.scale_factor().unwrap_or(1.0);
-    let left = x.round() as i32;
-    let top = (y - height as f64 * scale_factor - 1.0).max(0.0).round() as i32;
+    let (left, top) = tray_menu_position(app, x, y, width, height).unwrap_or_else(|| {
+        let scale_factor = window.scale_factor().unwrap_or(1.0);
+        (
+            x.round() as i32,
+            (y - height as f64 * scale_factor - TRAY_MENU_EDGE_GAP)
+                .max(0.0)
+                .round() as i32,
+        )
+    });
 
-    let _ = window.set_size(tauri::Size::Logical(LogicalSize::new(
-        width as f64,
-        height as f64,
-    )));
-    let _ = window.set_position(LogicalPosition::new(
-        left as f64 / scale_factor,
-        top as f64 / scale_factor,
-    ));
+    window
+        .set_size(tauri::Size::Logical(LogicalSize::new(
+            width as f64,
+            height as f64,
+        )))
+        .map_err(|error| error.to_string())?;
+    window
+        .set_position(PhysicalPosition::new(left, top))
+        .map_err(|error| error.to_string())?;
+    diagnostics::log_flow(
+        "tray",
+        format!("menu placed left={left} top={top} width={width} height={height}"),
+    );
+    Ok(())
 }
 
 fn show_custom_tray_menu(app: &AppHandle, x: f64, y: f64) {
@@ -199,7 +289,9 @@ fn show_custom_tray_menu(app: &AppHandle, x: f64, y: f64) {
         return;
     };
 
-    place_tray_menu_window(&window, x, y);
+    if let Err(error) = place_tray_menu_window(app, &window, x, y) {
+        diagnostics::log_flow("tray", format!("menu place failed error={error}"));
+    }
     let runtime = app.state::<StorageRuntimeState>();
     let _ = window.emit("tray-menu:shortcuts", read_tray_menu_shortcuts(&runtime));
     match window.show() {
@@ -274,8 +366,6 @@ pub(crate) fn resize_tray_menu(app: AppHandle, width: f64, height: f64) -> Resul
     let Some(window) = app.get_webview_window(TRAY_MENU_LABEL) else {
         return Ok(());
     };
-    let position = window.outer_position().map_err(|error| error.to_string())?;
-    let size = window.outer_size().map_err(|error| error.to_string())?;
     let next_width = width.max(TRAY_MENU_WIDTH).round() as u32;
     let next_height = height.max(1.0).round() as u32;
     let target = {
@@ -286,24 +376,15 @@ pub(crate) fn resize_tray_menu(app: AppHandle, width: f64, height: f64) -> Resul
         state.target
     };
 
-    window
-        .set_size(tauri::Size::Logical(LogicalSize::new(
-            next_width as f64,
-            next_height as f64,
-        )))
-        .map_err(|error| error.to_string())?;
-
     if let Some((x, y)) = target {
-        let scale_factor = window.scale_factor().unwrap_or(1.0);
-        window
-            .set_position(LogicalPosition::new(
-                x / scale_factor,
-                (y - next_height as f64 * scale_factor - 1.0).max(0.0) / scale_factor,
-            ))
-            .map_err(|error| error.to_string())?;
+        place_tray_menu_window(&app, &window, x, y)?;
     } else {
-        let _ = position;
-        let _ = size;
+        window
+            .set_size(tauri::Size::Logical(LogicalSize::new(
+                next_width as f64,
+                next_height as f64,
+            )))
+            .map_err(|error| error.to_string())?;
     }
 
     if target.is_some() {
@@ -312,6 +393,34 @@ pub(crate) fn resize_tray_menu(app: AppHandle, width: f64, height: f64) -> Resul
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::anchored_menu_position;
+
+    #[test]
+    fn opens_below_a_top_tray_anchor() {
+        let position = anchored_menu_position(300.0, 12.0, 244.0, 352.0, 0.0, 24.0, 1440.0, 876.0);
+
+        assert_eq!(position, (300, 25));
+    }
+
+    #[test]
+    fn opens_above_a_bottom_taskbar_anchor() {
+        let position =
+            anchored_menu_position(120.0, 1070.0, 244.0, 352.0, 0.0, 0.0, 1920.0, 1040.0);
+
+        assert_eq!(position, (120, 687));
+    }
+
+    #[test]
+    fn keeps_the_menu_inside_the_work_area() {
+        let position =
+            anchored_menu_position(1900.0, 1070.0, 244.0, 352.0, 0.0, 0.0, 1920.0, 1040.0);
+
+        assert_eq!(position, (1675, 687));
+    }
 }
 
 #[tauri::command]
