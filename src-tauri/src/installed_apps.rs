@@ -9,6 +9,12 @@ use std::os::windows::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
+use std::time::{Duration, Instant};
+
+#[cfg(target_os = "macos")]
+use objc2_app_kit::NSWorkspace;
+#[cfg(target_os = "macos")]
+use objc2_foundation::{NSFileManager, NSString};
 
 #[cfg(target_os = "windows")]
 use windows::{
@@ -44,8 +50,15 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 };
 
 static APPLICATION_ICON_CACHE: OnceLock<Mutex<HashMap<String, Option<String>>>> = OnceLock::new();
-static APPLICATION_ENTRY_CACHE: OnceLock<Mutex<Vec<InstalledApplicationEntry>>> = OnceLock::new();
+static APPLICATION_ENTRY_CACHE: OnceLock<Mutex<InstalledApplicationCache>> = OnceLock::new();
 const APPLICATION_ICON_SIZE: u32 = 64;
+const APPLICATION_LIST_CACHE_TTL: Duration = Duration::from_secs(5 * 60);
+
+#[derive(Default)]
+struct InstalledApplicationCache {
+    entries: Vec<InstalledApplicationEntry>,
+    refreshed_at: Option<Instant>,
+}
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -91,13 +104,36 @@ fn should_include_application_name(name: &str) -> bool {
     .any(|keyword| normalized.contains(keyword))
 }
 
+#[cfg(not(target_os = "macos"))]
 fn application_name(path: &Path) -> Option<String> {
     let name = path.file_stem()?.to_string_lossy().trim().to_string();
     should_include_application_name(&name).then_some(name)
 }
 
+#[cfg(target_os = "macos")]
+fn application_name(path: &Path) -> Option<String> {
+    let path_value = path.to_string_lossy();
+    let display_name = NSFileManager::defaultManager()
+        .displayNameAtPath(&NSString::from_str(&path_value))
+        .to_string();
+    let name = display_name
+        .strip_suffix(".app")
+        .unwrap_or(&display_name)
+        .trim()
+        .to_string();
+
+    should_include_application_name(&name).then_some(name)
+}
+
 fn application_keywords(root: &Path, path: &Path, name: &str) -> Vec<String> {
     let mut keywords = vec![name.to_string()];
+
+    if let Some(file_stem) = path.file_stem() {
+        let value = file_stem.to_string_lossy().trim().to_string();
+        if !value.is_empty() && !keywords.iter().any(|item| item == &value) {
+            keywords.push(value);
+        }
+    }
 
     if let Ok(relative) = path.strip_prefix(root) {
         for component in relative.parent().into_iter().flat_map(Path::components) {
@@ -414,23 +450,38 @@ fn installed_application_entries() -> Vec<InstalledApplicationEntry> {
     entries
 }
 
-fn application_entry_cache() -> &'static Mutex<Vec<InstalledApplicationEntry>> {
-    APPLICATION_ENTRY_CACHE.get_or_init(|| Mutex::new(Vec::new()))
+fn application_entry_cache() -> &'static Mutex<InstalledApplicationCache> {
+    APPLICATION_ENTRY_CACHE.get_or_init(|| Mutex::new(InstalledApplicationCache::default()))
 }
 
 fn refresh_installed_application_entries() -> Vec<InstalledApplicationEntry> {
     let entries = installed_application_entries();
 
     if let Ok(mut cache) = application_entry_cache().lock() {
-        *cache = entries.clone();
+        cache.entries = entries.clone();
+        cache.refreshed_at = Some(Instant::now());
     }
 
     entries
 }
 
+fn cached_installed_application_entries() -> Vec<InstalledApplicationEntry> {
+    if let Some(entries) = application_entry_cache().lock().ok().and_then(|cache| {
+        cache
+            .refreshed_at
+            .filter(|refreshed_at| refreshed_at.elapsed() < APPLICATION_LIST_CACHE_TTL)
+            .map(|_| cache.entries.clone())
+    }) {
+        return entries;
+    }
+
+    refresh_installed_application_entries()
+}
+
 fn find_installed_application_entry(application_id: &str) -> Option<InstalledApplicationEntry> {
     if let Some(entry) = application_entry_cache().lock().ok().and_then(|cache| {
         cache
+            .entries
             .iter()
             .find(|entry| entry.application.id == application_id)
             .cloned()
@@ -769,43 +820,23 @@ fn extract_application_icon(path: &Path) -> Result<Option<String>, String> {
 
 #[cfg(target_os = "macos")]
 fn extract_application_icon(path: &Path) -> Result<Option<String>, String> {
-    use std::hash::{DefaultHasher, Hash, Hasher};
-
-    let resources = path.join("Contents").join("Resources");
-    let Ok(items) = fs::read_dir(resources) else {
+    let path_value = path.to_string_lossy();
+    let icon = NSWorkspace::sharedWorkspace().iconForFile(&NSString::from_str(&path_value));
+    let Some(tiff) = icon.TIFFRepresentation() else {
         return Ok(None);
     };
-    let mut icons = items
-        .flatten()
-        .map(|item| item.path())
-        .filter(|path| {
-            path.extension()
-                .and_then(|value| value.to_str())
-                .is_some_and(|value| value.eq_ignore_ascii_case("icns"))
-        })
-        .collect::<Vec<_>>();
-    icons.sort();
-    let Some(icon_path) = icons.into_iter().next() else {
-        return Ok(None);
-    };
-    let mut hasher = DefaultHasher::new();
-    path.hash(&mut hasher);
-    let output_path = env::temp_dir().join(format!("tooldesk-app-icon-{:x}.png", hasher.finish()));
-    let output = Command::new("sips")
-        .args(["-Z", "96", "-s", "format", "png"])
-        .arg(&icon_path)
-        .arg("--out")
-        .arg(&output_path)
-        .output()
-        .map_err(|error| format!("转换程序图标失败：{error}"))?;
+    let image = xcap::image::load_from_memory(&tiff.to_vec())
+        .map_err(|error| format!("读取程序图标失败：{error}"))?;
+    let rgba = image
+        .resize_exact(
+            APPLICATION_ICON_SIZE,
+            APPLICATION_ICON_SIZE,
+            xcap::image::imageops::FilterType::Lanczos3,
+        )
+        .to_rgba8()
+        .into_raw();
+    let png = encode_png(rgba)?;
 
-    if !output.status.success() || !output_path.is_file() {
-        let _ = fs::remove_file(&output_path);
-        return Ok(None);
-    }
-
-    let png = fs::read(&output_path).map_err(|error| error.to_string())?;
-    let _ = fs::remove_file(output_path);
     Ok(Some(png_data_url(&png)))
 }
 
@@ -815,17 +846,18 @@ fn extract_application_icon(_path: &Path) -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
-pub(crate) fn list_installed_applications() -> Vec<InstalledApplication> {
-    refresh_installed_application_entries()
-        .into_iter()
-        .map(|entry| entry.application)
-        .collect()
+pub(crate) async fn list_installed_applications() -> Result<Vec<InstalledApplication>, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        cached_installed_application_entries()
+            .into_iter()
+            .map(|entry| entry.application)
+            .collect()
+    })
+    .await
+    .map_err(|error| format!("枚举本机程序失败：{error}"))
 }
 
-#[tauri::command]
-pub(crate) fn get_installed_application_icon(
-    application_id: String,
-) -> Result<Option<String>, String> {
+fn get_installed_application_icon_inner(application_id: String) -> Result<Option<String>, String> {
     let application_id = application_id.trim();
 
     if let Some(icon) = application_icon_cache()
@@ -852,7 +884,17 @@ pub(crate) fn get_installed_application_icon(
 }
 
 #[tauri::command]
-pub(crate) fn launch_installed_application(application_id: String) -> Result<(), String> {
+pub(crate) async fn get_installed_application_icon(
+    application_id: String,
+) -> Result<Option<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        get_installed_application_icon_inner(application_id)
+    })
+    .await
+    .map_err(|error| format!("读取程序图标失败：{error}"))?
+}
+
+fn launch_installed_application_inner(application_id: String) -> Result<(), String> {
     let application_id = application_id.trim();
     let entry = find_installed_application_entry(application_id)
         .ok_or_else(|| "未找到本机程序".to_string())?;
@@ -881,6 +923,13 @@ pub(crate) fn launch_installed_application(application_id: String) -> Result<(),
     .map_err(|error| format!("启动程序失败：{error}"))?;
 
     Ok(())
+}
+
+#[tauri::command]
+pub(crate) async fn launch_installed_application(application_id: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || launch_installed_application_inner(application_id))
+        .await
+        .map_err(|error| format!("启动程序失败：{error}"))?
 }
 
 #[cfg(test)]

@@ -84,6 +84,7 @@ const installedApplications = ref<InstalledApplication[]>([]);
 const installedApplicationIcons = ref<Record<string, string | null>>({});
 const toolAliasSettings = ref<ToolAliasSettings>(getDefaultToolAliasSettings());
 const installedApplicationIconRequests = new Set<string>();
+let installedApplicationsRefresh: Promise<void> | null = null;
 let inlineDoubleClickOpening = false;
 let inlineWindowHintTimer: number | null = null;
 let inlineLastPointerDown:
@@ -351,17 +352,29 @@ function createKeyboardSearchItem(result: QuickSearchResult, index: number): Qui
 }
 
 async function refreshInstalledApplications() {
+  if (installedApplicationsRefresh) {
+    return installedApplicationsRefresh;
+  }
+
   if (!window.tooldeskShortcut?.listInstalledApplications) {
     installedApplications.value = [];
     return;
   }
 
-  try {
-    installedApplications.value = await window.tooldeskShortcut.listInstalledApplications();
-  } catch (error) {
-    console.warn('[tooldesk] Failed to list installed applications.', error);
-    installedApplications.value = [];
-  }
+  installedApplicationsRefresh = window.tooldeskShortcut
+    .listInstalledApplications()
+    .then((applications) => {
+      installedApplications.value = applications;
+    })
+    .catch((error) => {
+      console.warn('[tooldesk] Failed to list installed applications.', error);
+      installedApplications.value = [];
+    })
+    .finally(() => {
+      installedApplicationsRefresh = null;
+    });
+
+  return installedApplicationsRefresh;
 }
 
 watch([() => props.shortcutContent, () => props.shortcutContentVersion], () => {

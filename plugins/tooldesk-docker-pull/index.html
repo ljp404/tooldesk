@@ -403,6 +403,7 @@
       const SOURCE_STORAGE_KEY = 'tooldesk-docker-pull-source';
       const MANUAL_IMAGES_STORAGE_KEY = 'tooldesk-docker-pull-manual-images';
       const PULL_TIMEOUT_MS = 5 * 60 * 1000;
+      const PULL_IDLE_TIMEOUT_MS = 20 * 1000;
 
       const composePathInput = document.getElementById('composePath');
       const manualImageListInput = document.getElementById('manualImageList');
@@ -557,8 +558,10 @@
       function parseDockerImage(image) {
         let ref = String(image || '').trim();
         let tag = 'latest';
+        let digest = '';
         const digestIndex = ref.indexOf('@');
         if (digestIndex >= 0) {
+          digest = ref.slice(digestIndex + 1);
           ref = ref.slice(0, digestIndex);
         }
         const colonIndex = ref.lastIndexOf(':');
@@ -572,11 +575,12 @@
           (parts[0].includes('.') || parts[0].includes(':') || parts[0] === 'localhost');
         if (!hasRegistry) {
           if (parts.length === 1) {
-            return { isDockerHub: true, original: image, repository: `library/${parts[0]}`, tag };
+            return { digest, isDockerHub: true, original: image, repository: `library/${parts[0]}`, tag };
           }
-          return { isDockerHub: true, original: image, repository: ref, tag };
+          return { digest, isDockerHub: true, original: image, repository: ref, tag };
         }
         return {
+          digest,
           isDockerHub: false,
           original: image,
           registry: parts[0],
@@ -637,7 +641,7 @@
 
       function buildMirrorPullRef(image, mirrorHost) {
         const parsed = parseDockerImage(image);
-        if (!parsed.isDockerHub) {
+        if (!parsed.isDockerHub || parsed.digest) {
           return null;
         }
         return `${normalizeMirrorHost(mirrorHost)}/${parsed.repository}:${parsed.tag}`;
@@ -1006,10 +1010,14 @@
         try {
           if (typeof api.sshExecStream === 'function') {
             return await api.sshExecStream(config, command, {
+              idleTimeoutMs: options.idleTimeoutMs,
               timeoutMs: options.timeoutMs ?? PULL_TIMEOUT_MS
             });
           }
-          return await api.sshExec(config, command, { timeoutMs: options.timeoutMs ?? PULL_TIMEOUT_MS });
+          return await api.sshExec(config, command, {
+            idleTimeoutMs: options.idleTimeoutMs,
+            timeoutMs: options.timeoutMs ?? PULL_TIMEOUT_MS
+          });
         } finally {
           if (typeof unsubscribe === 'function') {
             unsubscribe();
@@ -1031,10 +1039,22 @@
 
       async function pullImageRef(ref) {
         const command = `docker pull ${shQuote(ref)}`;
-        if (mode === 'remote') {
-          return remoteExec(command, { timeoutMs: PULL_TIMEOUT_MS });
+        try {
+          if (mode === 'remote') {
+            return await remoteExec(command, {
+              idleTimeoutMs: PULL_IDLE_TIMEOUT_MS,
+              timeoutMs: PULL_TIMEOUT_MS
+            });
+          }
+          return await api.dockerPullImage(ref);
+        } catch (error) {
+          return {
+            exitCode: 1,
+            ok: false,
+            stderr: error instanceof Error ? error.message : String(error || '拉取失败'),
+            stdout: ''
+          };
         }
-        return api.dockerPullImage(ref);
       }
 
       async function tagImage(source, target) {
@@ -1073,7 +1093,9 @@
         const parsed = parseDockerImage(imageName);
         const mirrors = getOrderedMirrors();
 
-        if (parsed.isDockerHub) {
+        if (parsed.digest) {
+          appendLog(`${imageName} 使用 digest 固定版本，跳过镜像源改写`);
+        } else if (parsed.isDockerHub) {
           for (const mirror of mirrors) {
             const mirrorRef = buildMirrorPullRef(imageName, mirror);
             if (!mirrorRef) {
@@ -1155,7 +1177,9 @@
           appendLog(sourceMode === 'manual' ? `使用手动镜像清单：${images.length} 个` : `使用 Compose 镜像清单：${images.length} 个`);
           appendLog(`开始拉取（${mode === 'remote' ? '远程服务器' : '本机'}）…`);
           if (mode === 'remote') {
-            appendLog(`远程主机 ${getSshConfig().host}，单镜像超时 ${PULL_TIMEOUT_MS / 60000} 分钟`);
+            appendLog(
+              `远程主机 ${getSshConfig().host}，单镜像最长 ${PULL_TIMEOUT_MS / 60000} 分钟，单源 ${PULL_IDLE_TIMEOUT_MS / 1000} 秒无进展自动切换`
+            );
           }
           let successCount = 0;
           for (const item of images) {

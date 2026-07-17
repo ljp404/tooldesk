@@ -624,12 +624,12 @@ interface TooldeskShortcutApi {
   sshExec(
     config: { host?: string; password?: string; port?: number | string; username?: string },
     command: string,
-    options?: { timeoutMs?: number }
+    options?: { idleTimeoutMs?: number; timeoutMs?: number }
   ): Promise<{ exitCode: number; ok: boolean; stderr: string; stdout: string }>;
   sshExecStream(
     config: { host?: string; password?: string; port?: number | string; username?: string },
     command: string,
-    options?: { timeoutMs?: number }
+    options?: { idleTimeoutMs?: number; timeoutMs?: number }
   ): Promise<{ exitCode: number; ok: boolean; stderr: string; stdout: string }>;
   onSshExecOutput(callback: (chunk: { line: string; stream: 'stderr' | 'stdout' }) => void): () => void;
   createTextExport(suggestedName?: string): Promise<{ exportId: string; filePath: string }>;

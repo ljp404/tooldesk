@@ -9,6 +9,7 @@ export type TauriSshConfig = {
 };
 
 export type TauriSshExecOptions = {
+  idleTimeoutMs?: number;
   timeoutMs?: number;
 };
 

@@ -1,9 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 type MessageListener = (event: { data: unknown }) => void;
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 function loadSdk(options: { document?: unknown; MutationObserver?: unknown } = {}) {
   const listeners: MessageListener[] = [];
@@ -77,6 +81,64 @@ describe('tooldesk plugin sdk', () => {
 
     expect(plugin.api.then).toBeUndefined();
     await expect(Promise.resolve(plugin.api)).resolves.toBe(plugin.api);
+  });
+
+  it('keeps API calls alive for the requested operation timeout', async () => {
+    vi.useFakeTimers();
+    const { dispatchHostMessage, postedMessages, window } = loadSdk();
+    const plugin = window.TooldeskPlugin.create({ capabilities: ['sshExecStream'], id: 'tooldesk-test' });
+    const connectPromise = plugin.connect();
+
+    dispatchHostMessage({
+      appVersion: '0.1.0',
+      hostApiVersion: '1.0.0',
+      permissions: ['ssh'],
+      sdkVersion: '1.0.0',
+      source: 'tooldesk-host',
+      type: 'host:ready'
+    });
+    await Promise.resolve();
+
+    const permissionsRequest = postedMessages.find(
+      (message): message is { requestId: string; type: string } =>
+        typeof message === 'object' &&
+        message !== null &&
+        (message as { type?: unknown }).type === 'permissions:get'
+    );
+    dispatchHostMessage({
+      permissions: ['ssh'],
+      requestId: permissionsRequest?.requestId,
+      source: 'tooldesk-host',
+      type: 'permissions:result'
+    });
+    await expect(connectPromise).resolves.toMatchObject({ ready: true });
+
+    const sshExecStream = plugin.api.sshExecStream as (
+      config: Record<string, unknown>,
+      command: string,
+      options: { timeoutMs: number }
+    ) => Promise<unknown>;
+    const resultPromise = sshExecStream({}, 'docker pull node:18-alpine', { timeoutMs: 300_000 });
+
+    await vi.advanceTimersByTimeAsync(60_001);
+
+    const invokeRequest = postedMessages.find(
+      (message): message is { requestId: string; type: string } =>
+        typeof message === 'object' &&
+        message !== null &&
+        (message as { method?: unknown }).method === 'sshExecStream'
+    );
+    expect(invokeRequest).toBeTruthy();
+
+    dispatchHostMessage({
+      ok: true,
+      requestId: invokeRequest?.requestId,
+      result: { ok: true },
+      source: 'tooldesk-host',
+      type: 'api:result'
+    });
+
+    await expect(resultPromise).resolves.toEqual({ ok: true });
   });
 
   it('connects immediately when host responds', async () => {

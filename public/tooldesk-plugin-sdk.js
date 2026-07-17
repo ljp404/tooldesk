@@ -3,6 +3,9 @@
 
   var SDK_VERSION = '1.0.0';
   var HOST_API_VERSION = '1.0.0';
+  var DEFAULT_INVOKE_TIMEOUT_MS = 60000;
+  var INVOKE_TIMEOUT_GRACE_MS = 15000;
+  var MAX_CONFIGURED_INVOKE_TIMEOUT_MS = 30 * 60 * 1000;
 
   var ERROR_CODES = {
     PLUGIN_API_DENIED: 'PLUGIN_API_DENIED',
@@ -109,12 +112,35 @@
     );
   }
 
+  function resolveInvokeTimeoutMs(args) {
+    var requestedTimeoutMs = 0;
+
+    args.forEach(function (arg) {
+      if (!arg || typeof arg !== 'object') {
+        return;
+      }
+
+      var timeoutMs = Number(arg.timeoutMs);
+      if (Number.isFinite(timeoutMs) && timeoutMs > requestedTimeoutMs) {
+        requestedTimeoutMs = timeoutMs;
+      }
+    });
+
+    if (requestedTimeoutMs <= 0) {
+      return DEFAULT_INVOKE_TIMEOUT_MS;
+    }
+
+    return (
+      Math.min(Math.floor(requestedTimeoutMs), MAX_CONFIGURED_INVOKE_TIMEOUT_MS) +
+      INVOKE_TIMEOUT_GRACE_MS
+    );
+  }
+
   function createTooldeskPluginApi(methods, pluginId) {
     var allowedMethods = Array.isArray(methods) ? methods : [];
     var sequence = 0;
     var pending = new Map();
     var eventHandlers = new Map();
-    var invokeTimeoutMs = 60000;
 
     window.addEventListener('message', function (event) {
       var data = event.data || {};
@@ -183,6 +209,7 @@
 
             return new Promise(function (resolve, reject) {
               var invokeRequestId = Date.now() + '-' + sequence++;
+              var invokeTimeoutMs = resolveInvokeTimeoutMs(args);
               var timeout = setTimeout(function () {
                 if (!pending.has(invokeRequestId)) {
                   return;

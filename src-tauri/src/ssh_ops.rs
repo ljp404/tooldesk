@@ -1,10 +1,10 @@
 use russh::client::{self, Config, Handler};
 use russh::keys::ssh_key;
-use russh::{ChannelMsg, CryptoVec};
+use russh::{ChannelMsg, CryptoVec, Sig};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
-use tokio::time::{timeout, Duration};
+use tokio::time::{timeout, Duration, Instant};
 
 const SSH_DEFAULT_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 const SSH_TEST_TIMEOUT_MS: u64 = 20 * 1000;
@@ -22,6 +22,7 @@ pub(crate) struct SshConnectionPayload {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SshExecOptions {
+    idle_timeout_ms: Option<u64>,
     timeout_ms: Option<u64>,
 }
 
@@ -104,11 +105,18 @@ fn validate_command(command: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn normalize_timeout(options: Option<SshExecOptions>) -> u64 {
-    options
+fn normalize_timeouts(options: Option<SshExecOptions>) -> (u64, Option<u64>) {
+    let timeout_ms = options
+        .as_ref()
         .and_then(|value| value.timeout_ms)
         .unwrap_or(SSH_DEFAULT_TIMEOUT_MS)
-        .max(1000)
+        .max(1000);
+    let idle_timeout_ms = options
+        .and_then(|value| value.idle_timeout_ms)
+        .filter(|value| *value > 0)
+        .map(|value| value.clamp(1000, timeout_ms));
+
+    (timeout_ms, idle_timeout_ms)
 }
 
 fn append_output(buffer: &mut String, data: &CryptoVec, stream: &str, app: Option<&AppHandle>) {
@@ -158,7 +166,7 @@ async fn exec_ssh_command(
 ) -> Result<SshExecResult, String> {
     validate_command(&command)?;
     let config = normalize_config(payload)?;
-    let timeout_ms = normalize_timeout(options);
+    let (timeout_ms, idle_timeout_ms) = normalize_timeouts(options);
 
     timeout(Duration::from_millis(timeout_ms), async move {
         let session = connect_ssh(&config).await?;
@@ -175,12 +183,49 @@ async fn exec_ssh_command(
             .await
             .map_err(|error| error.to_string())?;
 
-        while let Some(message) = channel.wait().await {
+        let mut last_output_at = Instant::now();
+        loop {
+            let message = if let Some(idle_timeout_ms) = idle_timeout_ms {
+                let idle_timeout = Duration::from_millis(idle_timeout_ms);
+                let remaining = idle_timeout.saturating_sub(last_output_at.elapsed());
+                if remaining.is_zero() {
+                    let _ = channel.signal(Sig::TERM).await;
+                    let _ = channel.close().await;
+                    return Err(format!(
+                        "SSH 命令连续 {} 秒无输出，已停止",
+                        idle_timeout_ms / 1000
+                    ));
+                }
+
+                match timeout(remaining, channel.wait()).await {
+                    Ok(message) => message,
+                    Err(_) => {
+                        let _ = channel.signal(Sig::TERM).await;
+                        let _ = channel.close().await;
+                        return Err(format!(
+                            "SSH 命令连续 {} 秒无输出，已停止",
+                            idle_timeout_ms / 1000
+                        ));
+                    }
+                }
+            } else {
+                channel.wait().await
+            };
+            let Some(message) = message else {
+                break;
+            };
+
             match message {
                 ChannelMsg::Data { data } => {
+                    if !data.is_empty() {
+                        last_output_at = Instant::now();
+                    }
                     append_output(&mut stdout, &data, "stdout", app.as_ref());
                 }
                 ChannelMsg::ExtendedData { data, .. } => {
+                    if !data.is_empty() {
+                        last_output_at = Instant::now();
+                    }
                     append_output(&mut stderr, &data, "stderr", app.as_ref());
                 }
                 ChannelMsg::ExitStatus { exit_status } => {
@@ -214,6 +259,7 @@ pub(crate) async fn test_ssh_connection(
         config,
         "echo __tooldesk_ok__".to_string(),
         Some(SshExecOptions {
+            idle_timeout_ms: None,
             timeout_ms: Some(SSH_TEST_TIMEOUT_MS),
         }),
         None,
@@ -252,4 +298,25 @@ pub(crate) async fn ssh_exec_stream(
     options: Option<SshExecOptions>,
 ) -> Result<SshExecResult, String> {
     exec_ssh_command(config, command, options, Some(app)).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{normalize_timeouts, SshExecOptions, SSH_DEFAULT_TIMEOUT_MS};
+
+    #[test]
+    fn uses_default_total_timeout_without_idle_timeout() {
+        assert_eq!(normalize_timeouts(None), (SSH_DEFAULT_TIMEOUT_MS, None));
+    }
+
+    #[test]
+    fn preserves_total_and_idle_timeouts() {
+        assert_eq!(
+            normalize_timeouts(Some(SshExecOptions {
+                idle_timeout_ms: Some(20_000),
+                timeout_ms: Some(300_000),
+            })),
+            (300_000, Some(20_000))
+        );
+    }
 }

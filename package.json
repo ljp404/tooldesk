@@ -1,6 +1,6 @@
 {
   "name": "tooldesk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "tooldesk is a desktop toolbox for JSON formatting, QR code generation, text comparison, timestamp conversion and daily developer utilities.",
   "license": "MIT",
   "author": {

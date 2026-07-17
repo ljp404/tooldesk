@@ -14,6 +14,11 @@ use tauri::{
 };
 use tokio::time::{sleep, Duration};
 
+#[cfg(target_os = "macos")]
+use objc2::MainThreadMarker;
+#[cfg(target_os = "macos")]
+use objc2_app_kit::{NSEvent, NSScreen};
+
 const TRAY_MENU_LABEL: &str = "tray-menu";
 const TRAY_MENU_WIDTH: f64 = 244.0;
 const TRAY_MENU_ESTIMATED_HEIGHT: f64 = 352.0;
@@ -207,6 +212,58 @@ fn anchored_menu_position(
     (left.round() as i32, top.round() as i32)
 }
 
+#[cfg(any(target_os = "macos", test))]
+fn cocoa_cursor_to_physical(
+    mouse_x: f64,
+    mouse_y: f64,
+    primary_top: f64,
+    scale_factor: f64,
+) -> (f64, f64) {
+    (
+        mouse_x * scale_factor,
+        (primary_top - mouse_y) * scale_factor,
+    )
+}
+
+#[cfg(target_os = "macos")]
+fn corrected_tray_event_position(fallback_x: f64, fallback_y: f64) -> (f64, f64) {
+    let Some(mtm) = MainThreadMarker::new() else {
+        return (fallback_x, fallback_y);
+    };
+    let screens = NSScreen::screens(mtm);
+    if screens.count() == 0 {
+        return (fallback_x, fallback_y);
+    }
+
+    let mouse = NSEvent::mouseLocation();
+    let primary_frame = screens.objectAtIndex(0).frame();
+    let primary_top = primary_frame.origin.y + primary_frame.size.height;
+    let target_screen = (0..screens.count())
+        .map(|index| screens.objectAtIndex(index))
+        .find(|screen| {
+            let frame = screen.frame();
+            mouse.x >= frame.origin.x
+                && mouse.x <= frame.origin.x + frame.size.width
+                && mouse.y >= frame.origin.y
+                && mouse.y <= frame.origin.y + frame.size.height
+        });
+    let Some(target_screen) = target_screen else {
+        return (fallback_x, fallback_y);
+    };
+
+    cocoa_cursor_to_physical(
+        mouse.x,
+        mouse.y,
+        primary_top,
+        target_screen.backingScaleFactor() as f64,
+    )
+}
+
+#[cfg(not(target_os = "macos"))]
+fn corrected_tray_event_position(x: f64, y: f64) -> (f64, f64) {
+    (x, y)
+}
+
 fn tray_menu_position(
     app: &AppHandle,
     x: f64,
@@ -351,7 +408,8 @@ pub(crate) fn create_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Er
                             MouseButtonState::Down | MouseButtonState::Up
                         ) && should_open_tray_menu() =>
                     {
-                        show_custom_tray_menu(tray.app_handle(), position.x, position.y);
+                        let (x, y) = corrected_tray_event_position(position.x, position.y);
+                        show_custom_tray_menu(tray.app_handle(), x, y);
                     }
                     _ => {}
                 }
@@ -398,7 +456,14 @@ pub(crate) fn resize_tray_menu(app: AppHandle, width: f64, height: f64) -> Resul
 
 #[cfg(test)]
 mod tests {
-    use super::anchored_menu_position;
+    use super::{anchored_menu_position, cocoa_cursor_to_physical};
+
+    #[test]
+    fn converts_cocoa_cursor_coordinates_using_point_height() {
+        let position = cocoa_cursor_to_physical(720.0, 850.0, 900.0, 2.0);
+
+        assert_eq!(position, (1440.0, 100.0));
+    }
 
     #[test]
     fn opens_below_a_top_tray_anchor() {
