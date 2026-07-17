@@ -1,6 +1,6 @@
 {
   "accent": "blue",
-  "caption": "支持 Compose 或手动镜像清单，可在本机、SSH 远程拉取或导出服务器脚本。",
+  "caption": "支持远程 SSH 与本机 Docker 拉取，可从 Compose 或手动清单读取镜像。",
   "category": "dev",
   "defaultAlias": "jxlq",
   "entry": "index.html",
@@ -18,13 +18,12 @@
     "容器",
     "拉取",
     "远程",
-    "脚本"
+    "远程拉取"
   ],
   "manifestVersion": 1,
   "minHostVersion": "0.1.0",
   "name": "镜像拉取",
   "permissions": [
-    "clipboard",
     "docker",
     "filesystem",
     "http",
@@ -34,7 +33,6 @@
   "sdkVersion": "1.0.0",
   "capabilities": [
     "checkDockerAvailable",
-    "copyText",
     "dockerImageExists",
     "dockerPullImage",
     "dockerTagImage",
@@ -58,6 +56,6 @@
       "tooldesk-docker-pull-ssh-config"
     ]
   },
-  "version": "0.2.1",
+  "version": "0.3.0",
   "windowIcon": "assets/window-icon.png"
 }

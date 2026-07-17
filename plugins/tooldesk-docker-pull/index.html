@@ -274,11 +274,6 @@
         resize: vertical;
         width: 100%;
       }
-      textarea.script-output {
-        font-family: Consolas, "Courier New", monospace;
-        font-size: 12px;
-        min-height: 180px;
-      }
       .log {
         background: #0f172a;
         color: #e2e8f0;
@@ -299,23 +294,6 @@
         grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
         min-height: 0;
       }
-      body[data-mode="script"] #scriptPanel {
-        display: flex;
-        flex: 1 1 35%;
-        flex-direction: column;
-        min-height: 0;
-      }
-      body[data-mode="script"] #scriptPanel .script-output {
-        flex: 1;
-        min-height: 80px;
-      }
-      body[data-mode="script"] .main-grid {
-        flex: 0 1 220px;
-      }
-      body[data-mode="script"] .log-card {
-        flex: 0 1 120px;
-        min-height: 80px;
-      }
       @media (max-width: 720px) {
         .main-grid { grid-template-columns: 1fr; }
       }
@@ -325,12 +303,11 @@
     <div class="panel">
       <div class="card">
         <div class="row" style="margin-bottom: 10px;">
-          <button id="modeLocal" type="button" class="tab active" data-mode="local">本机 Docker</button>
-          <button id="modeRemote" type="button" class="tab" data-mode="remote">远程 SSH</button>
-          <button id="modeScript" type="button" class="tab" data-mode="script">生成脚本</button>
+          <button id="modeRemote" type="button" class="tab active" data-mode="remote">远程 SSH</button>
+          <button id="modeLocal" type="button" class="tab" data-mode="local">本机 Docker</button>
         </div>
 
-        <div class="source-selector">
+        <div id="sourceSelector" class="source-selector">
           <span class="source-selector-label">镜像清单来源</span>
           <div class="source-segment">
             <button id="sourceCompose" type="button" class="source-tab active" data-source="compose">Compose 文件</button>
@@ -338,7 +315,7 @@
           </div>
         </div>
 
-        <div id="sshPanel" hidden>
+        <div id="sshPanel">
           <div class="section-title">远程 Linux 服务器（密码登录）</div>
           <div class="field-grid">
             <label>主机<input id="sshHost" type="text" placeholder="1.2.3.4" /></label>
@@ -349,14 +326,7 @@
           </div>
         </div>
 
-        <div id="remoteDirRow" hidden style="margin-top: 10px;">
-          <label style="color:#64748b;display:grid;font-size:12px;gap:4px;">
-            远程 Compose 目录
-            <input id="scriptRemoteComposeDir" type="text" placeholder="/opt/myapp" />
-          </label>
-        </div>
-
-        <div id="composePickerRow" class="row" style="margin-top: 10px;">
+        <div id="composePickerRow" class="row" style="margin-top: 10px;" hidden>
           <input id="composePath" type="text" placeholder="选择本地 docker-compose.yml（用于解析镜像）" readonly />
           <button id="pickCompose" type="button" class="secondary">选择文件</button>
           <button id="parseCompose" type="button" class="secondary">解析镜像</button>
@@ -368,15 +338,10 @@
         </div>
 
         <div class="row" style="margin-top: 8px;">
-          <button id="testSsh" type="button" class="secondary" hidden>测试连接</button>
+          <button id="testSsh" type="button" class="secondary">测试连接</button>
           <button id="probeMirrors" type="button" class="secondary">检测镜像源</button>
           <button id="prePull" type="button">拉取全部</button>
-          <button id="composeUp" type="button" class="secondary">Compose Up</button>
-        </div>
-
-        <div id="scriptActions" class="row" hidden style="margin-top: 8px;">
-          <button id="generateScript" type="button">生成远程脚本</button>
-          <button id="copyScript" type="button" class="secondary">复制脚本</button>
+          <button id="composeUp" type="button" class="secondary" hidden>Compose Up</button>
         </div>
 
         <div class="status-bar" style="margin-top: 10px;">
@@ -413,11 +378,6 @@
         </div>
       </div>
 
-      <div id="scriptPanel" class="card" hidden>
-        <div class="section-title">远程 Bash 脚本（在 Linux 服务器上执行）</div>
-        <textarea id="scriptOutput" class="script-output" readonly spellcheck="false" placeholder="解析镜像后点击「生成远程脚本」"></textarea>
-      </div>
-
       <div class="card log-card">
         <div class="log-shell">
           <div class="log-head">运行日志</div>
@@ -452,10 +412,7 @@
       const logEl = document.getElementById('log');
       const runtimeStatusEl = document.getElementById('runtimeStatus');
       const summaryTextEl = document.getElementById('summaryText');
-      const scriptOutput = document.getElementById('scriptOutput');
       const sshPanel = document.getElementById('sshPanel');
-      const scriptPanel = document.getElementById('scriptPanel');
-      const scriptActions = document.getElementById('scriptActions');
 
       let api = null;
       let composeDir = '';
@@ -464,15 +421,15 @@
       let manualInvalidEntries = [];
       let mirrorHealth = new Map();
       let busy = false;
-      let mode = 'local';
+      let mode = 'remote';
       let sourceMode = 'compose';
+      let remoteSourceMode = 'compose';
       let settingsSaveTimer = null;
 
       const plugin = TooldeskPlugin.create({
         id: 'tooldesk-docker-pull',
         capabilities: [
           'checkDockerAvailable',
-          'copyText',
           'dockerImageExists',
           'dockerPullImage',
           'dockerTagImage',
@@ -498,8 +455,6 @@
           'prePull',
           'composeUp',
           'testSsh',
-          'generateScript',
-          'copyScript',
           'sourceCompose',
           'sourceManual'
         ]) {
@@ -745,9 +700,7 @@
       }
 
       function getRemoteComposeDir() {
-        const remoteInput = document.getElementById('remoteComposeDir');
-        const scriptInput = document.getElementById('scriptRemoteComposeDir');
-        return (mode === 'script' ? scriptInput.value : remoteInput.value).trim();
+        return document.getElementById('remoteComposeDir').value.trim();
       }
 
       async function loadSettings() {
@@ -760,11 +713,9 @@
 
         try {
           const savedMode = await plugin.api.getPluginStorageItem(MODE_STORAGE_KEY);
-          if (savedMode === 'remote' || savedMode === 'script' || savedMode === 'local') {
-            setMode(savedMode, false);
-          }
+          setMode(savedMode === 'local' ? 'local' : 'remote', false);
         } catch {
-          setMode('local', false);
+          setMode('remote', false);
         }
 
         try {
@@ -776,7 +727,6 @@
             document.getElementById('sshUser').value = config.username || '';
             document.getElementById('sshPassword').value = config.password || '';
             document.getElementById('remoteComposeDir').value = config.remoteComposeDir || '';
-            document.getElementById('scriptRemoteComposeDir').value = config.remoteComposeDir || '';
           }
         } catch {
           // ignore
@@ -810,7 +760,7 @@
           const mirrorSaved = await plugin.api.setPluginStorageItem(MIRROR_STORAGE_KEY, mirrorListInput.value.trim());
           const modeSaved = await plugin.api.setPluginStorageItem(MODE_STORAGE_KEY, mode);
           const sshSaved = await plugin.api.setPluginStorageItem(SSH_STORAGE_KEY, sshPayload);
-          const sourceSaved = await plugin.api.setPluginStorageItem(SOURCE_STORAGE_KEY, sourceMode);
+          const sourceSaved = await plugin.api.setPluginStorageItem(SOURCE_STORAGE_KEY, remoteSourceMode);
           const manualImagesSaved = await plugin.api.setPluginStorageItem(
             MANUAL_IMAGES_STORAGE_KEY,
             manualImageListInput.value.trim()
@@ -845,47 +795,47 @@
 
       function updateSourceUi() {
         const usesCompose = sourceMode === 'compose';
-        document.getElementById('composePickerRow').hidden = !usesCompose || mode === 'remote';
-        document.getElementById('manualImageRow').hidden = usesCompose;
-        document.getElementById('remoteComposeDirField').hidden = !usesCompose;
-        document.getElementById('remoteDirRow').hidden = !usesCompose || mode !== 'script';
-        document.getElementById('composeUp').hidden = !usesCompose || mode !== 'local';
+        const remoteMode = mode === 'remote';
+        document.getElementById('sourceSelector').hidden = !remoteMode;
+        document.getElementById('composePickerRow').hidden = remoteMode || !usesCompose;
+        document.getElementById('manualImageRow').hidden = !remoteMode || usesCompose;
+        document.getElementById('remoteComposeDirField').hidden = !remoteMode || !usesCompose;
+        document.getElementById('composeUp').hidden = mode !== 'local';
       }
 
       function setSourceMode(nextSource, persist = true) {
-        sourceMode = nextSource;
+        remoteSourceMode = nextSource;
+        sourceMode = mode === 'remote' ? remoteSourceMode : 'compose';
         for (const button of document.querySelectorAll('button.source-tab')) {
-          button.classList.toggle('active', button.dataset.source === nextSource);
+          button.classList.toggle('active', button.dataset.source === remoteSourceMode);
         }
         updateSourceUi();
-        images = sourceImages[nextSource];
+        images = sourceImages[sourceMode];
         renderImageRows();
 
         if (persist) {
-          appendLog(nextSource === 'manual' ? `手动镜像清单：${images.length} 个` : '镜像清单来源：Compose 文件');
+          appendLog(remoteSourceMode === 'manual' ? `手动镜像清单：${sourceImages.manual.length} 个` : '镜像清单来源：Compose 文件');
           void saveSettings();
         }
       }
 
       function setMode(nextMode, persist = true) {
         mode = nextMode;
+        sourceMode = nextMode === 'remote' ? remoteSourceMode : 'compose';
         document.body.dataset.mode = nextMode;
         for (const button of document.querySelectorAll('button.tab')) {
           button.classList.toggle('active', button.dataset.mode === nextMode);
         }
         sshPanel.hidden = nextMode !== 'remote';
-        scriptPanel.hidden = nextMode !== 'script';
-        scriptActions.hidden = nextMode !== 'script';
         document.getElementById('testSsh').hidden = nextMode !== 'remote';
-        document.getElementById('prePull').hidden = nextMode === 'script';
         updateSourceUi();
+        images = sourceImages[sourceMode];
+        renderImageRows();
 
         if (nextMode === 'local') {
           void refreshLocalDockerStatus();
-        } else if (nextMode === 'remote') {
-          setRuntimeStatus('', '远程 SSH 模式');
         } else {
-          setRuntimeStatus('warn', '脚本模式：本机无需 Docker');
+          setRuntimeStatus('', '远程 SSH 模式');
         }
 
         if (persist) {
@@ -1198,7 +1148,7 @@
           if (!dockerOk) {
             return;
           }
-        } else if (mode === 'remote') {
+        } else {
           const test = await api.testSshConnection(getSshConfig());
           if (!test.ok) {
             appendLog(test.message || 'SSH 连接失败');
@@ -1206,9 +1156,6 @@
             return;
           }
           setRuntimeStatus('ok', 'SSH 已连接');
-        } else {
-          appendLog('脚本模式请使用「生成远程脚本」');
-          return;
         }
 
         setBusy(true);
@@ -1249,10 +1196,6 @@
       }
 
       async function composeUp() {
-        if (mode === 'script') {
-          appendLog('脚本模式请复制脚本到服务器执行');
-          return;
-        }
         setBusy(true);
         try {
           if (mode === 'remote') {
@@ -1297,63 +1240,6 @@
         }
       }
 
-      function generatePullScript() {
-        if (!images.length) {
-          appendLog('请先解析镜像列表');
-          return '';
-        }
-        const mirrors = getOrderedMirrors();
-        const remoteDir = sourceMode === 'compose' ? getRemoteComposeDir() : '';
-        const lines = [
-          '#!/usr/bin/env bash',
-          'set -euo pipefail',
-          '',
-          '# Tooldesk 生成的 Compose 镜像拉取脚本',
-          '# 用法: chmod +x pull-images.sh && ./pull-images.sh',
-          ''
-        ];
-
-        for (const item of images) {
-          lines.push(`echo "=== ${item.name} ==="`);
-          lines.push(`if docker image inspect ${shQuote(item.name)} >/dev/null 2>&1; then`);
-          lines.push(`  echo "[skip] ${item.name}"`);
-          lines.push('else');
-          const parsed = parseDockerImage(item.name);
-          if (parsed.isDockerHub && mirrors.length) {
-            lines.push('  pulled=0');
-            for (const mirror of mirrors) {
-              const mirrorRef = buildMirrorPullRef(item.name, mirror);
-              if (!mirrorRef) {
-                continue;
-              }
-              lines.push(`  if [ "$pulled" -eq 0 ] && docker pull ${shQuote(mirrorRef)}; then`);
-              lines.push(`    docker tag ${shQuote(mirrorRef)} ${shQuote(item.name)}`);
-              lines.push(`    echo "[ok] ${item.name} via ${mirror}"`);
-              lines.push('    pulled=1');
-              lines.push('  fi');
-            }
-            lines.push(`  if [ "$pulled" -eq 0 ]; then`);
-            lines.push(`    docker pull ${shQuote(item.name)}`);
-            lines.push(`    echo "[ok] ${item.name} via Docker Hub"`);
-            lines.push('  fi');
-          } else {
-            lines.push(`  docker pull ${shQuote(item.name)}`);
-            lines.push(`  echo "[ok] ${item.name}"`);
-          }
-          lines.push('fi');
-          lines.push('');
-        }
-
-        if (remoteDir) {
-          lines.push(`cd ${shQuote(remoteDir)}`);
-          lines.push('docker compose up -d');
-          lines.push('');
-        }
-
-        lines.push('echo "全部完成"');
-        return lines.join('\n');
-      }
-
       async function testSshConnection() {
         setBusy(true);
         try {
@@ -1375,9 +1261,8 @@
         }
       }
 
-      document.getElementById('modeLocal').addEventListener('click', () => setMode('local'));
       document.getElementById('modeRemote').addEventListener('click', () => setMode('remote'));
-      document.getElementById('modeScript').addEventListener('click', () => setMode('script'));
+      document.getElementById('modeLocal').addEventListener('click', () => setMode('local'));
       document.getElementById('sourceCompose').addEventListener('click', () => setSourceMode('compose'));
       document.getElementById('sourceManual').addEventListener('click', () => setSourceMode('manual'));
       manualImageListInput.addEventListener('input', () => {
@@ -1411,30 +1296,6 @@
       document.getElementById('prePull').addEventListener('click', () => void prePullAll());
       document.getElementById('composeUp').addEventListener('click', () => void composeUp());
       document.getElementById('testSsh').addEventListener('click', () => void testSshConnection());
-
-      document.getElementById('generateScript').addEventListener('click', () => {
-        const script = generatePullScript();
-        if (!script) {
-          return;
-        }
-        scriptOutput.value = script;
-        appendLog(sourceMode === 'manual' ? `使用手动镜像清单：${images.length} 个` : `使用 Compose 镜像清单：${images.length} 个`);
-        appendLog('远程脚本已生成，可复制到服务器执行');
-      });
-
-      document.getElementById('copyScript').addEventListener('click', async () => {
-        const text = scriptOutput.value.trim();
-        if (!text) {
-          appendLog('请先生成脚本');
-          return;
-        }
-        try {
-          await api.copyText(text);
-          appendLog('脚本已复制到剪贴板');
-        } catch (error) {
-          appendLog(error instanceof Error ? error.message : '复制失败');
-        }
-      });
 
       mirrorListInput.value = DEFAULT_MIRRORS.join('\n');
 
